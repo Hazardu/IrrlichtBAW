@@ -214,7 +214,7 @@ set(COMMON_INCLUDE_DIRS
 	${THIRD_PARTY_SOURCE_DIR}/convertutf
 	${THIRD_PARTY_SOURCE_DIR}/utfcpp/source
 	$<TARGET_PROPERTY:png_static,BINARY_DIR> #for dynamically generated pnglibconf.h
-	$<TARGET_PROPERTY:jpeg,BINARY_DIR> #for dynamically generated jconfig.h
+	$<TARGET_PROPERTY:turbojpeg-static,BINARY_DIR> #for dynamically generated jconfig.h
 )
 
 irr_adjust_flags() # macro defined in root CMakeLists
@@ -243,9 +243,9 @@ macro(irr_target_link_shaderc _trgt)
 	target_include_directories(${_trgt} PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/shaderc/libshaderc/include)
 endmacro()
 macro(irr_target_link_libjpeg _trgt)
-	add_dependencies(${_trgt} jpeg)
+	add_dependencies(${_trgt} turbojpeg-static)
 	target_link_libraries(${_trgt} INTERFACE
-		jpeg
+		turbojpeg-static
 	)
 	target_include_directories(${_trgt} PUBLIC ${CMAKE_SOURCE_DIR}/3rdparty/libjpeg)
 endmacro()

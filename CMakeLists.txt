@@ -22,10 +22,8 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: Debug or Release" FORCE)
 endif()
 
-macro(irr_adjust_flags)
-	option(IRR_GCC_SANITIZE_ADDRESS OFF)
-	option(IRR_GCC_SANITIZE_THREAD OFF)
 
+macro(irr_adjust_flags)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		add_compile_options(
 			-Wextra
@@ -119,6 +117,9 @@ if(WIN32)
 elseif(UNIX)
 	set(_IRR_PLATFORM_LINUX_ 1)
 endif()
+
+option(IRR_GCC_SANITIZE_ADDRESS OFF)
+option(IRR_GCC_SANITIZE_THREAD OFF)
 
 #uncomment in the future
 #option(IRR_TARGET_ARCH_ARM "Build for ARM?" OFF)
