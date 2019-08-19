@@ -5,14 +5,13 @@
 #ifndef __I_MESH_MANIPULATOR_H_INCLUDED__
 #define __I_MESH_MANIPULATOR_H_INCLUDED__
 
-#include "IrrCompileConfig.h"
-#include "irr/core/IReferenceCounted.h"
+#include <functional>
+
+#include "irr/core/core.h"
 #include "vector3d.h"
 #include "aabbox3d.h"
-#include "IAnimatedMesh.h"
 #include "irr/asset/ICPUMeshBuffer.h"
-#include "SVertexManipulator.h"
-#include "irr/asset/SCPUMesh.h"
+#include "irr/asset/CCPUMesh.h"
 
 namespace irr
 {

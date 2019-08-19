@@ -2,9 +2,7 @@
 #define __IRR_I_ASSET_H_INCLUDED__
 
 #include <string>
-#include "irr/core/IReferenceCounted.h"
-#include "irr/core/Types.h"
-#include "irr/core/refctd_dynamic_array.h"
+#include "irr/core/core.h"
 
 namespace irr { namespace asset
 {
@@ -99,7 +97,7 @@ class SAssetBundle
 {
     using contents_container_t = core::refctd_dynamic_array<core::smart_refctd_ptr<IAsset>>;
 public:
-    SAssetBundle(std::initializer_list<core::smart_refctd_ptr<IAsset>> _contents = {}) : m_contents(new contents_container_t(_contents), core::dont_grab)
+    SAssetBundle(std::initializer_list<core::smart_refctd_ptr<IAsset>> _contents = {}) : m_contents(core::make_smart_refctd_ptr<contents_container_t>(_contents))
     {
         auto allSameTypeAndNotNull = [&_contents] {
             if (_contents.size()==0ull)

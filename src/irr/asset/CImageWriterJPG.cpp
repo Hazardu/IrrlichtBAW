@@ -8,8 +8,10 @@
 
 #include "IWriteFile.h"
 #include "CImage.h"
-#include "irr/video/convertColor.h"
+#include "irr/asset/format/convertColor.h"
 #include "irr/asset/ICPUTexture.h"
+
+#include "os.h"
 
 #ifdef _IRR_COMPILE_WITH_LIBJPEG_
 #include <stdio.h> // required for jpeglib.h

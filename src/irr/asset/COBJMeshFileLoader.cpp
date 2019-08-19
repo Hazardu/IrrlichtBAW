@@ -2,7 +2,8 @@
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
-#include "IrrCompileConfig.h"
+#include "irr/core/core.h"
+
 #ifdef _IRR_COMPILE_WITH_OBJ_LOADER_
 
 #include "IrrlichtDevice.h"
@@ -11,15 +12,11 @@
 #include "COBJMeshFileLoader.h"
 #include "irr/asset/IMeshManipulator.h"
 #include "IVideoDriver.h"
-#include "irr/video/SGPUMesh.h"
+#include "irr/video/CGPUMesh.h"
 #include "SVertexManipulator.h"
 #include "IReadFile.h"
-#include "coreutil.h"
 #include "os.h"
 #include "irr/asset/IAssetManager.h"
-
-#include "irr/core/Types.h"
-#include "irr/core/math/plane3dSIMD.h"
 
 /*
 namespace std
@@ -338,7 +335,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 	// Clean up the allocate obj _file contents
 	delete [] buf;
 
-	asset::SCPUMesh* mesh = new asset::SCPUMesh();
+	asset::CCPUMesh* mesh = new asset::CCPUMesh();
 
 	// Combine all the groups (meshbuffers) into the mesh
 	for ( uint32_t m = 0; m < ctx.Materials.size(); ++m )
@@ -347,8 +344,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
             auto preloadedMbItr = ctx.preloadedSubmeshes.find(ctx.Materials[m]);
             if (preloadedMbItr != ctx.preloadedSubmeshes.end())
             {
-                mesh->addMeshBuffer(preloadedMbItr->second);
-                preloadedMbItr->second->drop(); // after grab inside addMeshBuffer()
+                mesh->addMeshBuffer(core::smart_refctd_ptr<ICPUMeshBuffer>(preloadedMbItr->second,core::dont_grab));
                 preloadedMbItr->second->drop(); // after grab when we got it from cache
                 continue;
             }
@@ -395,8 +391,8 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
         }
         else*/
 
-        asset::ICPUMeshBuffer* meshbuffer = new asset::ICPUMeshBuffer();
-        mesh->addMeshBuffer(meshbuffer);
+        auto meshbuffer = core::make_smart_refctd_ptr<asset::ICPUMeshBuffer>();
+        mesh->addMeshBuffer(core::smart_refctd_ptr(meshbuffer));
 
         meshbuffer->getMaterial() = ctx.Materials[m]->Material;
 
@@ -443,7 +439,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
         memcpy(vertexbuf->getPointer(),ctx.Materials[m]->Vertices.data()+baseVertex,vertexbuf->getSize());
         vertexbuf->drop();
 
-        SAssetBundle bundle{core::smart_refctd_ptr<asset::IAsset>(meshbuffer,core::dont_grab)};
+        SAssetBundle bundle{std::move(meshbuffer)};
         _override->insertAssetIntoCache(bundle, genKeyForMeshBuf(ctx, _file->getFileName().c_str(), ctx.Materials[m]->Name, ctx.Materials[m]->Group), ctx.inner, 1u);
         //transfer ownership to smart_refctd_ptr, so instead of grab() in smart_refctd_ptr and drop() here, just do nothing (thus dont_grab goes as smart ptr ctor arg)
 	}
