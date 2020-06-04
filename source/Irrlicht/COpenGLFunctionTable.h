@@ -28,10 +28,10 @@ wywaliæ linktime linking openGL'a
 
 #include "IrrCompileConfig.h"
 #include "irr/core/core.h"
+#include "irr/system/system.h"
 //#ifdef _IRR_COMPILE_WITH_OPENGL
 
 #include "COpenGLStateManager.h"
-
 #ifdef _IRR_WINDOWS_API_
 // include windows headers for HWND
 #include "../src/3rdparty/GL/wglext.h"
@@ -43,6 +43,7 @@ wywaliæ linktime linking openGL'a
 #include "SDL2/include/SDL.h"
 #include "os.h"
 #include "irr/video/IGPUImageView.h"
+#include <irr\system\DynamicFunctionCaller.h>
 namespace irr
 {
 	namespace video
@@ -552,1327 +553,411 @@ namespace irr
 		"GL_NVX_gpu_memory_info",
 		"GL_NVX_multiview_per_view_attributes"
 			};
-		class COpenGLFunctionTable
-		{
-		public:
-			enum EOpenGLFeatures {
-				IRR_3DFX_multisample = 0,
-				IRR_3DFX_tbuffer,
-				IRR_3DFX_texture_compression_FXT1,
-				IRR_AMD_blend_minmax_factor,
-				IRR_AMD_conservative_depth,
-				IRR_AMD_debug_output,
-				IRR_AMD_depth_clamp_separate,
-				IRR_AMD_draw_buffers_blend,
-				IRR_AMD_multi_draw_indirect,
-				IRR_AMD_name_gen_delete,
-				IRR_AMD_performance_monitor,
-				IRR_AMD_sample_positions,
-				IRR_AMD_seamless_cubemap_per_texture,
-				IRR_AMD_shader_stencil_export,
-				IRR_AMD_texture_texture4,
-				IRR_AMD_transform_feedback3_lines_triangles,
-				IRR_AMD_vertex_shader_tesselator,
-				IRR_AMD_gcn_shader,
-				IRR_AMD_gpu_shader_half_float_fetch,
-				IRR_AMD_shader_explicit_vertex_parameter,
-				IRR_AMD_shader_fragment_mask,
-				IRR_AMD_shader_image_load_store_lod,
-				IRR_AMD_shader_trinary_minmax,
-				IRR_AMD_texture_gather_bias_lod,
-				IRR_AMD_vertex_shader_viewport_index,
-				IRR_AMD_vertex_shader_layer,
-				IRR_AMD_sparse_texture,
-				IRR_AMD_shader_stencil_value_export,
-				IRR_AMD_gpu_shader_int64,
-				IRR_AMD_shader_ballot,
-				IRR_APPLE_aux_depth_stencil,
-				IRR_APPLE_client_storage,
-				IRR_APPLE_element_array,
-				IRR_APPLE_fence,
-				IRR_APPLE_float_pixels,
-				IRR_APPLE_flush_buffer_range,
-				IRR_APPLE_object_purgeable,
-				IRR_APPLE_rgb_422,
-				IRR_APPLE_row_bytes,
-				IRR_APPLE_specular_vector,
-				IRR_APPLE_texture_range,
-				IRR_APPLE_transform_hint,
-				IRR_APPLE_vertex_array_object,
-				IRR_APPLE_vertex_array_range,
-				IRR_APPLE_vertex_program_evaluators,
-				IRR_APPLE_ycbcr_422,
-				IRR_ARB_base_instance,
-				IRR_ARB_bindless_texture,
-				IRR_ARB_buffer_storage,
-				IRR_ARB_blend_func_extended,
-				IRR_ARB_clip_control,
-				IRR_ARB_cl_event,
-				IRR_ARB_color_buffer_float,
-				IRR_ARB_compatibility,
-				IRR_ARB_compressed_texture_pixel_storage,
-				IRR_ARB_compute_shader,
-				IRR_ARB_conservative_depth,
-				IRR_ARB_copy_buffer,
-				IRR_ARB_debug_output,
-				IRR_ARB_depth_buffer_float,
-				IRR_ARB_depth_clamp,
-				IRR_ARB_depth_texture,
-				IRR_ARB_direct_state_access,
-				IRR_ARB_draw_buffers,
-				IRR_ARB_draw_buffers_blend,
-				IRR_ARB_draw_elements_base_vertex,
-				IRR_ARB_draw_indirect,
-				IRR_ARB_draw_instanced,
-				IRR_ARB_ES2_compatibility,
-				IRR_ARB_explicit_attrib_location,
-				IRR_ARB_explicit_uniform_location,
-				IRR_ARB_fragment_coord_conventions,
-				IRR_ARB_fragment_program,
-				IRR_ARB_fragment_program_shadow,
-				IRR_ARB_fragment_shader,
-				IRR_ARB_fragment_shader_interlock,
-				IRR_ARB_framebuffer_object,
-				IRR_ARB_framebuffer_sRGB,
-				IRR_ARB_geometry_shader4,
-				IRR_ARB_get_program_binary,
-				IRR_ARB_get_texture_sub_image,
-				IRR_ARB_gpu_shader5,
-				IRR_ARB_gpu_shader_fp64,
-				IRR_ARB_half_float_pixel,
-				IRR_ARB_half_float_vertex,
-				IRR_ARB_imaging,
-				IRR_ARB_instanced_arrays,
-				IRR_ARB_indirect_parameters,
-				IRR_ARB_internalformat_query,
-				IRR_ARB_internalformat_query2,
-				IRR_ARB_map_buffer_alignment,
-				IRR_ARB_map_buffer_range,
-				IRR_ARB_matrix_palette,
-				IRR_ARB_multi_bind,
-				IRR_ARB_multi_draw_indirect,
-				IRR_ARB_multisample,
-				IRR_ARB_multitexture,
-				IRR_ARB_occlusion_query,
-				IRR_ARB_occlusion_query2,
-				IRR_ARB_pixel_buffer_object,
-				IRR_ARB_point_parameters,
-				IRR_ARB_point_sprite,
-				IRR_ARB_program_interface_query,
-				IRR_ARB_provoking_vertex,
-				IRR_ARB_query_buffer_object,
-				IRR_ARB_robustness,
-				IRR_ARB_sample_shading,
-				IRR_ARB_sampler_objects,
-				IRR_ARB_seamless_cube_map,
-				IRR_ARB_separate_shader_objects,
-				IRR_ARB_shader_atomic_counters,
-				IRR_ARB_shader_ballot,
-				IRR_ARB_shader_bit_encoding,
-				IRR_ARB_shader_draw_parameters,
-				IRR_ARB_shader_group_vote,
-				IRR_ARB_shader_image_load_store,
-				IRR_ARB_shader_objects,
-				IRR_ARB_shader_precision,
-				IRR_ARB_shader_stencil_export,
-				IRR_ARB_shader_subroutine,
-				IRR_ARB_shader_texture_lod,
-				IRR_ARB_shading_language_100,
-				IRR_ARB_shading_language_420pack,
-				IRR_ARB_shading_language_include,
-				IRR_ARB_shading_language_packing,
-				IRR_ARB_shadow,
-				IRR_ARB_shadow_ambient,
-				IRR_ARB_sync,
-				IRR_ARB_tessellation_shader,
-				IRR_ARB_texture_barrier,
-				IRR_ARB_texture_border_clamp,
-				IRR_ARB_texture_buffer_object,
-				IRR_ARB_texture_buffer_object_rgb32,
-				IRR_ARB_texture_buffer_range,
-				IRR_ARB_texture_compression,
-				IRR_ARB_texture_compression_bptc,
-				IRR_ARB_texture_compression_rgtc,
-				IRR_ARB_texture_cube_map,
-				IRR_ARB_texture_cube_map_array,
-				IRR_ARB_texture_env_add,
-				IRR_ARB_texture_env_combine,
-				IRR_ARB_texture_env_crossbar,
-				IRR_ARB_texture_env_dot3,
-				IRR_ARB_texture_float,
-				IRR_ARB_texture_gather,
-				IRR_ARB_texture_mirrored_repeat,
-				IRR_ARB_texture_multisample,
-				IRR_ARB_texture_non_power_of_two,
-				IRR_ARB_texture_query_lod,
-				IRR_ARB_texture_rectangle,
-				IRR_ARB_texture_rg,
-				IRR_ARB_texture_rgb10_a2ui,
-				IRR_ARB_texture_stencil8,
-				IRR_ARB_texture_storage,
-				IRR_ARB_texture_storage_multisample,
-				IRR_ARB_texture_swizzle,
-				IRR_ARB_texture_view,
-				IRR_ARB_timer_query,
-				IRR_ARB_transform_feedback2,
-				IRR_ARB_transform_feedback3,
-				IRR_ARB_transform_feedback_instanced,
-				IRR_ARB_transpose_matrix,
-				IRR_ARB_uniform_buffer_object,
-				IRR_ARB_vertex_array_bgra,
-				IRR_ARB_vertex_array_object,
-				IRR_ARB_vertex_attrib_64bit,
-				IRR_ARB_vertex_attrib_binding,
-				IRR_ARB_vertex_blend,
-				IRR_ARB_vertex_buffer_object,
-				IRR_ARB_vertex_program,
-				IRR_ARB_vertex_shader,
-				IRR_ARB_vertex_type_2_10_10_10_rev,
-				IRR_ARB_viewport_array,
-				IRR_ARB_window_pos,
-				IRR_ARB_enhanced_layouts,
-				IRR_ARB_cull_distance,
-				IRR_ARB_derivative_control,
-				IRR_ARB_shader_texture_image_samples,
-				IRR_ARB_gpu_shader_int64,
-				IRR_ARB_post_depth_coverage,
-				IRR_ARB_shader_clock,
-				IRR_ARB_shader_viewport_layer_array,
-				IRR_ARB_sparse_texture2,
-				IRR_ARB_sparse_texture_clamp,
-				IRR_ARB_gl_spirv,
-				IRR_ARB_spirv_extensions,
-				IRR_ATI_draw_buffers,
-				IRR_ATI_element_array,
-				IRR_ATI_envmap_bumpmap,
-				IRR_ATI_fragment_shader,
-				IRR_ATI_map_object_buffer,
-				IRR_ATI_meminfo,
-				IRR_ATI_pixel_format_float,
-				IRR_ATI_pn_triangles,
-				IRR_ATI_separate_stencil,
-				IRR_ATI_text_fragment_shader,
-				IRR_ATI_texture_env_combine3,
-				IRR_ATI_texture_float,
-				IRR_ATI_texture_mirror_once,
-				IRR_ATI_vertex_array_object,
-				IRR_ATI_vertex_attrib_array_object,
-				IRR_ATI_vertex_streams,
-				IRR_EXT_422_pixels,
-				IRR_EXT_abgr,
-				IRR_EXT_bgra,
-				IRR_EXT_bindable_uniform,
-				IRR_EXT_blend_color,
-				IRR_EXT_blend_equation_separate,
-				IRR_EXT_blend_func_separate,
-				IRR_EXT_blend_logic_op,
-				IRR_EXT_blend_minmax,
-				IRR_EXT_blend_subtract,
-				IRR_EXT_clip_volume_hint,
-				IRR_EXT_cmyka,
-				IRR_EXT_color_subtable,
-				IRR_EXT_compiled_vertex_array,
-				IRR_EXT_convolution,
-				IRR_EXT_coordinate_frame,
-				IRR_EXT_copy_texture,
-				IRR_EXT_cull_vertex,
-				IRR_EXT_depth_bounds_test,
-				IRR_EXT_direct_state_access,
-				IRR_EXT_draw_buffers2,
-				IRR_EXT_draw_instanced,
-				IRR_EXT_draw_range_elements,
-				IRR_EXT_fog_coord,
-				IRR_EXT_framebuffer_blit,
-				IRR_EXT_framebuffer_multisample,
-				IRR_EXT_framebuffer_multisample_blit_scaled,
-				IRR_EXT_framebuffer_object,
-				IRR_EXT_framebuffer_sRGB,
-				IRR_EXT_geometry_shader4,
-				IRR_EXT_gpu_program_parameters,
-				IRR_EXT_gpu_shader4,
-				IRR_EXT_histogram,
-				IRR_EXT_index_array_formats,
-				IRR_EXT_index_func,
-				IRR_EXT_index_material,
-				IRR_EXT_index_texture,
-				IRR_EXT_light_texture,
-				IRR_EXT_misc_attribute,
-				IRR_EXT_multi_draw_arrays,
-				IRR_EXT_multisample,
-				IRR_EXT_packed_depth_stencil,
-				IRR_EXT_packed_float,
-				IRR_EXT_packed_pixels,
-				IRR_EXT_paletted_texture,
-				IRR_EXT_pixel_buffer_object,
-				IRR_EXT_pixel_transform,
-				IRR_EXT_pixel_transform_color_table,
-				IRR_EXT_point_parameters,
-				IRR_EXT_polygon_offset,
-				IRR_EXT_provoking_vertex,
-				IRR_EXT_rescale_normal,
-				IRR_EXT_secondary_color,
-				IRR_EXT_separate_shader_objects,
-				IRR_EXT_separate_specular_color,
-				IRR_EXT_shader_image_load_store,
-				IRR_EXT_shadow_funcs,
-				IRR_EXT_shared_texture_palette,
-				IRR_EXT_stencil_clear_tag,
-				IRR_EXT_stencil_two_side,
-				IRR_EXT_stencil_wrap,
-				IRR_EXT_subtexture,
-				IRR_EXT_texture,
-				IRR_EXT_texture3D,
-				IRR_EXT_texture_array,
-				IRR_EXT_texture_buffer_object,
-				IRR_EXT_texture_compression_latc,
-				IRR_EXT_texture_compression_rgtc,
-				IRR_EXT_texture_compression_s3tc,
-				IRR_EXT_texture_cube_map,
-				IRR_EXT_texture_env_add,
-				IRR_EXT_texture_env_combine,
-				IRR_EXT_texture_env_dot3,
-				IRR_EXT_texture_filter_anisotropic,
-				IRR_EXT_texture_integer,
-				IRR_EXT_texture_lod_bias,
-				IRR_EXT_texture_mirror_clamp,
-				IRR_EXT_texture_object,
-				IRR_EXT_texture_perturb_normal,
-				IRR_EXT_texture_shared_exponent,
-				IRR_EXT_texture_snorm,
-				IRR_EXT_texture_sRGB,
-				IRR_EXT_texture_sRGB_decode,
-				IRR_EXT_texture_sRGB_R8,
-				IRR_EXT_texture_sRGB_RG8,
-				IRR_EXT_texture_swizzle,
-				IRR_EXT_texture_view,
-				IRR_EXT_timer_query,
-				IRR_EXT_transform_feedback,
-				IRR_EXT_vertex_array,
-				IRR_EXT_vertex_array_bgra,
-				IRR_EXT_vertex_attrib_64bit,
-				IRR_EXT_vertex_shader,
-				IRR_EXT_vertex_weighting,
-				IRR_EXT_x11_sync_object,
-				IRR_EXT_shader_pixel_local_storage,
-				IRR_EXT_shader_pixel_local_storage2,
-				IRR_EXT_shader_integer_mix,
-				IRR_EXT_shader_image_load_formatted,
-				IRR_EXT_post_depth_coverage,
-				IRR_EXT_sparse_texture2,
-				IRR_EXT_shader_framebuffer_fetch,
-				IRR_EXT_shader_framebuffer_fetch_non_coherent,
-				IRR_FfdMaskSGIX,
-				IRR_GREMEDY_frame_terminator,
-				IRR_GREMEDY_string_marker,
-				IRR_HP_convolution_border_modes,
-				IRR_HP_image_transform,
-				IRR_HP_occlusion_test,
-				IRR_HP_texture_lighting,
-				IRR_IBM_cull_vertex,
-				IRR_IBM_multimode_draw_arrays,
-				IRR_IBM_rasterpos_clip,
-				IRR_IBM_texture_mirrored_repeat,
-				IRR_IBM_vertex_array_lists,
-				IRR_INGR_blend_func_separate,
-				IRR_INGR_color_clamp,
-				IRR_INGR_interlace_read,
-				IRR_INGR_palette_buffer,
-				IRR_INTEL_fragment_shader_ordering,
-				IRR_INTEL_parallel_arrays,
-				IRR_INTEL_texture_scissor,
-				IRR_INTEL_conservative_rasterization,
-				IRR_INTEL_blackhole_render,
-				IRR_KHR_debug,
-				IRR_MESA_pack_invert,
-				IRR_MESA_resize_buffers,
-				IRR_MESA_window_pos,
-				IRR_MESAX_texture_stack,
-				IRR_MESA_ycbcr_texture,
-				IRR_NV_blend_square,
-				IRR_NV_conditional_render,
-				IRR_NV_copy_depth_to_color,
-				IRR_NV_copy_image,
-				IRR_NV_depth_buffer_float,
-				IRR_NV_depth_clamp,
-				IRR_NV_evaluators,
-				IRR_NV_explicit_multisample,
-				IRR_NV_fence,
-				IRR_NV_float_buffer,
-				IRR_NV_fog_distance,
-				IRR_NV_fragment_program,
-				IRR_NV_fragment_program2,
-				IRR_NV_fragment_program4,
-				IRR_NV_fragment_program_option,
-				IRR_NV_fragment_shader_interlock,
-				IRR_NV_framebuffer_multisample_coverage,
-				IRR_NV_geometry_program4,
-				IRR_NV_geometry_shader4,
-				IRR_NV_gpu_program4,
-				IRR_NV_gpu_program5,
-				IRR_NV_gpu_shader5,
-				IRR_NV_half_float,
-				IRR_NV_light_max_exponent,
-				IRR_NV_multisample_coverage,
-				IRR_NV_multisample_filter_hint,
-				IRR_NV_occlusion_query,
-				IRR_NV_packed_depth_stencil,
-				IRR_NV_parameter_buffer_object,
-				IRR_NV_parameter_buffer_object2,
-				IRR_NV_pixel_data_range,
-				IRR_NV_point_sprite,
-				IRR_NV_present_video,
-				IRR_NV_primitive_restart,
-				IRR_NV_register_combiners,
-				IRR_NV_register_combiners2,
-				IRR_NV_shader_buffer_load,
-				IRR_NV_shader_buffer_store,
-				IRR_NV_shader_thread_group,
-				IRR_NV_shader_thread_shuffle,
-				IRR_NV_tessellation_program5,
-				IRR_NV_texgen_emboss,
-				IRR_NV_texgen_reflection,
-				IRR_NV_texture_barrier,
-				IRR_NV_texture_compression_vtc,
-				IRR_NV_texture_env_combine4,
-				IRR_NV_texture_expand_normal,
-				IRR_NV_texture_multisample,
-				IRR_NV_texture_rectangle,
-				IRR_NV_texture_shader,
-				IRR_NV_texture_shader2,
-				IRR_NV_texture_shader3,
-				IRR_NV_transform_feedback,
-				IRR_NV_transform_feedback2,
-				IRR_NV_vdpau_interop,
-				IRR_NV_vertex_array_range,
-				IRR_NV_vertex_array_range2,
-				IRR_NV_vertex_attrib_integer_64bit,
-				IRR_NV_vertex_buffer_unified_memory,
-				IRR_NV_vertex_program,
-				IRR_NV_vertex_program1_1,
-				IRR_NV_vertex_program2,
-				IRR_NV_vertex_program2_option,
-				IRR_NV_vertex_program3,
-				IRR_NV_vertex_program4,
-				IRR_NV_video_capture,
-				IRR_NV_viewport_array2,
-				IRR_NV_stereo_view_rendering,
-				IRR_NV_sample_mask_override_coverage,
-				IRR_NV_geometry_shader_passthrough,
-				IRR_NV_shader_subgroup_partitioned,
-				IRR_NV_compute_shader_derivatives,
-				IRR_NV_fragment_shader_barycentric,
-				IRR_NV_mesh_shader,
-				IRR_NV_shader_image_footprint,
-				IRR_NV_shading_rate_image,
-				IRR_NV_bindless_texture,
-				IRR_NV_shader_atomic_float,
-				IRR_NV_shader_atomic_int64,
-				IRR_NV_sample_locations,
-				IRR_NV_shader_atomic_fp16_vector,
-				IRR_NV_command_list,
-				IRR_NV_shader_atomic_float64,
-				IRR_NV_conservative_raster_pre_snap,
-				IRR_NV_shader_texture_footprint,
-				IRR_OES_read_format,
-				IRR_OML_interlace,
-				IRR_OML_resample,
-				IRR_OML_subsample,
-				IRR_OVR_multiview,
-				IRR_OVR_multiview2,
-				IRR_PGI_misc_hints,
-				IRR_PGI_vertex_hints,
-				IRR_REND_screen_coordinates,
-				IRR_S3_s3tc,
-				IRR_SGI_color_matrix,
-				IRR_SGI_color_table,
-				IRR_SGI_depth_pass_instrument,
-				IRR_SGIS_detail_texture,
-				IRR_SGIS_fog_function,
-				IRR_SGIS_generate_mipmap,
-				IRR_SGIS_multisample,
-				IRR_SGIS_pixel_texture,
-				IRR_SGIS_point_line_texgen,
-				IRR_SGIS_point_parameters,
-				IRR_SGIS_sharpen_texture,
-				IRR_SGIS_texture4D,
-				IRR_SGIS_texture_border_clamp,
-				IRR_SGIS_texture_color_mask,
-				IRR_SGIS_texture_edge_clamp,
-				IRR_SGIS_texture_filter4,
-				IRR_SGIS_texture_lod,
-				IRR_SGIS_texture_select,
-				IRR_SGI_texture_color_table,
-				IRR_SGIX_async,
-				IRR_SGIX_async_histogram,
-				IRR_SGIX_async_pixel,
-				IRR_SGIX_blend_alpha_minmax,
-				IRR_SGIX_calligraphic_fragment,
-				IRR_SGIX_clipmap,
-				IRR_SGIX_convolution_accuracy,
-				IRR_SGIX_depth_pass_instrument,
-				IRR_SGIX_depth_texture,
-				IRR_SGIX_flush_raster,
-				IRR_SGIX_fog_offset,
-				IRR_SGIX_fog_scale,
-				IRR_SGIX_fragment_lighting,
-				IRR_SGIX_framezoom,
-				IRR_SGIX_igloo_interface,
-				IRR_SGIX_impact_pixel_texture,
-				IRR_SGIX_instruments,
-				IRR_SGIX_interlace,
-				IRR_SGIX_ir_instrument1,
-				IRR_SGIX_list_priority,
-				IRR_SGIX_pixel_texture,
-				IRR_SGIX_pixel_tiles,
-				IRR_SGIX_polynomial_ffd,
-				IRR_SGIX_reference_plane,
-				IRR_SGIX_resample,
-				IRR_SGIX_scalebias_hint,
-				IRR_SGIX_shadow,
-				IRR_SGIX_shadow_ambient,
-				IRR_SGIX_sprite,
-				IRR_SGIX_subsample,
-				IRR_SGIX_tag_sample_buffer,
-				IRR_SGIX_texture_add_env,
-				IRR_SGIX_texture_coordinate_clamp,
-				IRR_SGIX_texture_lod_bias,
-				IRR_SGIX_texture_multi_buffer,
-				IRR_SGIX_texture_scale_bias,
-				IRR_SGIX_texture_select,
-				IRR_SGIX_vertex_preclip,
-				IRR_SGIX_ycrcb,
-				IRR_SGIX_ycrcba,
-				IRR_SGIX_ycrcb_subsample,
-				IRR_SUN_convolution_border_modes,
-				IRR_SUN_global_alpha,
-				IRR_SUN_mesh_array,
-				IRR_SUN_slice_accum,
-				IRR_SUN_triangle_list,
-				IRR_SUN_vertex,
-				IRR_SUNX_constant_data,
-				IRR_WIN_phong_shading,
-				IRR_WIN_specular_fog,
-				IRR_KHR_texture_compression_astc_hdr,
-				IRR_KHR_texture_compression_astc_ldr,
-				IRR_KHR_blend_equation_advanced,
-				IRR_KHR_blend_equation_advanced_coherent,
-				//IRR_GLX_EXT_swap_control_tear,
-				IRR_NVX_gpu_memory_info,
-				IRR_NVX_multiview_per_view_attributes,
-				IRR_OpenGL_Feature_Count
-			};
-			_IRR_STATIC_INLINE_CONSTEXPR EOpenGLFeatures m_GLSLExtensions[]{
-				IRR_AMD_gcn_shader,
-				IRR_AMD_gpu_shader_half_float_fetch,
-				IRR_AMD_shader_ballot,
-				IRR_AMD_shader_explicit_vertex_parameter,
-				IRR_AMD_shader_fragment_mask,
-				IRR_AMD_shader_image_load_store_lod,
-				IRR_AMD_shader_trinary_minmax,
-				IRR_AMD_texture_gather_bias_lod,
-				IRR_NVX_multiview_per_view_attributes,
-				IRR_NV_viewport_array2,
-				IRR_NV_stereo_view_rendering,
-				IRR_NV_sample_mask_override_coverage,
-				IRR_NV_geometry_shader_passthrough,
-				IRR_NV_shader_subgroup_partitioned,
-				IRR_NV_compute_shader_derivatives,
-				IRR_NV_fragment_shader_barycentric,
-				IRR_NV_mesh_shader,
-				IRR_NV_shader_image_footprint,
-				IRR_NV_shading_rate_image,
-				IRR_ARB_shading_language_include,
-				IRR_ARB_shader_stencil_export,
-				IRR_ARB_enhanced_layouts,
-				IRR_ARB_bindless_texture,
-				IRR_ARB_shader_draw_parameters,
-				IRR_ARB_shader_group_vote,
-				IRR_ARB_cull_distance,
-				IRR_ARB_derivative_control,
-				IRR_ARB_shader_texture_image_samples,
-				IRR_KHR_blend_equation_advanced,
-				IRR_KHR_blend_equation_advanced_coherent,
-				IRR_ARB_fragment_shader_interlock,
-				IRR_ARB_gpu_shader_int64,
-				IRR_ARB_post_depth_coverage,
-				IRR_ARB_shader_ballot,
-				IRR_ARB_shader_clock,
-				IRR_ARB_shader_viewport_layer_array,
-				IRR_ARB_sparse_texture2,
-				IRR_ARB_sparse_texture_clamp,
-				IRR_ARB_gl_spirv,
-				IRR_ARB_spirv_extensions,
-				IRR_AMD_shader_stencil_export,
-				IRR_AMD_vertex_shader_viewport_index,
-				IRR_AMD_vertex_shader_layer,
-				IRR_NV_bindless_texture,
-				IRR_NV_shader_atomic_float,
-				IRR_AMD_sparse_texture,
-				IRR_EXT_shader_integer_mix,
-				IRR_INTEL_fragment_shader_ordering,
-				IRR_AMD_shader_stencil_value_export,
-				IRR_NV_shader_thread_group,
-				IRR_NV_shader_thread_shuffle,
-				IRR_EXT_shader_image_load_formatted,
-				IRR_AMD_gpu_shader_int64,
-				IRR_NV_shader_atomic_int64,
-				IRR_EXT_post_depth_coverage,
-				IRR_EXT_sparse_texture2,
-				IRR_NV_fragment_shader_interlock,
-				IRR_NV_sample_locations,
-				IRR_NV_shader_atomic_fp16_vector,
-				IRR_NV_command_list,
-				IRR_OVR_multiview,
-				IRR_OVR_multiview2,
-				IRR_NV_shader_atomic_float64,
-				IRR_INTEL_conservative_rasterization,
-				IRR_NV_conservative_raster_pre_snap,
-				IRR_EXT_shader_framebuffer_fetch,
-				IRR_EXT_shader_framebuffer_fetch_non_coherent,
-				IRR_INTEL_blackhole_render,
-				IRR_NV_shader_texture_footprint,
-				IRR_NV_gpu_shader5
-			};
-			//! show all features with availablity
-			void dump(std::string* outStr = NULL, bool onlyAvailable = false) const;
+			class COpenGLFunctionTable
+			{
+			public:
 
-			void dumpFramebufferFormats() const;
-			bool isDeviceCompatibile(core::vector<std::string>* failedExtensions = NULL);
+class OpenGLFunctionLoader final : system::FuncPtrLoader
+{
+	using FUNC_PTR_TYPE = decltype(SDL_GL_GetProcAddress)*;
+	FUNC_PTR_TYPE pGlGetProcAdress;//pClGetExtensionFunctionAddress;
 
-			static core::CLeakDebugger bufferLeaker;
-			static core::CLeakDebugger textureLeaker;
-			static bool FeatureAvailable[IRR_OpenGL_Feature_Count];
-
-			void initFunctions(bool stencilBuffer);
-			static void loadFunctions();
-			// Some variables for properties
-			bool StencilBuffer;
-			bool TextureCompressionExtension;
-
-			// Some non-boolean properties
-			static int32_t reqUBOAlignment;
-			//!
-			static int32_t reqSSBOAlignment;
-			//!
-			static int32_t reqTBOAlignment;
-			//!
-			static uint64_t maxUBOSize;
-			//!
-			static uint64_t maxSSBOSize;
-			//!
-			static uint64_t maxTBOSizeInTexels;
-			//!
-			static uint64_t maxBufferSize;
-			//!
-			static uint32_t maxUBOBindings;
-			//!
-			static uint32_t maxSSBOBindings;
-			//! For vertex and fragment shaders
-			//! If both the vertex shader and the fragment processing stage access the same texture image unit, then that counts as using two texture image units against this limit.
-			static uint32_t maxTextureBindings;
-			//! For compute shader
-			static uint32_t maxTextureBindingsCompute;
-			//!
-			static uint32_t maxImageBindings;
-			//!
-			static int32_t minMemoryMapAlignment;
-			//!
-			static int32_t MaxComputeWGSize[3];
-			//!
-			static uint32_t MaxArrayTextureLayers;
-			//! Maxmimum texture layers supported by the engine
-			static uint8_t MaxTextureUnits;
-			//! Maximal Anisotropy
-			static uint8_t MaxAnisotropy;
-			//! Number of user clipplanes
-			static uint8_t MaxUserClipPlanes;
-			//! Number of rendertargets available as MRTs
-			static uint8_t MaxMultipleRenderTargets;
-			//! Optimal number of indices per meshbuffer
-			static uint32_t MaxIndices;
-			//! Optimal number of vertices per meshbuffer
-			static uint32_t MaxVertices;
-			//! Maximal vertices handled by geometry shaders
-			static uint32_t MaxGeometryVerticesOut;
-			//! Maximal LOD Bias
-			static float MaxTextureLODBias;
-			//!
-			static uint32_t MaxVertexStreams;
-			//!
-			static uint32_t MaxXFormFeedbackComponents;
-			//!
-			static uint32_t MaxGPUWaitTimeout;
-			//! Gives the upper and lower bound on warp/wavefront/SIMD-lane size
-			static uint32_t InvocationSubGroupSize[2];
-
-			//TODO should be later changed to SPIR-V extensions enum like it is with OpenGL extensions
-			//(however it does not have any implications on API)
-			static GLuint SPIR_VextensionsCount;
-			static core::smart_refctd_dynamic_array<const GLubyte*> SPIR_Vextensions;
-
-			//! Minimal and maximal supported thickness for lines without smoothing
-			GLfloat DimAliasedLine[2];
-			//! Minimal and maximal supported thickness for points without smoothing
-			GLfloat DimAliasedPoint[2];
-			//! Minimal and maximal supported thickness for lines with smoothing
-			GLfloat DimSmoothedLine[2];
-			//! Minimal and maximal supported thickness for points with smoothing
-			GLfloat DimSmoothedPoint[2];
-
-			//! OpenGL version as Integer: 100*Major+Minor, i.e. 2.1 becomes 201
-			static uint16_t Version;
-			//! GLSL version as Integer: 100*Major+Minor
-			static uint16_t ShaderLanguageVersion;
-
-			static bool IsIntelGPU;
-			static bool needsDSAFramebufferHack;
-			//
-			static bool extGlIsEnabledi(GLenum cap, GLuint index);
-			static void extGlEnablei(GLenum cap, GLuint index);
-			static void extGlDisablei(GLenum cap, GLuint index);
-			static void extGlGetBooleani_v(GLenum pname, GLuint index, GLboolean* data);
-			static void extGlGetFloati_v(GLenum pname, GLuint index, float* data);
-			static void extGlGetInteger64v(GLenum pname, GLint64* data);
-			static void extGlGetIntegeri_v(GLenum pname, GLuint index, GLint* data);
-			static void extGlProvokingVertex(GLenum provokeMode);
-			static void extGlClipControl(GLenum origin, GLenum depth);
-
-			//
-			static GLsync extGlFenceSync(GLenum condition, GLbitfield flags);
-			static void extGlDeleteSync(GLsync sync);
-			static GLenum extGlClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-			static void extGlWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-
-			// the above function definitions can stay, the rest towards the bottom are up for review
-			// public access to the (loaded) extensions.
-			static void extGlActiveTexture(GLenum target);
-			static void extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets);
-			static void extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures);
+public:
+	OpenGLFunctionLoader() : pGlGetProcAdress(nullptr) {}
+	OpenGLFunctionLoader(FUNC_PTR_TYPE _pGlGetProcAdress) : pGlGetProcAdress(_pGlGetProcAdress) {}
+	OpenGLFunctionLoader(OpenGLFunctionLoader&& other) : OpenGLFunctionLoader()
+	{
+		operator=(std::move(other));
+	}
 
 
-			static void extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
-			static void extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length);
-			static void extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
-			static void extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-			static void extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-			//multisample textures
-			static void extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-			static void extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
-			// views
-			static void extGlTextureView(GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers);
-			// texture update functions
-			static void extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
-			static void extGlGetCompressedTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei bufSize, void* pixels);
-			static void extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels);
-			static void extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels);
-			static void extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels);
-			static void extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
-			static void extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
-			static void extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data);
-			static void extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
-			static void extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
-			static void extGlCopyImageSubData(GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth);
-			static void extGlGenerateTextureMipmap(GLuint texture, GLenum target);
-			// texture "parameter" functions
-			static void extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params);
-			static void extGlClampColor(GLenum target, GLenum clamp);
+	inline OpenGLFunctionLoader& operator=(OpenGLFunctionLoader&& other)
+	{
+		std::swap(pGlGetProcAdress, other.pGlGetProcAdress);
+		return *this;
+	}
 
-			static void extGlCreateSamplers(GLsizei n, GLuint* samplers);
-			static void extGlDeleteSamplers(GLsizei n, GLuint* samplers);
-			static void extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers);
-			static void extGlSamplerParameteri(GLuint sampler, GLenum pname, GLint param);
-			static void extGlSamplerParameterf(GLuint sampler, GLenum pname, GLfloat param);
-			static void extGlSamplerParameterfv(GLuint sampler, GLenum pname, const GLfloat* params);
+	inline bool isLibraryLoaded() override final
+	{
+		return pGlGetProcAdress != nullptr;
+	}
 
-			//
-			static void extGlBindImageTexture(GLuint index, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-			static void extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats);
+	inline void* loadFuncPtr(const char* funcname) override final
+	{
+		return pGlGetProcAdress(funcname);
+	}
+};
+IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(Multitexturing, OpenGLFunctionLoader,
+	
+	)
 
-			//bindless textures
-			static GLuint64 extGlGetTextureHandle(GLuint texture);
-			static GLuint64 extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler);
-			static void extGlMakeTextureHandleResident(GLuint64 handle);
-			static void extGlMakeTextureHandleNonResident(GLuint64 handle);
-			static GLuint64 extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format);
-			static void extGlMakeImageHandleResident(GLuint64 handle, GLenum access);
-			static void extGlMakeImageHandleNonResident(GLuint64 handle);
-			GLboolean extGlIsTextureHandleResident(GLuint64 handle);
-			GLboolean extGlIsImageHandleResident(GLuint64 handle);
+	//TO FIGURE OUT: 
+	// what are gl Fences
+	//
+glProvokingVertex
+glClipControl
 
-			static void extGlPointParameterf(GLint loc, GLfloat f);
-			static void extGlPointParameterfv(GLint loc, const GLfloat* v);
-			static void extGlStencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask);
-			static void extGlStencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
-			static void extGlStencilMaskSeparate(GLenum face, GLuint mask);
+//fences
+glFenceSync
+glDeleteSync
+glClientWaitSync
+glWaitSync
+
+//GLTextures
+glActiveTexture
+glBindTextures
+glCreateTextures
+glTexStorage1D
+glTexStorage2D
+glTexStorage3D
+glTexStorage2DMultisample
+glTexStorage3DMultisample
+glTexBuffer
+glTexBufferRange
+glTextureStorage1D
+glTextureStorage2D
+glTextureStorage3D
+glTextureStorage2DMultisample
+glTextureStorage3DMultisample
+glTextureBuffer
+glTextureBufferRange
+glTextureView
+glTextureStorage1DEXT
+glTextureStorage2DEXT
+glTextureStorage3DEXT
+glTextureBufferEXT
+glTextureBufferRangeEXT
+glTextureStorage2DMultisampleEXT
+glTextureStorage3DMultisampleEXT
+glGetTextureSubImage
+glGetCompressedTextureSubImage
+glGetTextureImage
+glGetTextureImageEXT
+glGetCompressedTextureImage
+glGetCompressedTextureImageEXT
+glGetCompressedTexImage
+glTexSubImage3D
+glMultiTexSubImage1DEXT
+glMultiTexSubImage2DEXT
+glMultiTexSubImage3DEXT
+glTextureSubImage1D
+glTextureSubImage2D
+glTextureSubImage3D
+glTextureSubImage1DEXT
+glTextureSubImage2DEXT
+glTextureSubImage3DEXT
+glCompressedTexSubImage1D
+glCompressedTexSubImage2D
+glCompressedTexSubImage3D
+glCompressedTextureSubImage1D
+glCompressedTextureSubImage2D
+glCompressedTextureSubImage3D
+glCompressedTextureSubImage1DEXT
+glCompressedTextureSubImage2DEXT
+glCompressedTextureSubImage3DEXT
+glCopyImageSubData
+glTextureParameterIuiv
+glTextureParameterIuivEXT
+glTexParameterIuiv
+glGenerateMipmap
+glGenerateTextureMipmap
+glGenerateTextureMipmapEXT
+glClampColor
+glCreateSamplers
+glGenSamplers
+glDeleteSamplers
+glBindSampler
+glBindSamplers
+glSamplerParameteri
+glSamplerParameterf
+glSamplerParameterfv
+glBindImageTexture
+glBindImageTextures
+glGetTextureHandleARB
+glGetTextureSamplerHandleARB
+glMakeTextureHandleResidentAR
+glMakeTextureHandleNonResidentARB
+glGetImageHandleARB
+glMakeImageHandleResidentARB
+glMakeImageHandleNonResidentARB
+glIsTextureHandleResidentARB
+glIsImageHandleResidentARB
+glGetTextureHandleNV
+glGetTextureSamplerHandleNV
+glMakeTextureHandleResidentAR
+glMakeTextureHandleNonResidentNV
+glGetImageHandleNV
+glMakeImageHandleResidentNV
+glMakeImageHandleNonResidentNV
+glIsTextureHandleResidentNV
+glIsImageHandleResidentNV
+
+//GLBuffer
+glBindBufferBase
+glBindBufferRange
+glBindBuffersBase
+glBindBuffersRange
+
+// get fragment and vertex program function pointers
+glCreateShader
+glCreateShaderProgramv
+glCreateProgramPipelines
+glDeleteProgramPipelines
+glUseProgramStages
+glShaderSource
+glCompileShader
+glCreateProgram
+glAttachShader
+glTransformFeedbackVaryings
+glLinkProgram
+glUseProgram
+glDeleteProgram
+glDeleteShader
+glGetAttachedShaders
+glGetShaderInfoLog
+glGetProgramInfoLog
+glGetShaderiv
+glGetProgramiv
+glGetUniformLocation
+glProgramUniform1fv
+glProgramUniform2fv
+glProgramUniform3fv
+glProgramUniform4fv
+glProgramUniform1iv
+glProgramUniform2iv
+glProgramUniform3iv
+glProgramUniform4iv
+glProgramUniform1uiv
+glProgramUniform2uiv
+glProgramUniform3uiv
+glProgramUniform4uiv
+glProgramUniformMatrix2fv
+glProgramUniformMatrix3fv
+glProgramUniformMatrix4fv
+glProgramUniformMatrix2x3fv
+glProgramUniformMatrix3x2fv
+glProgramUniformMatrix4x2fv
+glProgramUniformMatrix2x4fv
+glProgramUniformMatrix3x4fv
+glProgramUniformMatrix4x3fv
+glGetActiveUniform
+glBindProgramPipeline
+glGetProgramBinary
+glProgramBinary
+glMemoryBarrier
+glDispatchCompute
+glDispatchComputeIndirect
+glPointParameterf
+glPointParameterfv
+
+//ROP
+glBlendColor
+glDepthRangeIndexed
+glViewportIndexedfv
+glScissorIndexedv
+glSampleCoverage
+glSampleMaski
+glMinSampleShading
+glBlendEquationSeparatei
+glBlendFuncSeparatei
+glColorMaski
+glStencilFuncSeparate
+glStencilOpSeparate
+glStencilMaskSeparate
+
+// ARB FrameBufferObjects
+glBlitNamedFramebuffer
+glBlitFramebuffer
+glDeleteFramebuffers
+glCreateFramebuffers
+glGenFramebuffers
+glBindFramebuffer
+glCheckFramebufferStatus
+glCheckNamedFramebufferStatus
+glCheckNamedFramebufferStatusEXT
+glFramebufferTexture
+glNamedFramebufferTexture
+glNamedFramebufferTextureEXT
+glFramebufferTextureLayer
+glNamedFramebufferTextureLayer
+glNamedFramebufferTextureLayerEXT
+glFramebufferTexture2D
+glNamedFramebufferTexture2DEXT
+glDrawBuffers
+glNamedFramebufferDrawBuffers
+glFramebufferDrawBuffersEXT
+glNamedFramebufferDrawBuffer
+glFramebufferDrawBufferEXT
+glNamedFramebufferReadBuffer
+glFramebufferReadBufferEXT
+glClearNamedFramebufferiv
+glClearNamedFramebufferuiv
+glClearNamedFramebufferfv
+glClearNamedFramebufferfi
+glClearBufferiv
+glClearBufferuiv
+glClearBufferfv
+glClearBufferfi
+
+// get vertex buffer extension
+glGenBuffers
+glCreateBuffers
+glBindBuffer
+glDeleteBuffers
+glBufferStorage
+glNamedBufferStorage
+glNamedBufferStorageEXT
+glBufferSubData
+glNamedBufferSubData
+glNamedBufferSubDataEXT
+glGetBufferSubData
+glGetNamedBufferSubData
+glGetNamedBufferSubDataEXT
+glMapBuffer
+glMapNamedBuffer
+glMapNamedBufferEXT
+glMapBufferRange
+glMapNamedBufferRange
+glMapNamedBufferRangeEXT
+glFlushMappedBufferRange
+glFlushMappedNamedBufferRange
+glFlushMappedNamedBufferRangeEXT
+glUnmapBuffer
+glUnmapNamedBuffer
+glUnmapNamedBufferEXT
+glClearBufferData
+glClearNamedBufferData
+glClearNamedBufferDataEXT
+glClearBufferSubData
+glClearNamedBufferSubData
+glClearNamedBufferSubDataEXT
+glCopyBufferSubData
+glCopyNamedBufferSubData
+glNamedCopyBufferSubDataEXT
+glIsBuffer
+glGetNamedBufferParameteri64v
+glGetBufferParameteri64v
+glGetNamedBufferParameteriv
+glGetNamedBufferParameterivEXT
+glGetBufferParameteriv
+//vao
+glGenVertexArrays
+glCreateVertexArrays
+glDeleteVertexArrays
+glBindVertexArray
+glVertexArrayElementBuffer
+glBindVertexBuffer
+glVertexArrayVertexBuffer
+glVertexArrayBindVertexBufferEXT
+glVertexAttribBinding
+glVertexArrayAttribBinding
+glVertexArrayVertexAttribBindingEXT
+glEnableVertexAttribArray
+glEnableVertexArrayAttrib
+glEnableVertexArrayAttribEXT
+glDisableVertexAttribArray
+glDisableVertexArrayAttrib
+glDisableVertexArrayAttribEXT
+glVertexAttribFormat
+glVertexAttribIFormat
+glVertexAttribLFormat
+glVertexArrayAttribFormat
+glVertexArrayAttribIFormat
+glVertexArrayAttribLFormat
+glVertexArrayVertexAttribFormatEXT
+glVertexArrayVertexAttribIFormatEXT
+glVertexArrayVertexAttribLFormatEXT
+glVertexArrayBindingDivisor
+glVertexArrayVertexBindingDivisorEXT
+glVertexBindingDivisor
+//
+glPrimitiveRestartIndex
+glDrawArraysInstanced
+glDrawArraysInstancedBaseInstance
+glDrawElementsInstancedBaseVertex
+glDrawElementsInstancedBaseVertexBaseInstance
+glDrawTransformFeedback
+glDrawTransformFeedbackInstanced
+glDrawTransformFeedbackStream
+glDrawTransformFeedbackStreamInstanced
+glDrawArraysIndirect
+glDrawElementsIndirect
+glMultiDrawArraysIndirect
+glMultiDrawElementsIndirect
+if (Version >= 460)
+{
+	glMultiDrawArraysIndirectCount
+	glMultiDrawElementsIndirectCount
+}
+else if (FeatureAvailable[IRR_ARB_indirect_parameters])
+{
+	glMultiDrawArraysIndirectCountARB
+	glMultiDrawElementsIndirectCountARB
+}
+//
+glCreateTransformFeedbacks
+glGenTransformFeedbacks
+glDeleteTransformFeedbacks
+glBindTransformFeedback
+glBeginTransformFeedback
+glPauseTransformFeedback
+glResumeTransformFeedback
+glEndTransformFeedback
+glTransformFeedbackBufferBase
+glTransformFeedbackBufferRange
+//
+glBlendFuncSeparate
+glEnablei
+glDisablei
+glBlendFuncIndexedAMD
+glBlendFunciARB
+glBlendEquationIndexedAMD
+glBlendEquationiARB
+glProgramParameteri
+glPatchParameterfv
+glPatchParameteri
+
+// occlusion query
+glCreateQueries
+glGenQueries
+glDeleteQueries
+glIsQuery
+glBeginQuery
+glEndQuery
+glBeginQueryIndexed
+glEndQueryIndexed
+glGetQueryiv
+glGetQueryObjectuiv
+glGetQueryObjectui64v
+glGetQueryBufferObjectuiv
+glGetQueryBufferObjectui64v
+glQueryCounter
+glBeginConditionalRender
+glEndConditionalRender
+
+glTextureBarrier
+glTextureBarrierNV
 
 
-			// shader programming
-			static void extGlCreateProgramPipelines(GLsizei n, GLuint* pipelines);
-			static void extGlDeleteProgramPipelines(GLsizei n, const GLuint* pipelines);
-			static void extGlUseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program);
-			static GLuint extGlCreateShader(GLenum shaderType);
-			static GLuint extGlCreateShaderProgramv(GLenum shaderType, GLsizei count, const char** strings);
-			static void extGlShaderSource(GLuint shader, GLsizei numOfStrings, const char** strings, const GLint* lenOfStrings);
-			static void extGlCompileShader(GLuint shader);
-			static GLuint extGlCreateProgram(void);
-			static void extGlAttachShader(GLuint program, GLuint shader);
-			static void extGlTransformFeedbackVaryings(GLuint program, GLsizei count, const char** varyings, GLenum bufferMode);
-			static void extGlLinkProgram(GLuint program);
-			static void extGlUseProgram(GLuint prog);
-			static void extGlDeleteProgram(GLuint object);
-			static void extGlDeleteShader(GLuint shader);
-			static void extGlGetAttachedShaders(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders);
-			static void extGlGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
-			static void extGlGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
-			static void extGlGetShaderiv(GLuint shader, GLenum type, GLint* param);
-			static void extGlGetProgramiv(GLuint program, GLenum type, GLint* param);
-			static GLint extGlGetUniformLocation(GLuint program, const char* name);
-			static void extGlProgramUniform1fv(GLuint program, GLint loc, GLsizei count, const GLfloat* v);
-			static void extGlProgramUniform2fv(GLuint program, GLint loc, GLsizei count, const GLfloat* v);
-			static void extGlProgramUniform3fv(GLuint program, GLint loc, GLsizei count, const GLfloat* v);
-			static void extGlProgramUniform4fv(GLuint program, GLint loc, GLsizei count, const GLfloat* v);
-			static void extGlProgramUniform1iv(GLuint program, GLint loc, GLsizei count, const GLint* v);
-			static void extGlProgramUniform2iv(GLuint program, GLint loc, GLsizei count, const GLint* v);
-			static void extGlProgramUniform3iv(GLuint program, GLint loc, GLsizei count, const GLint* v);
-			static void extGlProgramUniform4iv(GLuint program, GLint loc, GLsizei count, const GLint* v);
-			static void extGlProgramUniform1uiv(GLuint program, GLint loc, GLsizei count, const GLuint* v);
-			static void extGlProgramUniform2uiv(GLuint program, GLint loc, GLsizei count, const GLuint* v);
-			static void extGlProgramUniform3uiv(GLuint program, GLint loc, GLsizei count, const GLuint* v);
-			static void extGlProgramUniform4uiv(GLuint program, GLint loc, GLsizei count, const GLuint* v);
-			static void extGlProgramUniformMatrix2fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix3fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix4fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix2x3fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix2x4fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix3x2fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix3x4fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix4x2fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlProgramUniformMatrix4x3fv(GLuint program, GLint loc, GLsizei count, GLboolean transpose, const GLfloat* v);
-			static void extGlGetActiveUniform(GLuint program, GLuint index, GLsizei maxlength, GLsizei* length, GLint* size, GLenum* type, GLchar* name);
-			static void extGlBindProgramPipeline(GLuint pipeline);
-			static void extGlGetProgramBinary(GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, void* binary);
-			static void extGlProgramBinary(GLuint program, GLenum binaryFormat, const void* binary, GLsizei length);
+glDebugMessageControl
+glDebugMessageControlARB
+glDebugMessageCallback
+glDebugMessageCallbackARB
 
-			//compute
-			static void extGlMemoryBarrier(GLbitfield barriers);
-			static void extGlDispatchCompute(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-			static void extGlDispatchComputeIndirect(GLintptr indirect);
+// blend equation
+glBlendEquationEXT
+glBlendEquation
 
-			// framebuffer objects
-			static void extGlDeleteFramebuffers(GLsizei n, const GLuint* framebuffers);
-			static void extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers);
-			static void extGlBindFramebuffer(GLenum target, GLuint framebuffer);
-			static GLenum extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target);
-			static void extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-			static void extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer);
-			static void extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-			static void extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode);
-			static void extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs);
-			static void extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf);
-			static void extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value);
-			static void extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value);
-			static void extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value);
-			static void extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
+glGetInternalformativ
+glGetInternalformati64v
 
-			static void extGlActiveStencilFace(GLenum face);
-
-			// vertex buffer object
-			static void extGlCreateBuffers(GLsizei n, GLuint* buffers);
-			static void extGlBindBuffer(const GLenum& target, const GLuint& buffer);
-			static void extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers);
-			static void extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes);
-			static void extGlDeleteBuffers(GLsizei n, const GLuint* buffers);
-			static void extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags);
-			static void extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
-			static void extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
-			static void* extGlMapNamedBuffer(GLuint buffer, GLbitfield access);
-			static void* extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
-			static void extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length);
-			static GLboolean extGlUnmapNamedBuffer(GLuint buffer);
-			static void extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data);
-			static void extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data);
-			static void extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
-			static GLboolean extGlIsBuffer(GLuint buffer);
-			static void extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data);
-			static void extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data);
-
-			//vao
-			static void extGlCreateVertexArrays(GLsizei n, GLuint* arrays);
-			static void extGlDeleteVertexArrays(GLsizei n, GLuint* arrays);
-			static void extGlBindVertexArray(GLuint vaobj);
-			static void extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer);
-			static void extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
-			static void extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex);
-			static void extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			static void extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			static void extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
-			static void extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			static void extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			static void extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor);
-
-			//transform feedback
-			static void extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids);
-			static void extGlDeleteTransformFeedbacks(GLsizei n, const GLuint* ids);
-			static void extGlBindTransformFeedback(GLenum target, GLuint id);
-			static void extGlBeginTransformFeedback(GLenum primitiveMode);
-			static void extGlPauseTransformFeedback();
-			static void extGlResumeTransformFeedback();
-			static void extGlEndTransformFeedback();
-			static void extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer);
-			static void extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+// get vsync extension
+wglSwapIntervalEXT
+glXSwapIntervalSGI
+glXSwapIntervalEXT
+glXSwapIntervalMESA
 
 
-			//draw
-			static void extGlPrimitiveRestartIndex(GLuint index);
-			static void extGlDrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
-			static void extGlDrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance);
-			static void extGlDrawElementsInstancedBaseVertex(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex);
-			static void extGlDrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance);
-			static void extGlDrawTransformFeedback(GLenum mode, GLuint id);
-			static void extGlDrawTransformFeedbackInstanced(GLenum mode, GLuint id, GLsizei instancecount);
-			static void extGlDrawTransformFeedbackStream(GLenum mode, GLuint id, GLuint stream);
-			static void extGlDrawTransformFeedbackStreamInstanced(GLenum mode, GLuint id, GLuint stream, GLsizei instancecount);
-			static void extGlDrawArraysIndirect(GLenum mode, const void* indirect);
-			static void extGlDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect);
-			static void extGlMultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride);
-			static void extGlMultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
-			static void extGlMultiDrawArraysIndirectCount(GLenum mode, const void* indirect, GLintptr drawcount, GLintptr maxdrawcount, GLsizei stride);
-			static void extGlMultiDrawElementsIndirectCount(GLenum mode, GLenum type, const void* indirect, GLintptr drawcount, GLintptr maxdrawcount, GLsizei stride);
-
-			// ROP
-			static void extGlBlendColor(float red, float green, float blue, float alpha);
-			static void extGlDepthRangeIndexed(GLuint index, GLdouble nearVal, GLdouble farVal);
-			static void extGlViewportIndexedfv(GLuint index, const GLfloat* v);
-			static void extGlScissorIndexedv(GLuint index, const GLint* v);
-			static void extGlSampleCoverage(float value, bool invert);
-			static void extGlSampleMaski(GLuint maskNumber, GLbitfield mask);
-			static void extGlMinSampleShading(float value);
-			static void extGlBlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeAlpha);
-			static void extGlBlendFuncSeparatei(GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-			static void extGlColorMaski(GLuint buf, GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
-
-			//
-			static void extGlBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha);
-			static void extGlColorMaskIndexed(GLuint buf, GLboolean r, GLboolean g, GLboolean b, GLboolean a);
-			static void extGlEnableIndexed(GLenum target, GLuint index);
-			static void extGlDisableIndexed(GLenum target, GLuint index);
-			static void extGlBlendFuncIndexed(GLuint buf, GLenum src, GLenum dst);
-			static void extGlBlendEquationIndexed(GLuint buf, GLenum mode);
-			static void extGlProgramParameteri(GLuint program, GLenum pname, GLint value);
-			static void extGlPatchParameterfv(GLenum pname, const float* values);
-			static void extGlPatchParameteri(GLenum pname, GLuint value);
-
-			// queries
-			static void extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids);
-			static void extGlDeleteQueries(GLsizei n, const GLuint* ids);
-			static GLboolean extGlIsQuery(GLuint id);
-			static void extGlBeginQuery(GLenum target, GLuint id);
-			static void extGlEndQuery(GLenum target);
-			static void extGlBeginQueryIndexed(GLenum target, GLuint index, GLuint id);
-			static void extGlEndQueryIndexed(GLenum target, GLuint index);
-			static void extGlGetQueryObjectuiv(GLuint id, GLenum pname, GLuint* params);
-			static void extGlGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64* params);
-			static void extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			static void extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			static void extGlQueryCounter(GLuint id, GLenum target);
-			static void extGlBeginConditionalRender(GLuint id, GLenum mode);
-			static void extGlEndConditionalRender();
-
-			//
-			static void extGlTextureBarrier();
-
-			// generic vsync setting method for several extensions
-			static void extGlSwapInterval(int interval);
-
-			// blend operations
-			static void extGlBlendEquation(GLenum mode);
-
-			// ARB_internalformat_query
-			static void extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
-			static void extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params);
-
-			static PFNGLISENABLEDIPROC pGlIsEnabledi;
-			static PFNGLENABLEIPROC pGlEnablei;
-			static PFNGLDISABLEIPROC pGlDisablei;
-			static PFNGLGETBOOLEANI_VPROC pGlGetBooleani_v;
-			static PFNGLGETFLOATI_VPROC pGlGetFloati_v;
-			static PFNGLGETINTEGER64VPROC pGlGetInteger64v;
-			static PFNGLGETINTEGERI_VPROC pGlGetIntegeri_v;
-			static PFNGLGETSTRINGIPROC pGlGetStringi;
-			static PFNGLPROVOKINGVERTEXPROC pGlProvokingVertex;
-			static PFNGLCLIPCONTROLPROC pGlClipControl;
-
-			//fences
-			static PFNGLFENCESYNCPROC pGlFenceSync;
-			static PFNGLDELETESYNCPROC pGlDeleteSync;
-			static PFNGLCLIENTWAITSYNCPROC pGlClientWaitSync;
-			static PFNGLWAITSYNCPROC pGlWaitSync;
-
-			//textures
-			static PFNGLACTIVETEXTUREPROC pGlActiveTexture;
-			static PFNGLBINDTEXTURESPROC pGlBindTextures; //NULL
-			static PFNGLCREATETEXTURESPROC pGlCreateTextures; //NULL
-			static PFNGLTEXSTORAGE1DPROC pGlTexStorage1D;
-			static PFNGLTEXSTORAGE2DPROC pGlTexStorage2D;
-			static PFNGLTEXSTORAGE3DPROC pGlTexStorage3D;
-			static PFNGLTEXSTORAGE2DMULTISAMPLEPROC pGlTexStorage2DMultisample;
-			static PFNGLTEXSTORAGE3DMULTISAMPLEPROC pGlTexStorage3DMultisample;
-			static PFNGLTEXBUFFERPROC pGlTexBuffer;
-			static PFNGLTEXBUFFERRANGEPROC pGlTexBufferRange;
-			static PFNGLTEXTURESTORAGE1DPROC pGlTextureStorage1D; //NULL
-			static PFNGLTEXTURESTORAGE2DPROC pGlTextureStorage2D; //NULL
-			static PFNGLTEXTURESTORAGE3DPROC pGlTextureStorage3D; //NULL
-			static PFNGLTEXTURESTORAGE2DMULTISAMPLEPROC pGlTextureStorage2DMultisample;
-			static PFNGLTEXTURESTORAGE3DMULTISAMPLEPROC pGlTextureStorage3DMultisample;
-			static PFNGLTEXTUREVIEWPROC pGlTextureView;
-			static PFNGLTEXTUREBUFFERPROC pGlTextureBuffer; //NULL
-			static PFNGLTEXTUREBUFFERRANGEPROC pGlTextureBufferRange; //NULL
-			static PFNGLTEXTURESTORAGE1DEXTPROC pGlTextureStorage1DEXT;
-			static PFNGLTEXTURESTORAGE2DEXTPROC pGlTextureStorage2DEXT;
-			static PFNGLTEXTURESTORAGE3DEXTPROC pGlTextureStorage3DEXT;
-			static PFNGLTEXTUREBUFFEREXTPROC pGlTextureBufferEXT;
-			static PFNGLTEXTUREBUFFERRANGEEXTPROC pGlTextureBufferRangeEXT;
-			static PFNGLTEXTURESTORAGE2DMULTISAMPLEEXTPROC pGlTextureStorage2DMultisampleEXT;
-			static PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC pGlTextureStorage3DMultisampleEXT;
-			static PFNGLGETTEXTURESUBIMAGEPROC pGlGetTextureSubImage;
-			static PFNGLGETCOMPRESSEDTEXTURESUBIMAGEPROC pGlGetCompressedTextureSubImage;
-			static PFNGLGETTEXTUREIMAGEPROC pGlGetTextureImage;
-			static PFNGLGETTEXTUREIMAGEEXTPROC pGlGetTextureImageEXT;
-			static PFNGLGETCOMPRESSEDTEXTUREIMAGEPROC pGlGetCompressedTextureImage;
-			static PFNGLGETCOMPRESSEDTEXTUREIMAGEEXTPROC pGlGetCompressedTextureImageEXT;
-			static PFNGLGETCOMPRESSEDTEXIMAGEPROC pGlGetCompressedTexImage;
-			static PFNGLTEXSUBIMAGE3DPROC pGlTexSubImage3D;
-			static PFNGLMULTITEXSUBIMAGE1DEXTPROC pGlMultiTexSubImage1DEXT;
-			static PFNGLMULTITEXSUBIMAGE2DEXTPROC pGlMultiTexSubImage2DEXT;
-			static PFNGLMULTITEXSUBIMAGE3DEXTPROC pGlMultiTexSubImage3DEXT;
-			static PFNGLTEXTURESUBIMAGE1DPROC pGlTextureSubImage1D; //NULL
-			static PFNGLTEXTURESUBIMAGE2DPROC pGlTextureSubImage2D; //NULL
-			static PFNGLTEXTURESUBIMAGE3DPROC pGlTextureSubImage3D; //NULL
-			static PFNGLTEXTURESUBIMAGE1DEXTPROC pGlTextureSubImage1DEXT;
-			static PFNGLTEXTURESUBIMAGE2DEXTPROC pGlTextureSubImage2DEXT;
-			static PFNGLTEXTURESUBIMAGE3DEXTPROC pGlTextureSubImage3DEXT;
-			static PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC pGlCompressedTexSubImage1D;
-			static PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC pGlCompressedTexSubImage2D;
-			static PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC pGlCompressedTexSubImage3D;
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE1DPROC pGlCompressedTextureSubImage1D; //NULL
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE2DPROC pGlCompressedTextureSubImage2D; //NULL
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE3DPROC pGlCompressedTextureSubImage3D; //NULL
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE1DEXTPROC pGlCompressedTextureSubImage1DEXT;
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE2DEXTPROC pGlCompressedTextureSubImage2DEXT;
-			static PFNGLCOMPRESSEDTEXTURESUBIMAGE3DEXTPROC pGlCompressedTextureSubImage3DEXT;
-			static PFNGLCOPYIMAGESUBDATAPROC pGlCopyImageSubData;
-			static PFNGLTEXTUREPARAMETERIUIVPROC pGlTextureParameterIuiv;
-			static PFNGLTEXTUREPARAMETERIUIVEXTPROC pGlTextureParameterIuivEXT;
-			static PFNGLTEXPARAMETERIUIVPROC pGlTexParameterIuiv;
-			static PFNGLGENERATEMIPMAPPROC pGlGenerateMipmap;
-			static PFNGLGENERATETEXTUREMIPMAPPROC pGlGenerateTextureMipmap; //NULL
-			static PFNGLGENERATETEXTUREMIPMAPEXTPROC pGlGenerateTextureMipmapEXT;
-			static PFNGLCLAMPCOLORPROC pGlClampColor;
-
-			//samplers
-			static PFNGLGENSAMPLERSPROC pGlGenSamplers;
-			static PFNGLCREATESAMPLERSPROC pGlCreateSamplers;
-			static PFNGLDELETESAMPLERSPROC pGlDeleteSamplers;
-			static PFNGLBINDSAMPLERPROC pGlBindSampler;
-			static PFNGLBINDSAMPLERSPROC pGlBindSamplers;
-			static PFNGLSAMPLERPARAMETERIPROC pGlSamplerParameteri;
-			static PFNGLSAMPLERPARAMETERFPROC pGlSamplerParameterf;
-			static PFNGLSAMPLERPARAMETERFVPROC pGlSamplerParameterfv;
-
-			//
-			static PFNGLBINDIMAGETEXTUREPROC pGlBindImageTexture;
-			static PFNGLBINDIMAGETEXTURESPROC pGlBindImageTextures;
-
-			//bindless textures
-			//ARB
-			static PFNGLGETTEXTUREHANDLEARBPROC pGlGetTextureHandleARB;
-			static PFNGLGETTEXTURESAMPLERHANDLEARBPROC pGlGetTextureSamplerHandleARB;
-			static PFNGLMAKETEXTUREHANDLERESIDENTARBPROC pGlMakeTextureHandleResidentARB;
-			static PFNGLMAKETEXTUREHANDLENONRESIDENTARBPROC pGlMakeTextureHandleNonResidentARB;
-			static PFNGLGETIMAGEHANDLEARBPROC pGlGetImageHandleARB;
-			static PFNGLMAKEIMAGEHANDLERESIDENTARBPROC pGlMakeImageHandleResidentARB;
-			static PFNGLMAKEIMAGEHANDLENONRESIDENTARBPROC pGlMakeImageHandleNonResidentARB;
-			static PFNGLISTEXTUREHANDLERESIDENTARBPROC pGlIsTextureHandleResidentARB;
-			static PFNGLISIMAGEHANDLERESIDENTARBPROC pGlIsImageHandleResidentARB;
-			//NV
-			static PFNGLGETTEXTUREHANDLENVPROC pGlGetTextureHandleNV;
-			static PFNGLGETTEXTURESAMPLERHANDLENVPROC pGlGetTextureSamplerHandleNV;
-			static PFNGLMAKETEXTUREHANDLERESIDENTNVPROC pGlMakeTextureHandleResidentNV;
-			static PFNGLMAKETEXTUREHANDLENONRESIDENTNVPROC pGlMakeTextureHandleNonResidentNV;
-			static PFNGLGETIMAGEHANDLENVPROC pGlGetImageHandleNV;
-			static PFNGLMAKEIMAGEHANDLERESIDENTNVPROC pGlMakeImageHandleResidentNV;
-			static PFNGLMAKEIMAGEHANDLENONRESIDENTNVPROC pGlMakeImageHandleNonResidentNV;
-			static PFNGLISTEXTUREHANDLERESIDENTNVPROC pGlIsTextureHandleResidentNV;
-			static PFNGLISIMAGEHANDLERESIDENTNVPROC pGlIsImageHandleResidentNV;
-
-			// stuff
-			static PFNGLBINDBUFFERBASEPROC pGlBindBufferBase;
-			static PFNGLBINDBUFFERRANGEPROC pGlBindBufferRange;
-			static PFNGLBINDBUFFERSBASEPROC pGlBindBuffersBase;
-			static PFNGLBINDBUFFERSRANGEPROC pGlBindBuffersRange;
-
-			//shaders
-			static PFNGLCREATEPROGRAMPIPELINESPROC pGlCreateProgramPipelines;
-			static PFNGLDELETEPROGRAMPIPELINESPROC pGlDeleteProgramPipelines;
-			static PFNGLUSEPROGRAMSTAGESPROC pGlUseProgramStages;
-			static PFNGLBINDATTRIBLOCATIONPROC pGlBindAttribLocation; //NULL
-			static PFNGLCREATEPROGRAMPROC pGlCreateProgram;
-			static PFNGLUSEPROGRAMPROC pGlUseProgram;
-			static PFNGLDELETEPROGRAMPROC pGlDeleteProgram;
-			static PFNGLDELETESHADERPROC pGlDeleteShader;
-			static PFNGLGETATTACHEDSHADERSPROC pGlGetAttachedShaders;
-			static PFNGLCREATESHADERPROC pGlCreateShader;
-			static PFNGLCREATESHADERPROGRAMVPROC pGlCreateShaderProgramv;
-			static PFNGLSHADERSOURCEPROC pGlShaderSource;
-			static PFNGLCOMPILESHADERPROC pGlCompileShader;
-			static PFNGLATTACHSHADERPROC pGlAttachShader;
-			static PFNGLTRANSFORMFEEDBACKVARYINGSPROC pGlTransformFeedbackVaryings;
-			static PFNGLLINKPROGRAMPROC pGlLinkProgram;
-			static PFNGLGETSHADERINFOLOGPROC pGlGetShaderInfoLog;
-			static PFNGLGETPROGRAMINFOLOGPROC pGlGetProgramInfoLog;
-			static PFNGLGETSHADERIVPROC pGlGetShaderiv;
-			static PFNGLGETSHADERIVPROC pGlGetProgramiv;
-			static PFNGLGETUNIFORMLOCATIONPROC pGlGetUniformLocation;
-			static PFNGLPROGRAMUNIFORM1FVPROC pGlProgramUniform1fv;
-			static PFNGLPROGRAMUNIFORM2FVPROC pGlProgramUniform2fv;
-			static PFNGLPROGRAMUNIFORM3FVPROC pGlProgramUniform3fv;
-			static PFNGLPROGRAMUNIFORM4FVPROC pGlProgramUniform4fv;
-			static PFNGLPROGRAMUNIFORM1IVPROC pGlProgramUniform1iv;
-			static PFNGLPROGRAMUNIFORM2IVPROC pGlProgramUniform2iv;
-			static PFNGLPROGRAMUNIFORM3IVPROC pGlProgramUniform3iv;
-			static PFNGLPROGRAMUNIFORM4IVPROC pGlProgramUniform4iv;
-			static PFNGLPROGRAMUNIFORM1UIVPROC pGlProgramUniform1uiv;
-			static PFNGLPROGRAMUNIFORM2UIVPROC pGlProgramUniform2uiv;
-			static PFNGLPROGRAMUNIFORM3UIVPROC pGlProgramUniform3uiv;
-			static PFNGLPROGRAMUNIFORM4UIVPROC pGlProgramUniform4uiv;
-			static PFNGLPROGRAMUNIFORMMATRIX2FVPROC pGlProgramUniformMatrix2fv;
-			static PFNGLPROGRAMUNIFORMMATRIX3FVPROC pGlProgramUniformMatrix3fv;
-			static PFNGLPROGRAMUNIFORMMATRIX4FVPROC pGlProgramUniformMatrix4fv;
-			static PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC pGlProgramUniformMatrix2x3fv;
-			static PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC pGlProgramUniformMatrix2x4fv;
-			static PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC pGlProgramUniformMatrix3x2fv;
-			static PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC pGlProgramUniformMatrix3x4fv;
-			static PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC pGlProgramUniformMatrix4x2fv;
-			static PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC pGlProgramUniformMatrix4x3fv;
-			static PFNGLGETACTIVEUNIFORMPROC pGlGetActiveUniform;
-			static PFNGLPOINTPARAMETERFPROC  pGlPointParameterf;
-			static PFNGLPOINTPARAMETERFVPROC pGlPointParameterfv;
-			static PFNGLBINDPROGRAMPIPELINEPROC pGlBindProgramPipeline;
-			static PFNGLGETPROGRAMBINARYPROC pGlGetProgramBinary;
-			static PFNGLPROGRAMBINARYPROC pGlProgramBinary;
-
-			// Compute
-			static PFNGLMEMORYBARRIERPROC pGlMemoryBarrier;
-			static PFNGLDISPATCHCOMPUTEPROC pGlDispatchCompute;
-			static PFNGLDISPATCHCOMPUTEINDIRECTPROC pGlDispatchComputeIndirect;
-
-			//ROP
-			static PFNGLBLENDCOLORPROC pGlBlendColor;
-			static PFNGLDEPTHRANGEINDEXEDPROC pGlDepthRangeIndexed;
-			static PFNGLVIEWPORTINDEXEDFVPROC pGlViewportIndexedfv;
-			static PFNGLSCISSORINDEXEDVPROC pGlScissorIndexedv;
-			static PFNGLSAMPLECOVERAGEPROC pGlSampleCoverage;
-			static PFNGLSAMPLEMASKIPROC pGlSampleMaski;
-			static PFNGLMINSAMPLESHADINGPROC pGlMinSampleShading;
-			static PFNGLBLENDEQUATIONSEPARATEIPROC pGlBlendEquationSeparatei;
-			static PFNGLBLENDFUNCSEPARATEIPROC pGlBlendFuncSeparatei;
-			static PFNGLCOLORMASKIPROC pGlColorMaski;
-			static PFNGLSTENCILFUNCSEPARATEPROC pGlStencilFuncSeparate;
-			static PFNGLSTENCILOPSEPARATEPROC pGlStencilOpSeparate;
-			static PFNGLSTENCILMASKSEPARATEPROC pGlStencilMaskSeparate;
-
-			// ARB framebuffer object
-			static PFNGLBLITNAMEDFRAMEBUFFERPROC pGlBlitNamedFramebuffer; //NULL
-			static PFNGLBLITFRAMEBUFFERPROC pGlBlitFramebuffer;
-			static PFNGLDELETEFRAMEBUFFERSPROC pGlDeleteFramebuffers;
-			static PFNGLCREATEFRAMEBUFFERSPROC pGlCreateFramebuffers; //NULL
-			static PFNGLBINDFRAMEBUFFERPROC pGlBindFramebuffer;
-			static PFNGLGENFRAMEBUFFERSPROC pGlGenFramebuffers;
-			static PFNGLCHECKFRAMEBUFFERSTATUSPROC pGlCheckFramebufferStatus;
-			static PFNGLCHECKNAMEDFRAMEBUFFERSTATUSPROC pGlCheckNamedFramebufferStatus; //NULL
-			static PFNGLCHECKNAMEDFRAMEBUFFERSTATUSEXTPROC pGlCheckNamedFramebufferStatusEXT;
-			static PFNGLFRAMEBUFFERTEXTUREPROC pGlFramebufferTexture;
-			static PFNGLNAMEDFRAMEBUFFERTEXTUREPROC pGlNamedFramebufferTexture; //NULL
-			static PFNGLNAMEDFRAMEBUFFERTEXTUREEXTPROC pGlNamedFramebufferTextureEXT;
-			static PFNGLFRAMEBUFFERTEXTURELAYERPROC pGlFramebufferTextureLayer;
-			static PFNGLNAMEDFRAMEBUFFERTEXTURELAYERPROC pGlNamedFramebufferTextureLayer; //NULL
-			static PFNGLNAMEDFRAMEBUFFERTEXTURELAYEREXTPROC pGlNamedFramebufferTextureLayerEXT;
-			static PFNGLFRAMEBUFFERTEXTURE2DPROC pGlFramebufferTexture2D;
-			static PFNGLNAMEDFRAMEBUFFERTEXTURE2DEXTPROC pGlNamedFramebufferTexture2DEXT;
-
-			//! REMOVE ALL BELOW
-			// EXT framebuffer object
-			static PFNGLACTIVESTENCILFACEEXTPROC pGlActiveStencilFaceEXT; //NULL
-			static PFNGLNAMEDFRAMEBUFFERREADBUFFERPROC pGlNamedFramebufferReadBuffer; //NULL
-			static PFNGLFRAMEBUFFERREADBUFFEREXTPROC pGlFramebufferReadBufferEXT;
-			static PFNGLNAMEDFRAMEBUFFERDRAWBUFFERPROC pGlNamedFramebufferDrawBuffer; //NULL
-			static PFNGLFRAMEBUFFERDRAWBUFFEREXTPROC pGlFramebufferDrawBufferEXT;
-			static PFNGLDRAWBUFFERSPROC pGlDrawBuffers;
-			static PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC pGlNamedFramebufferDrawBuffers; //NULL
-			static PFNGLFRAMEBUFFERDRAWBUFFERSEXTPROC pGlFramebufferDrawBuffersEXT;
-			static PFNGLCLEARNAMEDFRAMEBUFFERIVPROC pGlClearNamedFramebufferiv; //NULL
-			static PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC pGlClearNamedFramebufferuiv; //NULL
-			static PFNGLCLEARNAMEDFRAMEBUFFERFVPROC pGlClearNamedFramebufferfv; //NULL
-			static PFNGLCLEARNAMEDFRAMEBUFFERFIPROC pGlClearNamedFramebufferfi; //NULL
-			static PFNGLCLEARBUFFERIVPROC pGlClearBufferiv;
-			static PFNGLCLEARBUFFERUIVPROC pGlClearBufferuiv;
-			static PFNGLCLEARBUFFERFVPROC pGlClearBufferfv;
-			static PFNGLCLEARBUFFERFIPROC pGlClearBufferfi;
-			//
-			static PFNGLGENBUFFERSPROC pGlGenBuffers;
-			static PFNGLCREATEBUFFERSPROC pGlCreateBuffers; //NULL
-			static PFNGLBINDBUFFERPROC pGlBindBuffer;
-			static PFNGLDELETEBUFFERSPROC pGlDeleteBuffers;
-			static PFNGLBUFFERSTORAGEPROC pGlBufferStorage;
-			static PFNGLNAMEDBUFFERSTORAGEPROC pGlNamedBufferStorage; //NULL
-			static PFNGLNAMEDBUFFERSTORAGEEXTPROC pGlNamedBufferStorageEXT;
-			static PFNGLBUFFERSUBDATAPROC pGlBufferSubData;
-			static PFNGLNAMEDBUFFERSUBDATAPROC pGlNamedBufferSubData; //NULL
-			static PFNGLNAMEDBUFFERSUBDATAEXTPROC pGlNamedBufferSubDataEXT;
-			static PFNGLGETBUFFERSUBDATAPROC pGlGetBufferSubData;
-			static PFNGLGETNAMEDBUFFERSUBDATAPROC pGlGetNamedBufferSubData; //NULL
-			static PFNGLGETNAMEDBUFFERSUBDATAEXTPROC pGlGetNamedBufferSubDataEXT;
-			static PFNGLMAPBUFFERPROC pGlMapBuffer;
-			static PFNGLMAPNAMEDBUFFERPROC pGlMapNamedBuffer; //NULL
-			static PFNGLMAPNAMEDBUFFEREXTPROC pGlMapNamedBufferEXT;
-			static PFNGLMAPBUFFERRANGEPROC pGlMapBufferRange;
-			static PFNGLMAPNAMEDBUFFERRANGEPROC pGlMapNamedBufferRange; //NULL
-			static PFNGLMAPNAMEDBUFFERRANGEEXTPROC pGlMapNamedBufferRangeEXT;
-			static PFNGLFLUSHMAPPEDBUFFERRANGEPROC pGlFlushMappedBufferRange;
-			static PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEPROC pGlFlushMappedNamedBufferRange; //NULL
-			static PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEEXTPROC pGlFlushMappedNamedBufferRangeEXT;
-			static PFNGLUNMAPBUFFERPROC pGlUnmapBuffer;
-			static PFNGLUNMAPNAMEDBUFFERPROC pGlUnmapNamedBuffer; //NULL
-			static PFNGLUNMAPNAMEDBUFFEREXTPROC pGlUnmapNamedBufferEXT;
-			static PFNGLCLEARBUFFERDATAPROC pGlClearBufferData;
-			static PFNGLCLEARNAMEDBUFFERDATAPROC pGlClearNamedBufferData; //NULL
-			static PFNGLCLEARNAMEDBUFFERDATAEXTPROC pGlClearNamedBufferDataEXT;
-			static PFNGLCLEARBUFFERSUBDATAPROC pGlClearBufferSubData;
-			static PFNGLCLEARNAMEDBUFFERSUBDATAPROC pGlClearNamedBufferSubData; //NULL
-			static PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC pGlClearNamedBufferSubDataEXT;
-			static PFNGLCOPYBUFFERSUBDATAPROC pGlCopyBufferSubData;
-			static PFNGLCOPYNAMEDBUFFERSUBDATAPROC pGlCopyNamedBufferSubData; //NULL
-			static PFNGLNAMEDCOPYBUFFERSUBDATAEXTPROC pGlNamedCopyBufferSubDataEXT;
-			static PFNGLISBUFFERPROC pGlIsBuffer;
-			static PFNGLGETNAMEDBUFFERPARAMETERI64VPROC pGlGetNamedBufferParameteri64v;
-			static PFNGLGETBUFFERPARAMETERI64VPROC pGlGetBufferParameteri64v;
-			static PFNGLGETNAMEDBUFFERPARAMETERIVPROC pGlGetNamedBufferParameteriv;
-			static PFNGLGETNAMEDBUFFERPARAMETERIVEXTPROC pGlGetNamedBufferParameterivEXT;
-			static PFNGLGETBUFFERPARAMETERIVPROC pGlGetBufferParameteriv;
-			//vao
-			static PFNGLGENVERTEXARRAYSPROC pGlGenVertexArrays;
-			static PFNGLCREATEVERTEXARRAYSPROC pGlCreateVertexArrays; //NULL
-			static PFNGLDELETEVERTEXARRAYSPROC pGlDeleteVertexArrays;
-			static PFNGLBINDVERTEXARRAYPROC pGlBindVertexArray;
-			static PFNGLVERTEXARRAYELEMENTBUFFERPROC pGlVertexArrayElementBuffer; //NULL
-			static PFNGLBINDVERTEXBUFFERPROC pGlBindVertexBuffer;
-			static PFNGLVERTEXARRAYVERTEXBUFFERPROC pGlVertexArrayVertexBuffer; //NULL
-			static PFNGLVERTEXARRAYBINDVERTEXBUFFEREXTPROC pGlVertexArrayBindVertexBufferEXT;
-			static PFNGLVERTEXATTRIBBINDINGPROC pGlVertexAttribBinding;
-			static PFNGLVERTEXARRAYATTRIBBINDINGPROC pGlVertexArrayAttribBinding; //NULL
-			static PFNGLVERTEXARRAYVERTEXATTRIBBINDINGEXTPROC pGlVertexArrayVertexAttribBindingEXT;
-			static PFNGLENABLEVERTEXATTRIBARRAYPROC pGlEnableVertexAttribArray;
-			static PFNGLENABLEVERTEXARRAYATTRIBPROC pGlEnableVertexArrayAttrib; //NULL
-			static PFNGLENABLEVERTEXARRAYATTRIBEXTPROC pGlEnableVertexArrayAttribEXT;
-			static PFNGLDISABLEVERTEXATTRIBARRAYPROC pGlDisableVertexAttribArray;
-			static PFNGLDISABLEVERTEXARRAYATTRIBPROC pGlDisableVertexArrayAttrib; //NULL
-			static PFNGLDISABLEVERTEXARRAYATTRIBEXTPROC pGlDisableVertexArrayAttribEXT;
-			static PFNGLVERTEXATTRIBFORMATPROC pGlVertexAttribFormat;
-			static PFNGLVERTEXATTRIBIFORMATPROC pGlVertexAttribIFormat;
-			static PFNGLVERTEXATTRIBLFORMATPROC pGlVertexAttribLFormat;
-			static PFNGLVERTEXARRAYATTRIBFORMATPROC pGlVertexArrayAttribFormat; //NULL
-			static PFNGLVERTEXARRAYATTRIBIFORMATPROC pGlVertexArrayAttribIFormat; //NULL
-			static PFNGLVERTEXARRAYATTRIBLFORMATPROC pGlVertexArrayAttribLFormat; //NULL
-			static PFNGLVERTEXARRAYVERTEXATTRIBFORMATEXTPROC pGlVertexArrayVertexAttribFormatEXT;
-			static PFNGLVERTEXARRAYVERTEXATTRIBIFORMATEXTPROC pGlVertexArrayVertexAttribIFormatEXT;
-			static PFNGLVERTEXARRAYVERTEXATTRIBLFORMATEXTPROC pGlVertexArrayVertexAttribLFormatEXT;
-			static PFNGLVERTEXARRAYBINDINGDIVISORPROC pGlVertexArrayBindingDivisor; //NULL
-			static PFNGLVERTEXARRAYVERTEXBINDINGDIVISOREXTPROC pGlVertexArrayVertexBindingDivisorEXT;
-			static PFNGLVERTEXBINDINGDIVISORPROC pGlVertexBindingDivisor;
-			//
-			static PFNGLPRIMITIVERESTARTINDEXPROC pGlPrimitiveRestartIndex;
-			static PFNGLDRAWARRAYSINSTANCEDPROC pGlDrawArraysInstanced;
-			static PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC pGlDrawArraysInstancedBaseInstance;
-			static PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC pGlDrawElementsInstancedBaseVertex;
-			static PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC pGlDrawElementsInstancedBaseVertexBaseInstance;
-			static PFNGLDRAWTRANSFORMFEEDBACKPROC pGlDrawTransformFeedback;
-			static PFNGLDRAWTRANSFORMFEEDBACKINSTANCEDPROC pGlDrawTransformFeedbackInstanced;
-			static PFNGLDRAWTRANSFORMFEEDBACKSTREAMPROC pGlDrawTransformFeedbackStream;
-			static PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC pGlDrawTransformFeedbackStreamInstanced;
-			static PFNGLDRAWARRAYSINDIRECTPROC pGlDrawArraysIndirect;
-			static PFNGLDRAWELEMENTSINDIRECTPROC pGlDrawElementsIndirect;
-			static PFNGLMULTIDRAWARRAYSINDIRECTPROC pGlMultiDrawArraysIndirect;
-			static PFNGLMULTIDRAWELEMENTSINDIRECTPROC pGlMultiDrawElementsIndirect;
-			static PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC pGlMultiDrawArrysIndirectCount;
-			static PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC pGlMultiDrawElementsIndirectCount;
-			//
-			static PFNGLCREATETRANSFORMFEEDBACKSPROC pGlCreateTransformFeedbacks;
-			static PFNGLGENTRANSFORMFEEDBACKSPROC pGlGenTransformFeedbacks;
-			static PFNGLDELETETRANSFORMFEEDBACKSPROC pGlDeleteTransformFeedbacks;
-			static PFNGLBINDTRANSFORMFEEDBACKPROC pGlBindTransformFeedback;
-			static PFNGLBEGINTRANSFORMFEEDBACKPROC pGlBeginTransformFeedback;
-			static PFNGLPAUSETRANSFORMFEEDBACKPROC pGlPauseTransformFeedback;
-			static PFNGLRESUMETRANSFORMFEEDBACKPROC pGlResumeTransformFeedback;
-			static PFNGLENDTRANSFORMFEEDBACKPROC pGlEndTransformFeedback;
-			static PFNGLTRANSFORMFEEDBACKBUFFERBASEPROC pGlTransformFeedbackBufferBase;
-			static PFNGLTRANSFORMFEEDBACKBUFFERRANGEPROC pGlTransformFeedbackBufferRange;
-
-			static PFNGLGETINTERNALFORMATIVPROC pGlGetInternalformativ;
-			static PFNGLGETINTERNALFORMATI64VPROC pGlGetInternalformati64v;
-
-			//! REMOVE ALL BELOW
-			static PFNGLBLENDFUNCSEPARATEPROC pGlBlendFuncSeparate;
-			static PFNGLBLENDFUNCINDEXEDAMDPROC pGlBlendFuncIndexedAMD; //NULL
-			static PFNGLBLENDFUNCIPROC pGlBlendFunciARB;
-			static PFNGLBLENDEQUATIONINDEXEDAMDPROC pGlBlendEquationIndexedAMD; //NULL
-			static PFNGLBLENDEQUATIONIPROC pGlBlendEquationiARB; //NULL
-			//
-			static PFNGLPROGRAMPARAMETERIPROC pGlProgramParameteri;
-			static PFNGLPATCHPARAMETERIPROC pGlPatchParameteri;
-			static PFNGLPATCHPARAMETERFVPROC pGlPatchParameterfv;
-			//
-			static PFNGLCREATEQUERIESPROC pGlCreateQueries;
-			static PFNGLGENQUERIESPROC pGlGenQueries;
-			static PFNGLDELETEQUERIESPROC pGlDeleteQueries;
-			static PFNGLISQUERYPROC pGlIsQuery;
-			static PFNGLBEGINQUERYPROC pGlBeginQuery;
-			static PFNGLENDQUERYPROC pGlEndQuery;
-			static PFNGLBEGINQUERYINDEXEDPROC pGlBeginQueryIndexed;
-			static PFNGLENDQUERYINDEXEDPROC pGlEndQueryIndexed;
-			static PFNGLGETQUERYIVPROC pGlGetQueryiv;
-			static PFNGLGETQUERYOBJECTUIVPROC pGlGetQueryObjectuiv;
-			static PFNGLGETQUERYOBJECTUI64VPROC pGlGetQueryObjectui64v;
-			static PFNGLGETQUERYBUFFEROBJECTUIVPROC pGlGetQueryBufferObjectuiv;
-			static PFNGLGETQUERYBUFFEROBJECTUI64VPROC pGlGetQueryBufferObjectui64v;
-			static PFNGLQUERYCOUNTERPROC pGlQueryCounter;
-			static PFNGLBEGINCONDITIONALRENDERPROC pGlBeginConditionalRender;
-			static PFNGLENDCONDITIONALRENDERPROC pGlEndConditionalRender;
-			//
-			static PFNGLTEXTUREBARRIERPROC pGlTextureBarrier;
-			static PFNGLTEXTUREBARRIERNVPROC pGlTextureBarrierNV;
-			//
-			static PFNGLBLENDEQUATIONEXTPROC pGlBlendEquationEXT;
-			static PFNGLBLENDEQUATIONPROC pGlBlendEquation;
-
-			// the following can stay also
-			static PFNGLDEBUGMESSAGECONTROLPROC pGlDebugMessageControl;
-			static PFNGLDEBUGMESSAGECONTROLARBPROC pGlDebugMessageControlARB;
-			static PFNGLDEBUGMESSAGECALLBACKPROC pGlDebugMessageCallback;
-			static PFNGLDEBUGMESSAGECALLBACKARBPROC pGlDebugMessageCallbackARB;
-
-			// os specific stuff for swapchain
-#if defined(WGL_EXT_swap_control)
-			static PFNWGLSWAPINTERVALEXTPROC pWglSwapIntervalEXT;
-#endif
-#if defined(GLX_SGI_swap_control)
-			static PFNGLXSWAPINTERVALSGIPROC pGlxSwapIntervalSGI;
-#endif
-#if defined(GLX_EXT_swap_control)
-			static PFNGLXSWAPINTERVALEXTPROC pGlxSwapIntervalEXT;
-#endif
-#if defined(GLX_MESA_swap_control)
-			static PFNGLXSWAPINTERVALMESAPROC pGlxSwapIntervalMESA;
-#endif
 		protected:
 			// constructor
 			COpenGLFunctionTable();
@@ -4394,7 +3479,7 @@ namespace irr
 			if (Version < 440 && !FeatureAvailable[IRR_ARB_query_buffer_object])
 			{
 #ifdef _DEBuG
-				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n");
+				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n
 #endif // _DEBuG
 				return;
 			}
@@ -4420,7 +3505,7 @@ namespace irr
 			if (Version < 440 && !FeatureAvailable[IRR_ARB_query_buffer_object])
 			{
 #ifdef _DEBuG
-				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n");
+				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n
 #endif // _DEBuG
 				return;
 			}
