@@ -586,18 +586,183 @@ public:
 	{
 		return pGlGetProcAdress(funcname);
 	}
-};
-IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(Multitexturing, OpenGLFunctionLoader,
-	
-	)
+	IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLsync, OpenGLFunctionLoader
+		,glFenceSync
+		,glDeleteSync,
+		,glClientWaitSync
+		,glWaitSync
+		);
+	IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLbuffers, OpenGLFunctionLoader
+		, glBindBufferBase
+		, glBindBufferRange
+		, glBindBuffersBase
+		, glBindBuffersRange
+		, glBlitNamedFramebuffer
+		, glBlitFramebuffer
+		, glDeleteFramebuffers
+		, glCreateFramebuffers
+		, glGenFramebuffers
+		, glBindFramebuffer
+		, glCheckFramebufferStatus
+		, glCheckNamedFramebufferStatus
+		, glCheckNamedFramebufferStatusEXT
+		, glFramebufferTexture
+		, glNamedFramebufferTexture
+		, glNamedFramebufferTextureEXT
+		, glFramebufferTextureLayer
+		, glNamedFramebufferTextureLayer
+		, glNamedFramebufferTextureLayerEXT
+		, glFramebufferTexture2D
+		, glNamedFramebufferTexture2DEXT
+		, glDrawBuffers
+		, glNamedFramebufferDrawBuffers
+		, glFramebufferDrawBuffersEXT
+		, glNamedFramebufferDrawBuffer
+		, glFramebufferDrawBufferEXT
+		, glNamedFramebufferReadBuffer
+		, glFramebufferReadBufferEXT
+		, glClearNamedFramebufferiv
+		, glClearNamedFramebufferuiv
+		, glClearNamedFramebufferfv
+		, glClearNamedFramebufferfi
+		, glClearBufferiv
+		, glClearBufferuiv
+		, glClearBufferfv
+		, glClearBufferfi
+		, glGenBuffers
+		, glCreateBuffers
+		, glBindBuffer
+		, glDeleteBuffers
+		, glBufferStorage
+		, glNamedBufferStorage
+		, glNamedBufferStorageEXT
+		, glBufferSubData
+		, glNamedBufferSubData
+		, glNamedBufferSubDataEXT
+		, glGetBufferSubData
+		, glGetNamedBufferSubData
+		, glGetNamedBufferSubDataEXT
+		, glMapBuffer
+		, glMapNamedBuffer
+		, glMapNamedBufferEXT
+		, glMapBufferRange
+		, glMapNamedBufferRange
+		, glMapNamedBufferRangeEXT
+		, glFlushMappedBufferRange
+		, glFlushMappedNamedBufferRange
+		, glFlushMappedNamedBufferRangeEXT
+		, glUnmapBuffer
+		, glUnmapNamedBuffer
+		, glUnmapNamedBufferEXT
+		, glClearBufferData
+		, glClearNamedBufferData
+		, glClearNamedBufferDataEXT
+		, glClearBufferSubData
+		, glClearNamedBufferSubData
+		, glClearNamedBufferSubDataEXT
+		, glCopyBufferSubData
+		, glCopyNamedBufferSubData
+		, glNamedCopyBufferSubDataEXT
+		, glIsBuffer
+		, glGetNamedBufferParameteri64v
+		, glGetBufferParameteri64v
+		, glGetNamedBufferParameteriv
+		, glGetNamedBufferParameterivEXT
+		, glGetBufferParameteriv
+	);
+	IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLtextures, OpenGLFunctionLoader
+		,glActiveTexture
+		,glBindTextures
+		,glCreateTextures
+		,glTexStorage1D
+		,glTexStorage2D
+		,glTexStorage3D
+		,glTexStorage2DMultisample
+		,glTexStorage3DMultisample
+		,glTexBuffer
+		,glTexBufferRange
+		,glTextureStorage1D
+		,glTextureStorage2D
+		,glTextureStorage3D
+		,glTextureStorage2DMultisample
+		,glTextureStorage3DMultisample
+		,glTextureBuffer
+		,glTextureBufferRange
+		,glTextureView
+		,glTextureStorage1DEXT
+		,glTextureStorage2DEXT
+		,glTextureStorage3DEXT
+		,glTextureBufferEXT
+		,glTextureBufferRangeEXT
+		,glTextureStorage2DMultisampleEXT
+		,glTextureStorage3DMultisampleEXT
+		,glGetTextureSubImage
+		,glGetCompressedTextureSubImage
+		,glGetTextureImage
+		,glGetTextureImageEXT
+		,glGetCompressedTextureImage
+		,glGetCompressedTextureImageEXT
+		,glGetCompressedTexImage
+		,glTexSubImage3D
+		,glMultiTexSubImage1DEXT
+		,glMultiTexSubImage2DEXT
+		,glMultiTexSubImage3DEXT
+		,glTextureSubImage1D
+		,glTextureSubImage2D
+		,glTextureSubImage3D
+		,glTextureSubImage1DEXT
+		,glTextureSubImage2DEXT
+		,glTextureSubImage3DEXT
+		,glCompressedTexSubImage1D
+		,glCompressedTexSubImage2D
+		,glCompressedTexSubImage3D
+		,glCompressedTextureSubImage1D
+		,glCompressedTextureSubImage2D
+		,glCompressedTextureSubImage3D
+		,glCompressedTextureSubImage1DEXT
+		,glCompressedTextureSubImage2DEXT
+		,glCompressedTextureSubImage3DEXT
+		,glCopyImageSubData
+		,glTextureParameterIuiv
+		,glTextureParameterIuivEXT
+		,glTexParameterIuiv
+		,glGenerateMipmap
+		,glGenerateTextureMipmap
+		,glGenerateTextureMipmapEXT
+		,glClampColor
+		,glCreateSamplers
+		,glGenSamplers
+		,glDeleteSamplers
+		,glBindSampler
+		,glBindSamplers
+		,glSamplerParameteri
+		,glSamplerParameterf
+		,glSamplerParameterfv
+		,glBindImageTexture
+		,glBindImageTextures
+		,glGetTextureHandleARB
+		,glGetTextureSamplerHandleARB
+		,glMakeTextureHandleResidentAR
+		,glMakeTextureHandleNonResidentARB
+		,glGetImageHandleARB
+		,glMakeImageHandleResidentARB
+		,glMakeImageHandleNonResidentARB
+		,glIsTextureHandleResidentARB
+		,glIsImageHandleResidentARB
+		,glGetTextureHandleNV
+		,glGetTextureSamplerHandleNV
+		,glMakeTextureHandleResidentAR
+		,glMakeTextureHandleNonResidentNV
+		,glGetImageHandleNV
+		,glMakeImageHandleResidentNV
+		,glMakeImageHandleNonResidentNV
+		,glIsTextureHandleResidentNV
+		,glIsImageHandleResidentNV
+		,glTextureBarrier
+		,glTextureBarrierNV
+		);
 
-	//TO FIGURE OUT: 
-	// what are gl Fences
-	//
-glProvokingVertex
-glClipControl
-
-//fences
+//GLSync
 glFenceSync
 glDeleteSync
 glClientWaitSync
@@ -691,14 +856,90 @@ glMakeImageHandleResidentNV
 glMakeImageHandleNonResidentNV
 glIsTextureHandleResidentNV
 glIsImageHandleResidentNV
+glTextureBarrier
+glTextureBarrierNV
+glGetInternalformativ	//not sure if putting this in here is fine. target param is related to textures (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetInternalformat.xhtml)
+glGetInternalformati64v
 
 //GLBuffer
 glBindBufferBase
 glBindBufferRange
 glBindBuffersBase
 glBindBuffersRange
+glBlitNamedFramebuffer
+glBlitFramebuffer
+glDeleteFramebuffers
+glCreateFramebuffers
+glGenFramebuffers
+glBindFramebuffer
+glCheckFramebufferStatus
+glCheckNamedFramebufferStatus
+glCheckNamedFramebufferStatusEXT
+glFramebufferTexture
+glNamedFramebufferTexture
+glNamedFramebufferTextureEXT
+glFramebufferTextureLayer
+glNamedFramebufferTextureLayer
+glNamedFramebufferTextureLayerEXT
+glFramebufferTexture2D
+glNamedFramebufferTexture2DEXT
+glDrawBuffers
+glNamedFramebufferDrawBuffers
+glFramebufferDrawBuffersEXT
+glNamedFramebufferDrawBuffer
+glFramebufferDrawBufferEXT
+glNamedFramebufferReadBuffer
+glFramebufferReadBufferEXT
+glClearNamedFramebufferiv
+glClearNamedFramebufferuiv
+glClearNamedFramebufferfv
+glClearNamedFramebufferfi
+glClearBufferiv
+glClearBufferuiv
+glClearBufferfv
+glClearBufferfi
+glGenBuffers
+glCreateBuffers
+glBindBuffer
+glDeleteBuffers
+glBufferStorage
+glNamedBufferStorage
+glNamedBufferStorageEXT
+glBufferSubData
+glNamedBufferSubData
+glNamedBufferSubDataEXT
+glGetBufferSubData
+glGetNamedBufferSubData
+glGetNamedBufferSubDataEXT
+glMapBuffer
+glMapNamedBuffer
+glMapNamedBufferEXT
+glMapBufferRange
+glMapNamedBufferRange
+glMapNamedBufferRangeEXT
+glFlushMappedBufferRange
+glFlushMappedNamedBufferRange
+glFlushMappedNamedBufferRangeEXT
+glUnmapBuffer
+glUnmapNamedBuffer
+glUnmapNamedBufferEXT
+glClearBufferData
+glClearNamedBufferData
+glClearNamedBufferDataEXT
+glClearBufferSubData
+glClearNamedBufferSubData
+glClearNamedBufferSubDataEXT
+glCopyBufferSubData
+glCopyNamedBufferSubData
+glNamedCopyBufferSubDataEXT
+glIsBuffer
+glGetNamedBufferParameteri64v
+glGetBufferParameteri64v
+glGetNamedBufferParameteriv
+glGetNamedBufferParameterivEXT
+glGetBufferParameteriv
 
-// get fragment and vertex program function pointers
+//GLShader
 glCreateShader
 glCreateShaderProgramv
 glCreateProgramPipelines
@@ -749,8 +990,9 @@ glDispatchCompute
 glDispatchComputeIndirect
 glPointParameterf
 glPointParameterfv
-
-//ROP
+glBlendEquationEXT
+glBlendEquation
+//ROP - still GLShader
 glBlendColor
 glDepthRangeIndexed
 glViewportIndexedfv
@@ -765,82 +1007,7 @@ glStencilFuncSeparate
 glStencilOpSeparate
 glStencilMaskSeparate
 
-// ARB FrameBufferObjects
-glBlitNamedFramebuffer
-glBlitFramebuffer
-glDeleteFramebuffers
-glCreateFramebuffers
-glGenFramebuffers
-glBindFramebuffer
-glCheckFramebufferStatus
-glCheckNamedFramebufferStatus
-glCheckNamedFramebufferStatusEXT
-glFramebufferTexture
-glNamedFramebufferTexture
-glNamedFramebufferTextureEXT
-glFramebufferTextureLayer
-glNamedFramebufferTextureLayer
-glNamedFramebufferTextureLayerEXT
-glFramebufferTexture2D
-glNamedFramebufferTexture2DEXT
-glDrawBuffers
-glNamedFramebufferDrawBuffers
-glFramebufferDrawBuffersEXT
-glNamedFramebufferDrawBuffer
-glFramebufferDrawBufferEXT
-glNamedFramebufferReadBuffer
-glFramebufferReadBufferEXT
-glClearNamedFramebufferiv
-glClearNamedFramebufferuiv
-glClearNamedFramebufferfv
-glClearNamedFramebufferfi
-glClearBufferiv
-glClearBufferuiv
-glClearBufferfv
-glClearBufferfi
-
-// get vertex buffer extension
-glGenBuffers
-glCreateBuffers
-glBindBuffer
-glDeleteBuffers
-glBufferStorage
-glNamedBufferStorage
-glNamedBufferStorageEXT
-glBufferSubData
-glNamedBufferSubData
-glNamedBufferSubDataEXT
-glGetBufferSubData
-glGetNamedBufferSubData
-glGetNamedBufferSubDataEXT
-glMapBuffer
-glMapNamedBuffer
-glMapNamedBufferEXT
-glMapBufferRange
-glMapNamedBufferRange
-glMapNamedBufferRangeEXT
-glFlushMappedBufferRange
-glFlushMappedNamedBufferRange
-glFlushMappedNamedBufferRangeEXT
-glUnmapBuffer
-glUnmapNamedBuffer
-glUnmapNamedBufferEXT
-glClearBufferData
-glClearNamedBufferData
-glClearNamedBufferDataEXT
-glClearBufferSubData
-glClearNamedBufferSubData
-glClearNamedBufferSubDataEXT
-glCopyBufferSubData
-glCopyNamedBufferSubData
-glNamedCopyBufferSubDataEXT
-glIsBuffer
-glGetNamedBufferParameteri64v
-glGetBufferParameteri64v
-glGetNamedBufferParameteriv
-glGetNamedBufferParameterivEXT
-glGetBufferParameteriv
-//vao
+//GLVertex
 glGenVertexArrays
 glCreateVertexArrays
 glDeleteVertexArrays
@@ -870,7 +1037,10 @@ glVertexArrayVertexAttribLFormatEXT
 glVertexArrayBindingDivisor
 glVertexArrayVertexBindingDivisorEXT
 glVertexBindingDivisor
-//
+glProvokingVertex
+
+
+//GLDrawing
 glPrimitiveRestartIndex
 glDrawArraysInstanced
 glDrawArraysInstancedBaseInstance
@@ -884,17 +1054,12 @@ glDrawArraysIndirect
 glDrawElementsIndirect
 glMultiDrawArraysIndirect
 glMultiDrawElementsIndirect
-if (Version >= 460)
-{
-	glMultiDrawArraysIndirectCount
-	glMultiDrawElementsIndirectCount
-}
-else if (FeatureAvailable[IRR_ARB_indirect_parameters])
-{
-	glMultiDrawArraysIndirectCountARB
-	glMultiDrawElementsIndirectCountARB
-}
-//
+glMultiDrawArraysIndirectCount
+glMultiDrawElementsIndirectCount
+glMultiDrawArraysIndirectCountARB
+glMultiDrawElementsIndirectCountARB
+
+//GLTransformFeedback
 glCreateTransformFeedbacks
 glGenTransformFeedbacks
 glDeleteTransformFeedbacks
@@ -905,7 +1070,7 @@ glResumeTransformFeedback
 glEndTransformFeedback
 glTransformFeedbackBufferBase
 glTransformFeedbackBufferRange
-//
+//GLCapabilities
 glBlendFuncSeparate
 glEnablei
 glDisablei
@@ -917,7 +1082,7 @@ glProgramParameteri
 glPatchParameterfv
 glPatchParameteri
 
-// occlusion query
+//GLQuery
 glCreateQueries
 glGenQueries
 glDeleteQueries
@@ -935,23 +1100,17 @@ glQueryCounter
 glBeginConditionalRender
 glEndConditionalRender
 
-glTextureBarrier
-glTextureBarrierNV
 
 
+//GLDebug
 glDebugMessageControl
 glDebugMessageControlARB
 glDebugMessageCallback
 glDebugMessageCallbackARB
 
-// blend equation
-glBlendEquationEXT
-glBlendEquation
 
-glGetInternalformativ
-glGetInternalformati64v
 
-// get vsync extension
+//GLOS
 wglSwapIntervalEXT
 glXSwapIntervalSGI
 glXSwapIntervalEXT
@@ -962,13 +1121,11 @@ glXSwapIntervalMESA
 			// constructor
 			COpenGLFunctionTable();
 		private:
-			static bool functionsAlreadyLoaded;
-
-			static int32_t pixelUnpackAlignment;
+		
 		};
 
 #pragma region Inline Implementations
-
+		//TODO use khronos.org to add params & add ptr null checks
 		inline bool COpenGLFunctionTable::extGlIsEnabledi(GLenum cap, GLuint index)
 		{
 			return pGlIsEnabledi(cap, index);
