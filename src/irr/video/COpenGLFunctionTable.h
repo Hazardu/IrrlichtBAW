@@ -62,6 +62,9 @@ namespace irr { namespace video {
 			,glDeleteSync,
 			,glClientWaitSync
 			,glWaitSync
+			,glTextureBarrier	//perhaps this should be moved to sync?
+			,glTextureBarrierNV
+			,glMemoryBarrier
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLframeBuffer, OpenGLFunctionLoader
 			,glBlitNamedFramebuffer
@@ -95,7 +98,7 @@ namespace irr { namespace video {
 			,glClearBufferuiv
 			,glClearBufferfv
 			,glClearBufferfi
-			,glDrawBuffers	//its related to framebuffers, but could also go to GLdrawing
+			,glDrawBuffers
 
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLbuffer, OpenGLFunctionLoader
@@ -232,10 +235,9 @@ namespace irr { namespace video {
 			,glMakeImageHandleNonResidentNV
 			,glIsTextureHandleResidentNV
 			,glIsImageHandleResidentNV
-			,glTextureBarrier	//perhaps this should be moved to sync?
-			,glTextureBarrierNV
+			
 		);
-		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLshader, OpenGLFunctionLoader	//could be split into fragment functions
+		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLshader, OpenGLFunctionLoader	
 			,glCreateShader
 			,glCreateShaderProgramv
 			,glCreateProgramPipelines
@@ -281,33 +283,31 @@ namespace irr { namespace video {
 			,glBindProgramPipeline
 			,glGetProgramBinary
 			,glProgramBinary
-			,glMemoryBarrier				//not sure about this being here, previousely this was commented as "Criss"
-			,glDispatchCompute				//
-			,glDispatchComputeIndirect		//
-			,glPointParameterf
-			,glPointParameterfv
-			,glBlendEquationEXT
-			,glBlendEquation
-			//ROP
-			,glBlendColor
-			,glDepthRangeIndexed
-			,glViewportIndexedfv
-			,glScissorIndexedv
-			,glSampleCoverage
-			,glSampleMaski
-			,glMinSampleShading
-			,glBlendEquationSeparatei
-			,glBlendFuncSeparatei
-			,glColorMaski
-			,glStencilFuncSeparate
-			,glStencilOpSeparate
-			,glStencilMaskSeparate
-			,glBlendFuncIndexedAMD
-			,glBlendFunciARB
-			,glBlendEquationIndexedAMD
-			,glBlendEquationiARB
-			,glBlendFuncSeparate
-
+			,glProgramParameteri
+		);
+		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLfragment, OpenGLFunctionLoader
+			, glPointParameterf
+			, glPointParameterfv
+			, glBlendEquationEXT
+			, glBlendEquation
+			, glBlendColor
+			, glDepthRangeIndexed
+			, glViewportIndexedfv
+			, glScissorIndexedv
+			, glSampleCoverage
+			, glSampleMaski
+			, glMinSampleShading
+			, glBlendEquationSeparatei
+			, glBlendFuncSeparatei
+			, glColorMaski
+			, glStencilFuncSeparate
+			, glStencilOpSeparate
+			, glStencilMaskSeparate
+			, glBlendFuncIndexedAMD
+			, glBlendFunciARB
+			, glBlendEquationIndexedAMD
+			, glBlendEquationiARB
+			, glBlendFuncSeparate
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLvertex, OpenGLFunctionLoader
 			,glGenVertexArrays
@@ -359,6 +359,8 @@ namespace irr { namespace video {
 			,glMultiDrawElementsIndirectCount
 			,glMultiDrawArraysIndirectCountARB
 			,glMultiDrawElementsIndirectCountARB
+			,glPatchParameterfv
+			,glPatchParameteri
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLtransformFeedback, OpenGLFunctionLoader
 			,glCreateTransformFeedbacks
@@ -410,30 +412,24 @@ namespace irr { namespace video {
 			,glXSwapIntervalMESA
 #endif
 		);
-		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLprogram, OpenGLFunctionLoader
+		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLgeneral, OpenGLFunctionLoader
 			,glEnablei
 			,glDisablei
-			,glProgramParameteri
-			,glPatchParameterfv
-			,glPatchParameteri
 		);
-
-
-
-
-		//GLCapabilities
-
-
-
+		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLcompute, OpenGLFunctionLoader
+			, glDispatchCompute
+			, glDispatchComputeIndirect
+		);
 
 
 	protected:
 		// constructor
 		COpenGLFunctionTable() 
 		{
-			if(SDL_GL_LoadLibrary(nullptr);) //nullptr to load the default OpenGL library
+			if(SDL_VideoInit()<0)
 				//log error
-			if(SDL_VideoInit())
+			if(SDL_GL_LoadLibrary(nullptr) < 0) //nullptr to load the default OpenGL library
+				//log error
 		}
 	private:
 		GLsync glSync;
@@ -441,15 +437,19 @@ namespace irr { namespace video {
 		GLbuffer glBuffer;
 		GLtexture glTexture;
 		GLshader glShader;
+		GLfragment glFragment;
 		GLvertex glVertex;
 		GLdrawing glDrawing;
 		GLtransformFeedback glTransformFeedback;
 		GLquery glQuery;
 		GLdebug glDebug;
 		GLOS glOS;
-		GLprogram glProgram;
-	}
-	//
+		GLgeneral glGeneral;
+		GLcompute glCompute;
+
+	}	// end of class COpenGLFunctionTable
+	
+
 	//#pragma region Inline Implementations
 	//		//TODO use khronos.org to add params & add ptr null checks
 	//		inline bool COpenGLFunctionTable::extGlIsEnabledi(GLenum cap, GLuint index)
