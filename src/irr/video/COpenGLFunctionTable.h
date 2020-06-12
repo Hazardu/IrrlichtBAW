@@ -15,7 +15,7 @@
 #include "../src/3rdparty/GL/glxext.h"
 #endif
 
-#include "SDL2.h"
+#include "SDL2/include/SDL.h"
 #include "os.h"
 #include "irr/video/IGPUImageView.h"
 #include <irr\system\DynamicFunctionCaller.h>
@@ -35,20 +35,11 @@ namespace irr { namespace video {
 			{
 				operator=(std::move(other));
 			}
-
-
-			inline OpenGLFunctionLoader& operator=(OpenGLFunctionLoader&& other)
-			{
-				//std::swap(pGlGetProcAdress, other.pGlGetProcAdress);
-				return *this;
-			}
-
+			
 			inline bool isLibraryLoaded() override final
 			{
-				//should i instead call SDL_VideoInit and SDL_GL_LoadLibrary here alongside some check to not run them again?
-				//or maybe they are supposed to be called within the constructor, and then used here
+				//todo library loader - is sdl loaded
 				return true;
-				//return pGlGetProcAdress != nullptr;
 			}
 
 			inline void* loadFuncPtr(const char* funcname) override final
@@ -56,16 +47,18 @@ namespace irr { namespace video {
 				return SDL_GL_GetProcAddress(funcname);
 			}
 		};
-
+		// im temporairly putting // after those which have a public inline function that uses them
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLsync, OpenGLFunctionLoader
 			,glFenceSync
 			,glDeleteSync,
 			,glClientWaitSync
 			,glWaitSync
-			,glTextureBarrier	//perhaps this should be moved to sync?
+			,glTextureBarrier
 			,glTextureBarrierNV
 			,glMemoryBarrier
+			,glClientWaitSync	//
 		);
+		
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLframeBuffer, OpenGLFunctionLoader
 			,glBlitNamedFramebuffer
 			,glBlitFramebuffer
@@ -99,7 +92,6 @@ namespace irr { namespace video {
 			,glClearBufferfv
 			,glClearBufferfi
 			,glDrawBuffers
-
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLbuffer, OpenGLFunctionLoader
 			,glBindBufferBase
@@ -284,30 +276,40 @@ namespace irr { namespace video {
 			,glGetProgramBinary
 			,glProgramBinary
 			,glProgramParameteri
+			,glPatchParameterfv
+			,glPatchParameteri
+			,glDepthMask
+			,glPixelStorei
+			,glPolygonOffset
+			,glPointSize
+			,glLineWidth
+			,glDepthFunc
+			,glHint
+
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLfragment, OpenGLFunctionLoader
-			, glPointParameterf
-			, glPointParameterfv
-			, glBlendEquationEXT
-			, glBlendEquation
-			, glBlendColor
-			, glDepthRangeIndexed
-			, glViewportIndexedfv
-			, glScissorIndexedv
-			, glSampleCoverage
-			, glSampleMaski
-			, glMinSampleShading
-			, glBlendEquationSeparatei
-			, glBlendFuncSeparatei
-			, glColorMaski
-			, glStencilFuncSeparate
-			, glStencilOpSeparate
-			, glStencilMaskSeparate
-			, glBlendFuncIndexedAMD
-			, glBlendFunciARB
-			, glBlendEquationIndexedAMD
-			, glBlendEquationiARB
-			, glBlendFuncSeparate
+			,glPointParameterf
+			,glPointParameterfv
+			,glBlendEquationEXT
+			,glBlendEquation
+			,glBlendColor
+			,glDepthRangeIndexed
+			,glViewportIndexedfv
+			,glScissorIndexedv
+			,glSampleCoverage
+			,glSampleMaski
+			,glMinSampleShading
+			,glBlendEquationSeparatei
+			,glBlendFuncSeparatei
+			,glColorMaski
+			,glStencilFuncSeparate
+			,glStencilOpSeparate
+			,glStencilMaskSeparate
+			,glBlendFuncIndexedAMD
+			,glBlendFunciARB
+			,glBlendEquationIndexedAMD
+			,glBlendEquationiARB
+			,glBlendFuncSeparate
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLvertex, OpenGLFunctionLoader
 			,glGenVertexArrays
@@ -359,8 +361,6 @@ namespace irr { namespace video {
 			,glMultiDrawElementsIndirectCount
 			,glMultiDrawArraysIndirectCountARB
 			,glMultiDrawElementsIndirectCountARB
-			,glPatchParameterfv
-			,glPatchParameteri
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLtransformFeedback, OpenGLFunctionLoader
 			,glCreateTransformFeedbacks
@@ -393,10 +393,10 @@ namespace irr { namespace video {
 			,glEndConditionalRender
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLdebug, OpenGLFunctionLoader
-			glDebugMessageControl
-			glDebugMessageControlARB
-			glDebugMessageCallback
-			glDebugMessageCallbackARB
+			,glDebugMessageControl
+			,glDebugMessageControlARB
+			,glDebugMessageCallback
+			,glDebugMessageCallbackARB
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLOS, OpenGLFunctionLoader
 #if defined(WGL_EXT_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
@@ -411,10 +411,28 @@ namespace irr { namespace video {
 #if defined(GLX_MESA_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
 			,glXSwapIntervalMESA
 #endif
+			,glxWin
+			,glXMakeContextCurrent
+			,glXMakeCurrent
+			,glXDestroyContext
+			,glXDestroyWindow
+			,glXQueryExtension
+			,glXChooseFBConfig
+			,glXGetVisualFromFBConfig
+			,glXGetFBConfigAttrib
+
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLgeneral, OpenGLFunctionLoader
-			,glEnablei
-			,glDisablei
+			,glEnablei	//
+			,glDisablei	//
+			,glEnable	//
+			,glDisable	//
+			,glGetIntegerv
+			,glIsEnabledi	//
+			,glLogicOp
+			,glGetFloatv
+			,glFlush
+			,glGetBooleanv//
 		);
 		IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLcompute, OpenGLFunctionLoader
 			, glDispatchCompute
@@ -422,6 +440,85 @@ namespace irr { namespace video {
 		);
 
 
+		inline bool GlIsEnabledi(GLenum cap, GLuint index)
+		{
+			return glGeneral.pglIsEnabledi(cap, index);
+		}
+
+		inline void GlEnablei(GLenum cap, GLuint index)
+		{
+			glGeneral.pglEnable(cap, index);
+		}
+
+		inline void GlEnable(GLenum cap, GLuint index)
+		{
+			glGeneral.pglEnable(cap, index);
+		}
+
+		inline void GlDisablei(GLenum cap, GLuint index)
+		{
+			glGeneral.pglDisablei(cap, index);
+		}
+
+		inline void GlDisable(GLenum cap, GLuint index)
+		{
+			glGeneral.pglDisable(cap, index);
+		}
+
+		inline void GlGetBooleani_v(GLenum pname, GLuint index, GLboolean* data)
+		{
+			glGeneral.glGetBooleanv(pname, index, data);
+		}
+
+		inline void extGlGetFloati_v(GLenum pname, GLuint index, float* data)
+		{
+			glGeneral.pGlGetFloati_v(pname, index, data);
+		}
+
+		inline void COpenGLFunctionTable::extGlGetInteger64v(GLenum pname, GLint64* data)
+		{
+			glGeneral.pGlGetInteger64v(pname, data);
+		}
+		inline void COpenGLFunctionTable::extGlGetIntegeri_v(GLenum pname, GLuint index, GLint* data)
+		{
+			pGlGetIntegeri_v(pname, index, data);
+		}
+		inline void COpenGLFunctionTable::extGlProvokingVertex(GLenum provokeMode)
+		{
+			pGlProvokingVertex(provokeMode);
+		}
+		inline void COpenGLFunctionTable::extGlClipControl(GLenum origin, GLenum depth)
+		{
+			pGlClipControl(origin, depth);
+		}
+			
+			
+			
+		inline GLsync COpenGLFunctionTable::extGlFenceSync(GLenum condition, GLbitfield flags)
+		{
+			return pGlFenceSync(condition, flags);
+		}
+			
+		inline void COpenGLFunctionTable::extGlDeleteSync(GLsync sync)
+		{
+			pGlDeleteSync(sync);
+		}
+			
+		inline GLenum extGlClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
+		{
+			return pGlClientWaitSync(sync, flags, timeout);
+		}
+			
+		inline void COpenGLFunctionTable::extGlWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
+		{
+			pGlWaitSync(sync, flags, timeout);
+		}
+			
+		inline void COpenGLFunctionTable::extGlActiveTexture(GLenum target) // kill this function in favour of multibind (but need to upgrade OpenGL tracker)
+		{
+			pGlActiveTexture(target);
+		}
+			
 	protected:
 		// constructor
 		COpenGLFunctionTable() 
@@ -452,70 +549,9 @@ namespace irr { namespace video {
 
 	//#pragma region Inline Implementations
 	//		//TODO use khronos.org to add params & add ptr null checks
-	//		inline bool COpenGLFunctionTable::extGlIsEnabledi(GLenum cap, GLuint index)
-	//		{
-	//			return pGlIsEnabledi(cap, index);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlEnablei(GLenum cap, GLuint index)
-	//		{
-	//			pGlEnablei(cap, index);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlDisablei(GLenum cap, GLuint index)
-	//		{
-	//			pGlDisablei(cap, index);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlGetBooleani_v(GLenum pname, GLuint index, GLboolean* data)
-	//		{
-	//			pGlGetBooleani_v(pname, index, data);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlGetFloati_v(GLenum pname, GLuint index, float* data)
-	//		{
-	//			pGlGetFloati_v(pname, index, data);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlGetInteger64v(GLenum pname, GLint64* data)
-	//		{
-	//			pGlGetInteger64v(pname, data);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlGetIntegeri_v(GLenum pname, GLuint index, GLint* data)
-	//		{
-	//			pGlGetIntegeri_v(pname, index, data);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlProvokingVertex(GLenum provokeMode)
-	//		{
-	//			pGlProvokingVertex(provokeMode);
-	//		}
-	//		inline void COpenGLFunctionTable::extGlClipControl(GLenum origin, GLenum depth)
-	//		{
-	//			pGlClipControl(origin, depth);
-	//		}
-	//
-	//
-	//
-	//		inline GLsync COpenGLFunctionTable::extGlFenceSync(GLenum condition, GLbitfield flags)
-	//		{
-	//			return pGlFenceSync(condition, flags);
-	//		}
-	//
-	//		inline void COpenGLFunctionTable::extGlDeleteSync(GLsync sync)
-	//		{
-	//			pGlDeleteSync(sync);
-	//		}
-	//
-	//		inline GLenum COpenGLFunctionTable::extGlClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
-	//		{
-	//			return pGlClientWaitSync(sync, flags, timeout);
-	//		}
-	//
-	//		inline void COpenGLFunctionTable::extGlWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
-	//		{
-	//			pGlWaitSync(sync, flags, timeout);
-	//		}
-	//
-	//		inline void COpenGLFunctionTable::extGlActiveTexture(GLenum target) // kill this function in favour of multibind (but need to upgrade OpenGL tracker)
-	//		{
-	//			pGlActiveTexture(target);
-	//		}
-	//
+
+
+	//		
 	//		inline void COpenGLFunctionTable::extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets)
 	//		{
 	//			const GLenum supportedTargets[] = { GL_TEXTURE_1D,GL_TEXTURE_2D, // GL 1.x
