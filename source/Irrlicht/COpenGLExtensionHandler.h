@@ -10,7 +10,7 @@
 
 #ifdef _IRR_COMPILE_WITH_OPENGL_
 
-#include "COpenGLStateManager.h"
+//#include "COpenGLStateManager.h"
 
 #ifdef _IRR_WINDOWS_API_
 	// include windows headers for HWND
