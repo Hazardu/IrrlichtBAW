@@ -1,27 +1,44 @@
 #ifndef __C_OPEN_GL_FUNCTION_TABLE_H_INCLUDED__
 #define __C_OPEN_GL_FUNCTION_TABLE_H_INCLUDED__
-//
-//#include "IrrCompileConfig.h"
-//#include "irr/system/system.h"
-////#ifdef _IRR_COMPILE_WITH_OPENGL
-//
-//#include "COpenGLStateManager.h"
-//#ifdef _IRR_WINDOWS_API_
-//// include windows headers for HWND
-//#include "../src/3rdparty/GL/wglext.h"
-//#elif defined(_IRR_COMPILE_WITH_X11_)
-//#include "GL/glx.h"
-//#include "../src/3rdparty/GL/glxext.h"
-//#endif
-//
-//#include "irr/core/core.h"
-//#include "os.h"
-#include "irr/video/IGPUImageView.h"
-#include <irr\system\DynamicFunctionCaller.h>
-#include "SDL2/include/SDL.h"
-#include "COpenGLExtensionHandler.h"
-#include "../../3rdparty/GL/glext.h"
 
+#define GL_GLEXT_PROTOTYPES
+
+
+#ifdef _IRR_WINDOWS_API_
+#define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+#include <wingdi.h>
+#endif
+#if defined(_IRR_COMPILE_WITH_SDL_DEVICE_) && !(defined(_IRR_COMPILE_WITH_X11_DEVICE_)||defined(_IRR_WINDOWS_API_))
+#include <SDL/SDL_video.h>
+#define GL_GLEXT_LEGACY 1
+#include <SDL/SDL_opengl.h>
+#undef GL_GLEXT_LEGACY
+#else
+#define GL_GLEXT_LEGACY 1
+#include "GL/gl.h"
+//missing something of sort "#include <GL/glx.h>"
+#undef GL_GLEXT_LEGACY
+#endif
+
+#include "irr/core/string/UniqueStringLiteralType.h"
+#include "GL/glext.h"
+#include "GL/glxext.h"
+#include "GL/wglext.h"
+#include "irr/video/IGPUImageView.h"
+#include "SDL2/include/SDL.h"
+#include <irr\system\DynamicFunctionCaller.h>
+
+
+//maybe glx and wgl too
+//#include "../../3rdparty/GL/glext.h"
+
+//#ifdef __gl_glext_h_
+//#error chuj
+//#endif
 namespace irr {
 	namespace video {
 
@@ -137,7 +154,6 @@ namespace irr {
 				, glGetNamedBufferParameteriv
 				, glGetNamedBufferParameterivEXT
 				, glGetBufferParameteriv
-				, glCreateBuffers
 			);
 			IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLtexture, OpenGLFunctionLoader
 				, glActiveTexture
@@ -211,7 +227,7 @@ namespace irr {
 				, glBindImageTextures
 				, glGetTextureHandleARB
 				, glGetTextureSamplerHandleARB
-				, glMakeTextureHandleResidentAR
+				//, glMakeTextureHandleResidentAR
 				, glMakeTextureHandleNonResidentARB
 				, glGetImageHandleARB
 				, glMakeImageHandleResidentARB
@@ -220,7 +236,7 @@ namespace irr {
 				, glIsImageHandleResidentARB
 				, glGetTextureHandleNV
 				, glGetTextureSamplerHandleNV
-				, glMakeTextureHandleResidentAR
+				//, glMakeTextureHandleResidentAR
 				, glMakeTextureHandleNonResidentNV
 				, glGetImageHandleNV
 				, glMakeImageHandleResidentNV
@@ -562,7 +578,7 @@ namespace irr {
 												GL_TEXTURE_1D_ARRAY,GL_TEXTURE_2D_ARRAY,GL_TEXTURE_BUFFER, // GL 3.x
 												GL_TEXTURE_CUBE_MAP_ARRAY,GL_TEXTURE_2D_MULTISAMPLE,GL_TEXTURE_2D_MULTISAMPLE_ARRAY }; // GL 4.x
 
-			if (COpenGLExtensionHandler::Version >= 440 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_multi_bind])
+			if (COpenGLDriver::Version >= 440 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_multi_bind])
 				glTexture.pglBindTextures(first, count, textures);
 			else
 			{
@@ -590,16 +606,16 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglCreateTextures(target, n, textures);
 			else
 				glGenTextures(n, textures);
 		}
 		inline void COpenGLFunctionTable::extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureBuffer(texture, internalformat, buffer);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureBufferEXT(texture, GL_TEXTURE_BUFFER, internalformat, buffer);
 			else
 			{
@@ -612,13 +628,13 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 
 				if (glTexture.pglTextureBufferRange)
 					glTexture.pglTextureBufferRange(texture, internalformat, buffer, offset, length);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglTextureBufferRangeEXT)
 					glTexture.pglTextureBufferRangeEXT(texture, GL_TEXTURE_BUFFER, internalformat, buffer, offset, length);
@@ -635,12 +651,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglTextureStorage1D)
 					glTexture.pglTextureStorage1D(texture, levels, internalformat, width);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglTextureStorage1DEXT)
 					glTexture.pglTextureStorage1DEXT(texture, target, levels, internalformat, width);
@@ -664,12 +680,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglTextureStorage2D)
 					glTexture.pglTextureStorage2D(texture, levels, internalformat, width, height);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglTextureStorage2DEXT)
 					glTexture.pglTextureStorage2DEXT(texture, target, levels, internalformat, width, height);
@@ -702,9 +718,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage3D(texture, levels, internalformat, width, height, depth);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureStorage3DEXT(texture, target, levels, internalformat, width, height, depth);
 			else
 			{
@@ -731,9 +747,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage2DMultisample(texture, samples, internalformat, width, height, fixedsamplelocations);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureStorage2DMultisampleEXT(texture, target, samples, internalformat, width, height, fixedsamplelocations);
 			else
 			{
@@ -752,9 +768,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage3DMultisample(texture, samples, internalformat, width, height, depth, fixedsamplelocations);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureStorage3DMultisampleEXT(texture, target, samples, internalformat, width, height, depth, fixedsamplelocations);
 			else
 			{
@@ -773,7 +789,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_get_texture_sub_image])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_get_texture_sub_image])
 				glTexture.pglGetTextureSubImage(texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, bufSize, pixels);
 #ifdef _IRR_DEBUG
 			else
@@ -782,9 +798,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglGetTextureImage(texture, level, format, type, bufSizeHint, pixels);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglGetTextureImageEXT(texture, target, level, format, type, pixels);
 			else
 			{
@@ -831,9 +847,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglGetCompressedTextureImage(texture, level, bufSizeHint, pixels);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglGetCompressedTextureImageEXT(texture, target, level, pixels);
 			else
 			{
@@ -880,9 +896,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage1D(texture, level, xoffset, width, format, type, pixels);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureSubImage1DEXT(texture, target, level, xoffset, width, format, type, pixels);
 			else
 			{
@@ -903,9 +919,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, type, pixels);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureSubImage2DEXT(texture, target, level, xoffset, yoffset, width, height, format, type, pixels);
 			else
 			{
@@ -943,9 +959,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage3D(texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureSubImage3DEXT(texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 			else
 			{
@@ -978,12 +994,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage1D)
 					glTexture.pglCompressedTextureSubImage1D(texture, level, xoffset, width, format, imageSize, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage1DEXT)
 					glTexture.pglCompressedTextureSubImage1DEXT(texture, target, level, xoffset, width, format, imageSize, data);
@@ -1007,12 +1023,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage2D)
 					glTexture.pglCompressedTextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, imageSize, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage2DEXT)
 					glTexture.pglCompressedTextureSubImage2DEXT(texture, target, level, xoffset, yoffset, width, height, format, imageSize, data);
@@ -1047,12 +1063,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage3D)
 					glTexture.pglCompressedTextureSubImage3D(texture, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglCompressedTextureSubImage3DEXT)
 					glTexture.pglCompressedTextureSubImage3DEXT(texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data);
@@ -1085,12 +1101,12 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGenerateTextureMipmap(GLuint texture, GLenum target)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTexture.pglGenerateTextureMipmap)
 					glTexture.pglGenerateTextureMipmap(texture);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glTexture.pglGenerateTextureMipmapEXT)
 					glTexture.pglGenerateTextureMipmapEXT(texture, target);
@@ -1144,9 +1160,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureParameterIuiv(texture, pname, params);
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				glTexture.pglTextureParameterIuivEXT(texture, target, pname, params);
 			else
 			{
@@ -1205,7 +1221,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers)
 		{
-			if (COpenGLExtensionHandler::Version >= 440 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_multi_bind])
+			if (COpenGLDriver::Version >= 440 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
 				if (glTexture.pglBindSamplers)
 					glTexture.pglBindSamplers(first, count, samplers);
@@ -1313,9 +1329,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglCreateFramebuffers(n, framebuffers);
 					return;
@@ -1326,11 +1342,11 @@ namespace irr {
 		}
 		inline GLenum COpenGLFunctionTable::extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 					return glFrameBuffer.pglCheckNamedFramebufferStatus(framebuffer, target);
-				else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 					return glFrameBuffer.pglCheckNamedFramebufferStatusEXT(framebuffer, target);
 			}
 
@@ -1348,14 +1364,14 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTexture(framebuffer, attachment, texture, level);
 					return;
 				}
-				else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTextureEXT(framebuffer, attachment, texture, level);
 					return;
@@ -1373,9 +1389,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTextureLayer(framebuffer, attachment, texture, level, layer);
 					return;
@@ -1384,7 +1400,7 @@ namespace irr {
 
 			if (textureType != GL_TEXTURE_CUBE_MAP)
 			{
-				if (!COpenGLExtensionHandler::needsDSAFramebufferHack && COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				if (!COpenGLDriver::needsDSAFramebufferHack && COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTextureLayerEXT(framebuffer, attachment, texture, level, layer);
 				}
@@ -1406,7 +1422,7 @@ namespace irr {
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X,GL_TEXTURE_CUBE_MAP_NEGATIVE_X,GL_TEXTURE_CUBE_MAP_POSITIVE_Y,GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,GL_TEXTURE_CUBE_MAP_POSITIVE_Z,GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
 				};
 
-				if (!COpenGLExtensionHandler::needsDSAFramebufferHack && COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				if (!COpenGLDriver::needsDSAFramebufferHack && COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTexture2DEXT(framebuffer, attachment, CubeMapFaceToCubeMapFaceGLenum[layer], texture, level);
 				}
@@ -1425,9 +1441,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglBlitNamedFramebuffer(readFramebuffer, drawFramebuffer, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
 					return;
@@ -1453,14 +1469,14 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferReadBuffer(framebuffer, mode);
 					return;
 				}
-				else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglFramebufferReadBufferEXT(framebuffer, mode);
 					return;
@@ -1478,14 +1494,14 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferDrawBuffer(framebuffer, buf);
 					return;
 				}
-				else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglFramebufferDrawBufferEXT(framebuffer, buf);
 					return;
@@ -1503,14 +1519,14 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferDrawBuffers(framebuffer, n, bufs);
 					return;
 				}
-				else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglFramebufferDrawBuffersEXT(framebuffer, n, bufs);
 					return;
@@ -1528,9 +1544,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglClearNamedFramebufferiv(framebuffer, buffer, drawbuffer, value);
 					return;
@@ -1550,9 +1566,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglClearNamedFramebufferuiv(framebuffer, buffer, drawbuffer, value);
 					return;
@@ -1572,9 +1588,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglClearNamedFramebufferfv(framebuffer, buffer, drawbuffer, value);
 					return;
@@ -1594,9 +1610,9 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
 		{
-			if (!COpenGLExtensionHandler::needsDSAFramebufferHack)
+			if (!COpenGLDriver::needsDSAFramebufferHack)
 			{
-				if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+				if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
 					glFrameBuffer.pglClearNamedFramebufferfi(framebuffer, buffer, drawbuffer, depth, stencil);
 					return;
@@ -1613,7 +1629,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlCreateBuffers(GLsizei n, GLuint* buffers)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglCreateBuffers)
 					glBuffer.pglCreateBuffers(n, buffers);
@@ -1631,7 +1647,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers)
 		{
-			if (COpenGLExtensionHandler::Version >= 440 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_multi_bind])
+			if (COpenGLDriver::Version >= 440 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
 				if (glBuffer.pglBindBuffersBase)
 					glBuffer.pglBindBuffersBase(target, first, count, buffers);
@@ -1648,7 +1664,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes)
 		{
-			if (COpenGLExtensionHandler::Version >= 440 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_multi_bind])
+			if (COpenGLDriver::Version >= 440 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
 				if (glBuffer.pglBindBuffersRange)
 					glBuffer.pglBindBuffersRange(target, first, count, buffers, offsets, sizes);
@@ -1673,12 +1689,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglNamedBufferStorage)
 					glBuffer.pglNamedBufferStorage(buffer, size, data, flags);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglNamedBufferStorageEXT)
 					glBuffer.pglNamedBufferStorageEXT(buffer, size, data, flags);
@@ -1695,12 +1711,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglNamedBufferSubData)
 					glBuffer.pglNamedBufferSubData(buffer, offset, size, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglNamedBufferSubDataEXT)
 					glBuffer.pglNamedBufferSubDataEXT(buffer, offset, size, data);
@@ -1717,12 +1733,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglGetNamedBufferSubData)
 					glBuffer.pglGetNamedBufferSubData(buffer, offset, size, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglGetNamedBufferSubDataEXT)
 					glBuffer.pglGetNamedBufferSubDataEXT(buffer, offset, size, data);
@@ -1739,12 +1755,12 @@ namespace irr {
 
 		inline void* COpenGLFunctionTable::extGlMapNamedBuffer(GLuint buffer, GLbitfield access)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglMapNamedBuffer)
 					return glBuffer.pglMapNamedBuffer(buffer, access);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglMapNamedBufferEXT)
 					return glBuffer.pglMapNamedBufferEXT(buffer, access);
@@ -1764,12 +1780,12 @@ namespace irr {
 
 		inline void* COpenGLFunctionTable::extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglMapNamedBufferRange)
 					return glBuffer.pglMapNamedBufferRange(buffer, offset, length, access);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglMapNamedBufferRangeEXT)
 					return glBuffer.pglMapNamedBufferRangeEXT(buffer, offset, length, access);
@@ -1789,12 +1805,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglFlushMappedNamedBufferRange)
 					glBuffer.pglFlushMappedNamedBufferRange(buffer, offset, length);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglFlushMappedNamedBufferRangeEXT)
 					glBuffer.pglFlushMappedNamedBufferRangeEXT(buffer, offset, length);
@@ -1811,12 +1827,12 @@ namespace irr {
 
 		inline GLboolean COpenGLFunctionTable::extGlUnmapNamedBuffer(GLuint buffer)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglUnmapNamedBuffer)
 					return glBuffer.pglUnmapNamedBuffer(buffer);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglUnmapNamedBufferEXT)
 					return glBuffer.pglUnmapNamedBufferEXT(buffer);
@@ -1836,12 +1852,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglClearNamedBufferData)
 					glBuffer.pglClearNamedBufferData(buffer, internalformat, format, type, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglClearNamedBufferDataEXT)
 					glBuffer.pglClearNamedBufferDataEXT(buffer, internalformat, format, type, data);
@@ -1858,12 +1874,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglClearNamedBufferSubData)
 					glBuffer.pglClearNamedBufferSubData(buffer, internalformat, offset, size, format, type, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglClearNamedBufferSubDataEXT)
 					glBuffer.pglClearNamedBufferSubDataEXT(buffer, internalformat, offset, size, format, type, data);
@@ -1880,12 +1896,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglCopyNamedBufferSubData)
 					glBuffer.pglCopyNamedBufferSubData(readBuffer, writeBuffer, readOffset, writeOffset, size);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglNamedCopyBufferSubDataEXT)
 					glBuffer.pglNamedCopyBufferSubDataEXT(readBuffer, writeBuffer, readOffset, writeOffset, size);
@@ -1905,12 +1921,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglGetNamedBufferParameteriv)
 					glBuffer.pglGetNamedBufferParameteriv(buffer, value, data);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glBuffer.pglGetNamedBufferParameterivEXT)
 					glBuffer.pglGetNamedBufferParameterivEXT(buffer, value, data);
@@ -1927,7 +1943,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glBuffer.pglGetNamedBufferParameteri64v)
 					glBuffer.pglGetNamedBufferParameteri64v(buffer, value, data);
@@ -1945,7 +1961,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlCreateVertexArrays(GLsizei n, GLuint* arrays)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglCreateVertexArrays)
 					glVertex.pglCreateVertexArrays(n, arrays);
@@ -1961,7 +1977,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayElementBuffer)
 					glVertex.pglVertexArrayElementBuffer(vaobj, buffer);
@@ -1979,12 +1995,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexBuffer)
 					glVertex.pglVertexArrayVertexBuffer(vaobj, bindingindex, buffer, offset, stride);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayBindVertexBufferEXT)
 					glVertex.pglVertexArrayBindVertexBufferEXT(vaobj, bindingindex, buffer, offset, stride);
@@ -2002,12 +2018,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribBinding)
 					glVertex.pglVertexArrayAttribBinding(vaobj, attribindex, bindingindex);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribBindingEXT)
 					glVertex.pglVertexArrayVertexAttribBindingEXT(vaobj, attribindex, bindingindex);
@@ -2025,12 +2041,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglEnableVertexArrayAttrib)
 					glVertex.pglEnableVertexArrayAttrib(vaobj, index);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglEnableVertexArrayAttribEXT)
 					glVertex.pglEnableVertexArrayAttribEXT(vaobj, index);
@@ -2048,12 +2064,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglDisableVertexArrayAttrib)
 					glVertex.pglDisableVertexArrayAttrib(vaobj, index);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglDisableVertexArrayAttribEXT)
 					glVertex.pglDisableVertexArrayAttribEXT(vaobj, index);
@@ -2071,12 +2087,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribFormat)
 					glVertex.pglVertexArrayAttribFormat(vaobj, attribindex, size, type, normalized, relativeoffset);
 			}
-			else if (!COpenGLExtensionHandler::IsIntelGPU && COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!COpenGLDriver::IsIntelGPU && COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribFormatEXT)
 					glVertex.pglVertexArrayVertexAttribFormatEXT(vaobj, attribindex, size, type, normalized, relativeoffset);
@@ -2094,12 +2110,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribIFormat)
 					glVertex.pglVertexArrayAttribIFormat(vaobj, attribindex, size, type, relativeoffset);
 			}
-			else if (!COpenGLExtensionHandler::IsIntelGPU && COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!COpenGLDriver::IsIntelGPU && COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribIFormatEXT)
 					glVertex.pglVertexArrayVertexAttribIFormatEXT(vaobj, attribindex, size, type, relativeoffset);
@@ -2117,12 +2133,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribLFormat)
 					glVertex.pglVertexArrayAttribLFormat(vaobj, attribindex, size, type, relativeoffset);
 			}
-			else if (!COpenGLExtensionHandler::IsIntelGPU && COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!COpenGLDriver::IsIntelGPU && COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribLFormatEXT)
 					glVertex.pglVertexArrayVertexAttribLFormatEXT(vaobj, attribindex, size, type, relativeoffset);
@@ -2140,12 +2156,12 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayBindingDivisor)
 					glVertex.pglVertexArrayBindingDivisor(vaobj, bindingindex, divisor);
 			}
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexBindingDivisorEXT)
 					glVertex.pglVertexArrayVertexBindingDivisorEXT(vaobj, bindingindex, divisor);
@@ -2165,7 +2181,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTransformFeedback.pglCreateTransformFeedbacks)
 					glTransformFeedback.pglCreateTransformFeedbacks(n, ids);
@@ -2178,7 +2194,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTransformFeedback.pglTransformFeedbackBufferBase)
 					glTransformFeedback.pglTransformFeedbackBufferBase(xfb, index, buffer);
@@ -2194,7 +2210,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glTransformFeedback.pglTransformFeedbackBufferRange)
 					glTransformFeedback.pglTransformFeedbackBufferRange(xfb, index, buffer, offset, size);
@@ -2211,7 +2227,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids)
 		{
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glQuery.pglCreateQueries)
 					glQuery.pglCreateQueries(target, n, ids);
@@ -2224,7 +2240,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
 		{
-			if (COpenGLExtensionHandler::Version < 440 && !COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_query_buffer_object])
+			if (COpenGLDriver::Version < 440 && !COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_query_buffer_object])
 			{
 #ifdef _DEBuG
 				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n
@@ -2232,7 +2248,7 @@ namespace irr {
 					return;
 			}
 
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glQuery.pglGetQueryBufferObjectuiv)
 					glQuery.pglGetQueryBufferObjectuiv(id, buffer, pname, offset);
@@ -2249,7 +2265,7 @@ namespace irr {
 		}
 		inline void COpenGLFunctionTable::extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
 		{
-			if (COpenGLExtensionHandler::Version < 440 && !COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_query_buffer_object])
+			if (COpenGLDriver::Version < 440 && !COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_query_buffer_object])
 			{
 #ifdef _DEBuG
 				os::Printer::log("GL_ARB_query_buffer_object unsupported!\n
@@ -2257,7 +2273,7 @@ namespace irr {
 					return;
 			}
 
-			if (COpenGLExtensionHandler::Version >= 450 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_direct_state_access])
+			if (COpenGLDriver::Version >= 450 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glQuery.pglGetQueryBufferObjectui64v)
 					glQuery.pglGetQueryBufferObjectui64v(id, buffer, pname, offset);
@@ -2277,9 +2293,9 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlTextureBarrier()
 		{
-			if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_texture_barrier])
+			if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_texture_barrier])
 				glSync.pglTextureBarrier();
-			else if (COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_NV_texture_barrier])
+			else if (COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_NV_texture_barrier])
 				glSync.pglTextureBarrierNV();
 #ifdef _IRR_DEBUG
 			else
@@ -2318,7 +2334,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params)
 		{
-			if (COpenGLExtensionHandler::Version >= 460 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_internalformat_query])
+			if (COpenGLDriver::Version >= 460 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_internalformat_query])
 			{
 				if (glGeneral.pglGetInternalformativ)
 					glGeneral.pglGetInternalformativ(target, internalformat, pname, bufSize, params);
@@ -2327,7 +2343,7 @@ namespace irr {
 
 		inline void COpenGLFunctionTable::extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params)
 		{
-			if (COpenGLExtensionHandler::Version >= 460 || COpenGLExtensionHandler::FeatureAvailable[COpenGLExtensionHandler::EOpenGLFeatures::IRR_ARB_internalformat_query])
+			if (COpenGLDriver::Version >= 460 || COpenGLDriver::FeatureAvailable[COpenGLDriver::EOpenGLFeatures::IRR_ARB_internalformat_query])
 			{
 				if (glGeneral.pglGetInternalformati64v)
 					glGeneral.pglGetInternalformati64v(target, internalformat, pname, bufSize, params);
@@ -2336,5 +2352,5 @@ namespace irr {
 
 		}		//namespace video
 	}		//namespace irr
-//#undef GL_GLEXT_PROTOTYPES
+#undef GL_GLEXT_PROTOTYPES
 #endif
