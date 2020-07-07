@@ -25,8 +25,8 @@ class IOpenGLPipeline
                     const auto& bin = _binaries[j];
                     if (!bin.binary)
                         continue;
-                    const GLuint GLname = COpenGLExtensionHandler::extGlCreateProgram();
-                    COpenGLExtensionHandler::extGlProgramBinary(GLname, bin.format, bin.binary->data(), static_cast<uint32_t>(bin.binary->size()));
+                    const GLuint GLname = COpenGLFunctionTable::glShader.pglCreateProgram();
+                    COpenGLFunctionTable::glShader.pglProgramBinary(GLname, bin.format, bin.binary->data(), static_cast<uint32_t>(bin.binary->size()));
                     (*m_GLprograms)[i*_STAGE_COUNT+j].GLname = GLname;
                 }
 
@@ -38,7 +38,7 @@ class IOpenGLPipeline
             //shader programs can be shared so all names can be freed by any thread
             for (const auto& p : (*m_GLprograms))
                 if (p.GLname != 0u)
-                    COpenGLExtensionHandler::extGlDeleteProgram(p.GLname);
+                    COpenGLFunctionTable::extGlDeleteProgram(p.GLname);
             _IRR_ALIGNED_FREE(m_uniformValues);
         }
 
@@ -54,7 +54,7 @@ class IOpenGLPipeline
 
             IRR_ASSUME_ALIGNED(_pcData, 128);
 
-            using gl = COpenGLExtensionHandler;
+            using gl = COpenGLFunctionTable;
 	        uint32_t loc_i = 0u;
             for (auto u_it=_uniforms.begin(); u_it!=_uniforms.end(); ++u_it, ++loc_i)
             {
@@ -110,9 +110,9 @@ class IOpenGLPipeline
 			        if (is_mtx() && m.type==asset::EGVT_F32)
 			        {
 					        PFNGLPROGRAMUNIFORMMATRIX4FVPROC glProgramUniformMatrixNxMfv_fptr[3][3]{ //N - num of columns, M - num of rows because of weird OpenGL naming convention
-						        {&gl::extGlProgramUniformMatrix2fv, &gl::extGlProgramUniformMatrix2x3fv, &gl::extGlProgramUniformMatrix2x4fv},//2xM
-						        {&gl::extGlProgramUniformMatrix3x2fv, &gl::extGlProgramUniformMatrix3fv, &gl::extGlProgramUniformMatrix3x4fv},//3xM
-						        {&gl::extGlProgramUniformMatrix4x2fv, &gl::extGlProgramUniformMatrix4x3fv, &gl::extGlProgramUniformMatrix4fv} //4xM
+						        {&gl::glShader.pglProgramUniformMatrix2fv, &gl::glShader.pglProgramUniformMatrix2x3fv, &gl::glShader.pglProgramUniformMatrix2x4fv},//2xM
+						        {&gl::glShader.pglProgramUniformMatrix3x2fv, &gl::glShader.pglProgramUniformMatrix3fv, &gl::glShader.pglProgramUniformMatrix3x4fv},//3xM
+						        {&gl::glShader.pglProgramUniformMatrix4x2fv, &gl::glShader.pglProgramUniformMatrix4x3fv, &gl::glShader.pglProgramUniformMatrix4fv} //4xM
 					        };
 
 					        glProgramUniformMatrixNxMfv_fptr[m.mtxColCnt-2u][m.mtxRowCnt-2u](GLname, _locations.begin()[loc_i], m.count, m.rowMajor ? GL_TRUE : GL_FALSE, reinterpret_cast<const GLfloat*>(packed_data.data()));
@@ -124,7 +124,7 @@ class IOpenGLPipeline
 					        case asset::EGVT_F32:
 					        {
 						        PFNGLPROGRAMUNIFORM1FVPROC glProgramUniformNfv_fptr[4]{
-							        &gl::extGlProgramUniform1fv, &gl::extGlProgramUniform2fv, &gl::extGlProgramUniform3fv, &gl::extGlProgramUniform4fv
+							        &gl::glShader.pglProgramUniform1fv, &gl::glShader.pglProgramUniform2fv, &gl::glShader.pglProgramUniform3fv, &gl::glShader.pglProgramUniform4fv
 						        };
 						        glProgramUniformNfv_fptr[m.mtxRowCnt-1u](GLname, _locations.begin()[loc_i], m.count, reinterpret_cast<const GLfloat*>(packed_data.data()));
 						        break;
@@ -132,7 +132,7 @@ class IOpenGLPipeline
 					        case asset::EGVT_I32:
 					        {
 						        PFNGLPROGRAMUNIFORM1IVPROC glProgramUniformNiv_fptr[4]{
-							        &gl::extGlProgramUniform1iv, &gl::extGlProgramUniform2iv, &gl::extGlProgramUniform3iv, &gl::extGlProgramUniform4iv
+							        &gl::glShader.pglProgramUniform1iv, &gl::glShader.pglProgramUniform2iv, &gl::glShader.pglProgramUniform3iv, &gl::glShader.pglProgramUniform4iv
 						        };
 						        glProgramUniformNiv_fptr[m.mtxRowCnt-1u](GLname, _locations.begin()[loc_i], m.count, reinterpret_cast<const GLint*>(packed_data.data()));
 						        break;
@@ -140,7 +140,7 @@ class IOpenGLPipeline
 					        case asset::EGVT_U32:
 					        {
 						        PFNGLPROGRAMUNIFORM1UIVPROC glProgramUniformNuiv_fptr[4]{
-							        &gl::extGlProgramUniform1uiv, &gl::extGlProgramUniform2uiv, &gl::extGlProgramUniform3uiv, &gl::extGlProgramUniform4uiv
+							        &gl::glShader.pglProgramUniform1uiv, &gl::glShader.pglProgramUniform2uiv, &gl::glShader.pglProgramUniform3uiv, &gl::glShader.pglProgramUniform4uiv
 						        };
 						        glProgramUniformNuiv_fptr[m.mtxRowCnt-1u](GLname, _locations.begin()[loc_i], m.count, reinterpret_cast<const GLuint*>(packed_data.data()));
 						        break;

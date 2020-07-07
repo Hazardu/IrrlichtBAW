@@ -233,7 +233,7 @@ set(IRRLICHT_SRCS_NORMAL
 	#opengl
 	COpenCLHandler.cpp
 	COpenGLDriver.cpp
-	COpenGLExtensionHandler.cpp
+	COpenGLFunctionTable.cpp
 	COpenGLFrameBuffer.cpp
 	COpenGLQuery.cpp
 	${IRR_ROOT_PATH}/src/irr/video/COpenGLPipelineCache.cpp

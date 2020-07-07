@@ -19,13 +19,13 @@ class COpenGLBufferView : public IGPUBufferView
 		COpenGLBufferView(core::smart_refctd_ptr<COpenGLBuffer>&& _buffer, asset::E_FORMAT _format, size_t _offset = 0ull, size_t _size = COpenGLBufferView::whole_buffer) :
 			IGPUBufferView(std::move(_buffer), _format, _offset, _size), m_textureName(0u), m_GLformat(GL_INVALID_ENUM), m_textureSize(0u)
 		{
-			COpenGLExtensionHandler::extGlCreateTextures(GL_TEXTURE_BUFFER, 1, &m_textureName);
+			COpenGLFunctionTable::extGlCreateTextures(GL_TEXTURE_BUFFER, 1, &m_textureName);
 			m_GLformat = getSizedOpenGLFormatFromOurFormat(m_format);
 
 			if (m_offset==0u && m_size==m_buffer->getSize())
-				COpenGLExtensionHandler::extGlTextureBuffer(m_textureName, m_GLformat, static_cast<COpenGLBuffer*>(m_buffer.get())->getOpenGLName());
+				COpenGLFunctionTable::extGlTextureBuffer(m_textureName, m_GLformat, static_cast<COpenGLBuffer*>(m_buffer.get())->getOpenGLName());
 			else
-				COpenGLExtensionHandler::extGlTextureBufferRange(m_textureName, m_GLformat, static_cast<COpenGLBuffer*>(m_buffer.get())->getOpenGLName(), m_offset, m_size);
+				COpenGLFunctionTable::extGlTextureBufferRange(m_textureName, m_GLformat, static_cast<COpenGLBuffer*>(m_buffer.get())->getOpenGLName(), m_offset, m_size);
 
 			m_textureSize = m_size / asset::getTexelOrBlockBytesize(m_format);
 		}

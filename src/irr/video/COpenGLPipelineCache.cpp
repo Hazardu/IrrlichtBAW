@@ -82,12 +82,12 @@ core::smart_refctd_ptr<asset::ICPUPipelineCache> COpenGLPipelineCache::convertTo
 		uuid = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 		uuid += reinterpret_cast<const char*>(glGetString(GL_RENDERER));
 
-		uuid += std::to_string(COpenGLExtensionHandler::Version);
+		uuid += std::to_string(COpenGLFunctionTable::Version);
 
 		std::string exts;
-		for (uint32_t k = 0u; k < COpenGLExtensionHandler::IRR_OpenGL_Feature_Count; ++k)
+		for (uint32_t k = 0u; k < COpenGLFunctionTable::IRR_OpenGL_Feature_Count; ++k)
 		{
-			if (COpenGLExtensionHandler::FeatureAvailable[k])
+			if (COpenGLFunctionTable::FeatureAvailable[k])
 				exts += OpenGLFeatureStrings[k];
 		}
 		uuid += exts;

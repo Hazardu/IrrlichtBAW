@@ -26,10 +26,11 @@
 
 #include "irr/core/string/UniqueStringLiteralType.h"
 #include "GL/glext.h"
-#include "GL/glxext.h"
+//#include "GL/glxext.h"
 #include "GL/wglext.h"
 #include "irr/video/IGPUImageView.h"
 #include "SDL2/include/SDL.h"
+#include "COpenGLDriver.h"
 #include <irr\system\DynamicFunctionCaller.h>
 
 
@@ -419,24 +420,24 @@ namespace irr {
 #if defined(WGL_EXT_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
 				, wglSwapIntervalEXT
 #endif
-#if defined(GLX_SGI_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-				, glXSwapIntervalSGI
-#endif
-#if defined(GLX_EXT_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-				, glXSwapIntervalEXT
-#endif
-#if defined(GLX_MESA_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
-				, glXSwapIntervalMESA
-#endif
-				, glxWin
-				, glXMakeContextCurrent
-				, glXMakeCurrent
-				, glXDestroyContext
-				, glXDestroyWindow
-				, glXQueryExtension
-				, glXChooseFBConfig
-				, glXGetVisualFromFBConfig
-				, glXGetFBConfigAttrib
+//#if defined(GLX_SGI_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
+//				, glXSwapIntervalSGI
+//#endif
+//#if defined(GLX_EXT_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
+//				, glXSwapIntervalEXT
+//#endif
+//#if defined(GLX_MESA_swap_control) && !defined(_IRR_COMPILE_WITH_SDL_DEVICE_)
+//				, glXSwapIntervalMESA
+//#endif
+//				, glxWin
+//				, glXMakeContextCurrent
+//				, glXMakeCurrent
+//				, glXDestroyContext
+//				, glXDestroyWindow
+//				, glXQueryExtension
+//				, glXChooseFBConfig
+//				, glXGetVisualFromFBConfig
+//				, glXGetFBConfigAttrib
 			);
 			IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLgeneral, OpenGLFunctionLoader
 				, glEnablei
@@ -449,14 +450,17 @@ namespace irr {
 				, glGetBooleanv
 				, glGetDoublev
 				, glGetFloatv
-				, glGetInteger64v
 				, glGetFloati_v
+				, glGetInteger64v
 				, glGetIntegeri_v
 				, glGetBooleani_v
+				, glGetStringi
+
 				, glGetInternalformativ
 				, glGetInternalformati64v
 				, glLogicOp
 				, glFlush
+				, glClipControl
 			);
 			IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLcompute, OpenGLFunctionLoader
 				, glDispatchCompute
@@ -480,87 +484,87 @@ namespace irr {
 
 
 
-			void extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets);
-			void extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures);
-			void extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
-			void extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length);
-			void extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
-			void extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-			void extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-			void extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-			void extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
-			void extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
-			void extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels);
-			void extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels);
-			void extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels);
-			void extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
-			void extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
-			void extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data);
-			void extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
-			void extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
-			void extGlGenerateTextureMipmap(GLuint texture, GLenum target);
-			void extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params);
-			void extGlCreateSamplers(GLsizei n, GLuint* samplers);
-			void extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers);
-			void extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats);
-			GLuint64 extGlGetTextureHandle(GLuint texture);
-			GLuint64 extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler);
-			void extGlMakeTextureHandleResident(GLuint64 handle);
-			void extGlMakeTextureHandleNonResident(GLuint64 handle);
-			GLuint64 extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format);
-			void extGlMakeImageHandleResident(GLuint64 handle, GLenum access);
-			void extGlMakeImageHandleNonResident(GLuint64 handle);
-			GLboolean extGlIsTextureHandleResident(GLuint64 handle);
-			GLboolean extGlIsImageHandleResident(GLuint64 handle);
-			void extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers);
-			GLenum extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target);
-			void extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-			void extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer);
-			void extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-			void extGlActiveStencilFace(GLenum face);
-			void extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode);
-			void extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf);
-			void extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs);
-			void extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value);
-			void extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value);
-			void extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value);
-			void extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
-			void extGlCreateBuffers(GLsizei n, GLuint* buffers);
-			void extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers);
-			void extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes);
-			void extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags);
-			void extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
-			void extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
-			void* extGlMapNamedBuffer(GLuint buffer, GLbitfield access);
-			void* extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
-			void extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length);
-			GLboolean extGlUnmapNamedBuffer(GLuint buffer);
-			void extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data);
-			void extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data);
-			void extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
-			GLboolean extGlIsBuffer(GLuint buffer);
-			void extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data);
-			void extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data);
-			void extGlCreateVertexArrays(GLsizei n, GLuint* arrays);
-			void extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer);
-			void extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
-			void extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex);
-			void extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			void extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			void extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
-			void extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			void extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			void extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor);
-			void extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids);
-			void extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer);
-			void extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
-			void extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids);
-			void extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			void extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			void extGlTextureBarrier();
-			void extGlSwapInterval(int interval);
-			void extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
-			void extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params);
+			static void extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets);
+			static void extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures);
+			static void extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
+			static void extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length);
+			static void extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
+			static void extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+			static void extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+			static void extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
+			static void extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
+			static void extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
+			static void extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels);
+			static void extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels);
+			static void extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels);
+			static void extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
+			static void extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
+			static void extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data);
+			static void extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
+			static void extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
+			static void extGlGenerateTextureMipmap(GLuint texture, GLenum target);
+			static void extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params);
+			static void extGlCreateSamplers(GLsizei n, GLuint* samplers);
+			static void extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers);
+			static void extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats);
+			static GLuint64 extGlGetTextureHandle(GLuint texture);
+			static GLuint64 extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler);
+			static void extGlMakeTextureHandleResident(GLuint64 handle);
+			static void extGlMakeTextureHandleNonResident(GLuint64 handle);
+			static GLuint64 extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format);
+			static void extGlMakeImageHandleResident(GLuint64 handle, GLenum access);
+			static void extGlMakeImageHandleNonResident(GLuint64 handle);
+			static GLboolean extGlIsTextureHandleResident(GLuint64 handle);
+			static GLboolean extGlIsImageHandleResident(GLuint64 handle);
+			static void extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers);
+			static GLenum extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target);
+			static void extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
+			static void extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer);
+			static void extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+			static void extGlActiveStencilFace(GLenum face);
+			static void extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode);
+			static void extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf);
+			static void extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs);
+			static void extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value);
+			static void extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value);
+			static void extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value);
+			static void extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
+			static void extGlCreateBuffers(GLsizei n, GLuint* buffers);
+			static void extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers);
+			static void extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes);
+			static void extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags);
+			static void extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
+			static void extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
+			static void* extGlMapNamedBuffer(GLuint buffer, GLbitfield access);
+			static void* extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
+			static void extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length);
+			static GLboolean extGlUnmapNamedBuffer(GLuint buffer);
+			static void extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data);
+			static void extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data);
+			static void extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+			static GLboolean extGlIsBuffer(GLuint buffer);
+			static void extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data);
+			static void extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data);
+			static void extGlCreateVertexArrays(GLsizei n, GLuint* arrays);
+			static void extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer);
+			static void extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
+			static void extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex);
+			static void extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index);
+			static void extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index);
+			static void extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
+			static void extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
+			static void extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
+			static void extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor);
+			static void extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids);
+			static void extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer);
+			static void extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+			static void extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids);
+			static void extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
+			static void extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
+			static void extGlTextureBarrier();
+			static void extGlSwapInterval(int interval);
+			static void extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
+			static void extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params);
 
 		protected:
 			// constructor

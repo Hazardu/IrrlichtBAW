@@ -23,7 +23,7 @@ class COpenGLImage final : public IGPUImage, public IDriverMemoryAllocation
 			if (name)
 				glDeleteTextures(1,&name);
 			#ifdef OPENGL_LEAK_DEBUG
-				COpenGLExtensionHandler::textureLeaker.deregisterObj(this);
+				COpenGLFunctionTable::textureLeaker.deregisterObj(this);
 			#endif // OPENGL_LEAK_DEBUG
 		}
 
@@ -37,27 +37,27 @@ class COpenGLImage final : public IGPUImage, public IDriverMemoryAllocation
 			internalFormat(GL_INVALID_ENUM), target(GL_INVALID_ENUM), name(0u)
 		{
 			#ifdef OPENGL_LEAK_DEBUG
-				COpenGLExtensionHandler::textureLeaker.registerObj(this);
+				COpenGLFunctionTable::textureLeaker.registerObj(this);
 			#endif // OPENGL_LEAK_DEBUG
 			internalFormat = getSizedOpenGLFormatFromOurFormat(params.format);
 			switch (params.type)
 			{
 				case IGPUImage::ET_1D:
 					target = GL_TEXTURE_1D_ARRAY;
-					COpenGLExtensionHandler::extGlCreateTextures(target, 1, &name);
-					COpenGLExtensionHandler::extGlTextureStorage2D(	name, target, params.mipLevels, internalFormat,
+					COpenGLFunctionTable::extGlCreateTextures(target, 1, &name);
+					COpenGLFunctionTable::extGlTextureStorage2D(	name, target, params.mipLevels, internalFormat,
 																	params.extent.width, params.arrayLayers);
 					break;
 				case IGPUImage::ET_2D:
 					target = GL_TEXTURE_2D_ARRAY;
-					COpenGLExtensionHandler::extGlCreateTextures(target, 1, &name);
-					COpenGLExtensionHandler::extGlTextureStorage3D(	name, target, params.mipLevels, internalFormat,
+					COpenGLFunctionTable::extGlCreateTextures(target, 1, &name);
+					COpenGLFunctionTable::extGlTextureStorage3D(	name, target, params.mipLevels, internalFormat,
 																	params.extent.width, params.extent.height, params.arrayLayers);
 					break;
 				case IGPUImage::ET_3D:
 					target = GL_TEXTURE_3D;
-					COpenGLExtensionHandler::extGlCreateTextures(target, 1, &name);
-					COpenGLExtensionHandler::extGlTextureStorage3D(	name, target, params.mipLevels, internalFormat,
+					COpenGLFunctionTable::extGlCreateTextures(target, 1, &name);
+					COpenGLFunctionTable::extGlTextureStorage3D(	name, target, params.mipLevels, internalFormat,
 																	params.extent.width, params.extent.height, params.extent.depth);
 					break;
 				default:

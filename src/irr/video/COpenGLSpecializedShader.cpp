@@ -173,10 +173,10 @@ auto COpenGLSpecializedShader::compile(const COpenGLPipelineLayout* _layout, con
 	std::string glslCode = comp.compile();
 	const char* glslCode_cstr = glslCode.c_str();
 
-	GLuint GLname = COpenGLExtensionHandler::extGlCreateShaderProgramv(m_GLstage, 1u, &glslCode_cstr);
+	GLuint GLname = COpenGLFunctionTable::extGlCreateShaderProgramv(m_GLstage, 1u, &glslCode_cstr);
 
 	GLchar logbuf[1u<<12]; //4k
-	COpenGLExtensionHandler::extGlGetProgramInfoLog(GLname, sizeof(logbuf), nullptr, logbuf);
+	COpenGLFunctionTable::extGlGetProgramInfoLog(GLname, sizeof(logbuf), nullptr, logbuf);
 	if (logbuf[0])
 		os::Printer::log(logbuf, ELL_ERROR);
 
@@ -185,9 +185,9 @@ auto COpenGLSpecializedShader::compile(const COpenGLPipelineLayout* _layout, con
 
 	SProgramBinary binary;
 	GLint binaryLength = 0;
-	COpenGLExtensionHandler::extGlGetProgramiv(GLname, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
+	COpenGLFunctionTable::extGlGetProgramiv(GLname, GL_PROGRAM_BINARY_LENGTH, &binaryLength);
 	binary.binary = core::make_refctd_dynamic_array<core::smart_refctd_dynamic_array<uint8_t>>(binaryLength);
-	COpenGLExtensionHandler::extGlGetProgramBinary(GLname, binaryLength, nullptr, &binary.format, binary.binary->data());
+	COpenGLFunctionTable::extGlGetProgramBinary(GLname, binaryLength, nullptr, &binary.format, binary.binary->data());
 
 	return {GLname, std::move(binary)};
 }
@@ -196,7 +196,7 @@ void COpenGLSpecializedShader::gatherUniformLocations(GLuint _GLname) const
 {
 	m_locations.resize(m_uniformsList.size());
 	for (size_t i = 0ull; i < m_uniformsList.size(); ++i)
-		m_locations[i] = COpenGLExtensionHandler::extGlGetUniformLocation(_GLname, m_uniformsList[i].m.name.c_str());
+		m_locations[i] = COpenGLFunctionTable::extGlGetUniformLocation(_GLname, m_uniformsList[i].m.name.c_str());
 }
 
 #endif

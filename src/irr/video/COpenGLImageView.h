@@ -35,9 +35,9 @@ class COpenGLImageView final : public IGPUImageView
 			target = ViewTypeToGLenumTarget[params.viewType];
 			internalFormat = getSizedOpenGLFormatFromOurFormat(params.format);
             assert(internalFormat != GL_INVALID_ENUM);
-			//COpenGLExtensionHandler::extGlCreateTextures(target, 1, &name);
+			//COpenGLFunctionTable::extGlCreateTextures(target, 1, &name);
 			glGenTextures(1, &name);
-			COpenGLExtensionHandler::extGlTextureView(	name, target, static_cast<COpenGLImage*>(params.image.get())->getOpenGLName(), internalFormat, 
+			COpenGLFunctionTable::extGlTextureView(	name, target, static_cast<COpenGLImage*>(params.image.get())->getOpenGLName(), internalFormat, 
 														params.subresourceRange.baseMipLevel, params.subresourceRange.levelCount,
 														params.subresourceRange.baseArrayLayer, params.subresourceRange.layerCount);
 
@@ -49,7 +49,7 @@ class COpenGLImageView final : public IGPUImageView
 					continue;
 				swizzle[i] = ComponentMappingToGLenumSwizzle[currentMapping];
 			}
-			COpenGLExtensionHandler::extGlTextureParameterIuiv(name,target,GL_TEXTURE_SWIZZLE_RGBA,swizzle);
+			COpenGLFunctionTable::extGlTextureParameterIuiv(name,target,GL_TEXTURE_SWIZZLE_RGBA,swizzle);
 		}
 
 		void regenerateMipMapLevels() override
@@ -57,7 +57,7 @@ class COpenGLImageView final : public IGPUImageView
 			if (params.subresourceRange.levelCount <= 1u)
 				return;
 
-			COpenGLExtensionHandler::extGlGenerateTextureMipmap(name,target);
+			COpenGLFunctionTable::extGlGenerateTextureMipmap(name,target);
 		}
 
 		inline GLuint getOpenGLName() const { return name; }

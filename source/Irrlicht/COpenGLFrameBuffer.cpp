@@ -180,7 +180,7 @@ bool COpenGLFrameBuffer::attach(E_FBO_ATTACHMENT_POINT attachmenPoint, core::sma
     }
     if (enabledBufferCnt)
         enabledBufferCnt += 1-EFAP_COLOR_ATTACHMENT0;
-    COpenGLExtensionHandler::extGlNamedFramebufferDrawBuffers(frameBuffer, enabledBufferCnt, drawBuffers);
+    COpenGLFunctionTable::extGlNamedFramebufferDrawBuffers(frameBuffer, enabledBufferCnt, drawBuffers);
 
 	return true;
 }
