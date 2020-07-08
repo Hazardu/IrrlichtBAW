@@ -539,7 +539,7 @@ void executeGLDiff(const COpenGLStateDiff& diff)
         }
         else
         {
-            COpenGLExtensionHandler::extGlBindBuffersRange(diff.bindBufferRange[i].bindPoint,
+            COpenGLFunctionTable::extGlBindBuffersRange(diff.bindBufferRange[i].bindPoint,
                                     diff.bindBufferRange[i].index,1,
                                     NULL,NULL,NULL);
         }

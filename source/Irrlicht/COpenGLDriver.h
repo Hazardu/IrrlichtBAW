@@ -1308,6 +1308,21 @@ class COpenGLDriver final : public CNullDriver
 		static uint16_t Version;
 		static uint16_t ShaderLanguageVersion;
 		static uint8_t MaxUserClipPlanes;
+		static uint32_t MaxArrayTextureLayers;
+		static uint8_t MaxAnisotropy;
+		static uint32_t MaxGeometryVerticesOut;
+		static float MaxTextureLODBias;
+		static uint8_t MaxMultipleRenderTargets;
+		static uint8_t MaxTextureUnits; 
+
+		//! Minimal and maximal supported thickness for lines without smoothing
+		GLfloat DimAliasedLine[2];
+		//! Minimal and maximal supported thickness for points without smoothing
+		GLfloat DimAliasedPoint[2];
+		//! Minimal and maximal supported thickness for lines with smoothing
+		GLfloat DimSmoothedLine[2];
+		//! Minimal and maximal supported thickness for points with smoothing
+		GLfloat DimSmoothedPoint[2];
 
 
 		#ifdef _IRR_COMPILE_WITH_WINDOWS_DEVICE_
@@ -2132,6 +2147,7 @@ class COpenGLDriver final : public CNullDriver
 
         void cleanUpContextBeforeDelete();
 
+		void initExtensions(bool stencilBuffer);
 
         //COpenGLDriver::CGPUObjectFromAssetConverter
         class CGPUObjectFromAssetConverter;

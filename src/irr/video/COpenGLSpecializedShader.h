@@ -4,7 +4,7 @@
 #include "spirv_cross/spirv_glsl.hpp"
 #include "irr/asset/ICPUSpecializedShader.h"
 #include "irr/video/IGPUSpecializedShader.h"
-#include "COpenGlFunctionTable.h"
+#include "irr/video/COpenGLFunctionTable.h"
 #include "irr/video/COpenGLShader.h"
 #include "irr/asset/CShaderIntrospector.h"
 #include "irr/core/memory/refctd_dynamic_array.h"

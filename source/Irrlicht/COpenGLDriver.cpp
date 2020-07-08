@@ -230,7 +230,7 @@ namespace video
 //! Windows constructor and init code
 COpenGLDriver::COpenGLDriver(const irr::SIrrlichtCreationParameters& params,
 		io::IFileSystem* io, CIrrDeviceWin32* device, const asset::IGLSLCompiler* glslcomp)
-: CNullDriver(device, io, params), COpenGLFunctionTable(),   //TODO
+: CNullDriver(device, io, params), //COpenGLFunctionTable(),   // What to do here?
 	runningInRenderDoc(false),  ColorFormat(asset::EF_R8G8B8_UNORM),
 	HDc(0), Window(static_cast<HWND>(params.WindowId)), Win32Device(device),
 	AuxContexts(0), GLSLCompiler(glslcomp), DeviceType(EIDT_WIN32)
@@ -238,6 +238,14 @@ COpenGLDriver::COpenGLDriver(const irr::SIrrlichtCreationParameters& params,
 	#ifdef _IRR_DEBUG
 	setDebugName("COpenGLDriver");
 	#endif
+    DimAliasedLine[0]=1.f;
+	DimAliasedLine[1]=1.f;
+	DimAliasedPoint[0]=1.f;
+	DimAliasedPoint[1]=1.f;
+	DimSmoothedLine[0]=1.f;
+	DimSmoothedLine[1]=1.f;
+	DimSmoothedPoint[0]=1.f;
+	DimSmoothedPoint[1]=1.f;
 }
 
 bool COpenGLDriver::changeRenderContext(const SExposedVideoData& videoData, CIrrDeviceWin32* device)
@@ -680,6 +688,14 @@ COpenGLDriver::COpenGLDriver(const SIrrlichtCreationParameters& params,
 	#ifdef _IRR_DEBUG
 	setDebugName("COpenGLDriver");
 	#endif
+    DimAliasedLine[0] = 1.f;
+    DimAliasedLine[1] = 1.f;
+    DimAliasedPoint[0] = 1.f;
+    DimAliasedPoint[1] = 1.f;
+    DimSmoothedLine[0] = 1.f;
+    DimSmoothedLine[1] = 1.f;
+    DimSmoothedPoint[0] = 1.f;
+    DimSmoothedPoint[1] = 1.f;
 }
 
 
@@ -1177,8 +1193,8 @@ const core::smart_refctd_dynamic_array<std::string> COpenGLDriver::getSupportedG
         for (size_t j = 0ull; j < GLSLcnt; ++j)
             if (FeatureAvailable[m_GLSLExtensions[j]])
                 (*m_supportedGLSLExtsNames)[i++] = OpenGLFeatureStrings[m_GLSLExtensions[j]];
-        if (runningInRenderDoc)
-            (*m_supportedGLSLExtsNames)[i] = RUNNING_IN_RENDERDOC_EXTENSION_NAME;
+        //if (runningInRenderDoc)
+        //    (*m_supportedGLSLExtsNames)[i] = RUNNING_IN_RENDERDOC_EXTENSION_NAME;
     }
 
     return m_supportedGLSLExtsNames;
@@ -2392,11 +2408,15 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             glLogicOp(nextState.rasterParams.logicOp);
             UPDATE_STATE(rasterParams.logicOp);
         }
-        decltype(COpenGLFunctionTable::glGeneral.pglEnablei)* disable_enable_indexed_fptr[2]{ &COpenGLFunctionTable::glGeneral.pglDisablei, &COpenGLFunctionTable::glGeneral.pglEnablei };
+        //decltype(COpenGLFunctionTable::glGeneral.pglEnablei)* disable_enable_indexed_fptr[2]{ &COpenGLFunctionTable::glGeneral.pglDisablei, &COpenGLFunctionTable::glGeneral.pglEnablei };
         for (GLuint i=0u; i<asset::SBlendParams::MAX_COLOR_ATTACHMENT_COUNT; i++)
         {
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].blendEnable)) {
-                disable_enable_indexed_fptr[nextState.rasterParams.drawbufferBlend[i].blendEnable](GL_BLEND, i);
+                if (nextState.rasterParams.drawbufferBlend[i].blendEnable == GL_TRUE)
+                    COpenGLFunctionTable::glGeneral.pglEnablei(GL_BLEND, i);
+                else
+                    COpenGLFunctionTable::glGeneral.pglDisablei(GL_BLEND, i);
+                
                 UPDATE_STATE(rasterParams.drawbufferBlend[i].blendEnable);
             }
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].blendFunc)) {
@@ -3282,9 +3302,118 @@ void COpenGLDriver::enableClipPlane(uint32_t index, bool enable)
 		glDisable(GL_CLIP_DISTANCE0 + index);
 }
 
+void COpenGLDriver::initExtensions(bool stencilBuffer)
+{
+    core::stringc vendorString = (char*)glGetString(GL_VENDOR);
+    if (vendorString.find("Intel")!=-1 || vendorString.find("INTEL")!=-1)
+	    IsIntelGPU = true;
 
-} // end namespace
-} // end namespace
+	//TextureCompressionExtension = FeatureAvailable[IRR_ARB_texture_compression];
+	//StencilBuffer = stencilBuffer;
+
+
+	GLint num = 0;
+
+	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &reqUBOAlignment);
+    assert(core::is_alignment(reqUBOAlignment));
+	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &reqSSBOAlignment);
+    assert(core::is_alignment(reqSSBOAlignment));
+	glGetIntegerv(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &reqTBOAlignment);
+    assert(core::is_alignment(reqTBOAlignment));
+
+    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxUBOSize));
+    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxSSBOSize));
+    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_TEXTURE_BUFFER_SIZE, reinterpret_cast<GLint64*>(&maxTBOSizeInTexels));
+    maxBufferSize = std::max(maxUBOSize, maxSSBOSize);
+
+    glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, reinterpret_cast<GLint*>(&maxUBOBindings));
+    glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, reinterpret_cast<GLint*>(&maxSSBOBindings));
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&maxTextureBindings));
+    glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&maxTextureBindingsCompute));
+    glGetIntegerv(GL_MAX_COMBINED_IMAGE_UNIFORMS, reinterpret_cast<GLint*>(&maxImageBindings));
+
+	glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &minMemoryMapAlignment);
+
+    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, MaxComputeWGSize);
+    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, MaxComputeWGSize + 1);
+    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, MaxComputeWGSize+2);
+
+
+	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &num);
+	MaxArrayTextureLayers = num;
+
+	if (FeatureAvailable[IRR_EXT_texture_filter_anisotropic])
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &num);
+		MaxAnisotropy = static_cast<uint8_t>(num);
+	}
+
+
+    if (FeatureAvailable[IRR_ARB_geometry_shader4])
+    {
+        glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES, &num);
+        MaxGeometryVerticesOut = static_cast<uint32_t>(num);
+    }
+
+	if (FeatureAvailable[IRR_EXT_texture_lod_bias])
+		glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS_EXT, &MaxTextureLODBias);
+
+
+	glGetIntegerv(GL_MAX_CLIP_DISTANCES, &num);
+	MaxUserClipPlanes=static_cast<uint8_t>(num);
+    glGetIntegerv(GL_MAX_DRAW_BUFFERS, &num);
+    MaxMultipleRenderTargets = static_cast<uint8_t>(num);
+
+	glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, DimAliasedLine);
+	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, DimAliasedPoint);
+	glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, DimSmoothedLine);
+	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE, DimSmoothedPoint);
+
+    const GLubyte* shaderVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    float sl_ver;
+    sscanf(reinterpret_cast<const char*>(shaderVersion),"%f",&sl_ver);
+    ShaderLanguageVersion = static_cast<uint16_t>(core::round(sl_ver*100.0f));
+
+
+	//! For EXT-DSA testing
+	if (IsIntelGPU)
+	{
+		Version = 440;
+		FeatureAvailable[IRR_ARB_direct_state_access] = false;
+	}
+    num=0;
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &num);
+	MaxTextureUnits = num;
+
+#ifdef WIN32
+#ifdef _IRR_DEBUG
+	if (FeatureAvailable[IRR_NVX_gpu_memory_info])
+	{
+		// undocumented flags, so use the RAW values
+		GLint val;
+		glGetIntegerv(0x9047, &val);
+		os::Printer::log("Dedicated video memory (kB)", std::to_string(val));
+		glGetIntegerv(0x9048, &val);
+		os::Printer::log("Total video memory (kB)", std::to_string(val));
+		glGetIntegerv(0x9049, &val);
+		os::Printer::log("Available video memory (kB)", std::to_string(val));
+	}
+	if (FeatureAvailable[IRR_ATI_meminfo])
+	{
+		GLint val[4];
+		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, val);
+		os::Printer::log("Free texture memory (kB)", std::to_string(val[0]));
+		glGetIntegerv(GL_VBO_FREE_MEMORY_ATI, val);
+		os::Printer::log("Free VBO memory (kB)", std::to_string(val[0]));
+		glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI, val);
+		os::Printer::log("Free render buffer memory (kB)", std::to_string(val[0]));
+	}
+#endif
+#endif
+}
+
+} // end namespace video
+} // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_OPENGL_
 
