@@ -11,7 +11,6 @@
 #include "aabbox3d.h"
 #include "CConcurrentObjectCache.h"
 #include "CObjectCache.h"
-#include "COpenGLStateManager.h"
 #include "dimension2d.h"
 #include "EDeviceTypes.h"
 #include "EDriverTypes.h"

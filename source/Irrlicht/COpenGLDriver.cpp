@@ -230,7 +230,7 @@ namespace video
 //! Windows constructor and init code
 COpenGLDriver::COpenGLDriver(const irr::SIrrlichtCreationParameters& params,
 		io::IFileSystem* io, CIrrDeviceWin32* device, const asset::IGLSLCompiler* glslcomp)
-: CNullDriver(device, io, params), //COpenGLFunctionTable(),   // What to do here?
+: CNullDriver(device, io, params), COpenGLFunctionTable(),
 	runningInRenderDoc(false),  ColorFormat(asset::EF_R8G8B8_UNORM),
 	HDc(0), Window(static_cast<HWND>(params.WindowId)), Win32Device(device),
 	AuxContexts(0), GLSLCompiler(glslcomp), DeviceType(EIDT_WIN32)
@@ -1193,8 +1193,8 @@ const core::smart_refctd_dynamic_array<std::string> COpenGLDriver::getSupportedG
         for (size_t j = 0ull; j < GLSLcnt; ++j)
             if (FeatureAvailable[m_GLSLExtensions[j]])
                 (*m_supportedGLSLExtsNames)[i++] = OpenGLFeatureStrings[m_GLSLExtensions[j]];
-        //if (runningInRenderDoc)
-        //    (*m_supportedGLSLExtsNames)[i] = RUNNING_IN_RENDERDOC_EXTENSION_NAME;
+        if (runningInRenderDoc)
+            (*m_supportedGLSLExtsNames)[i] = RUNNING_IN_RENDERDOC_EXTENSION_NAME;
     }
 
     return m_supportedGLSLExtsNames;
