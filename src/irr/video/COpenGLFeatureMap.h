@@ -519,6 +519,7 @@ static const char* const OpenGLFeatureStrings[] = {
 class COpenGLFeatureMap
 {
 
+public:
 	enum EOpenGLFeatures {
 		IRR_3DFX_multisample = 0,
 		IRR_3DFX_tbuffer,

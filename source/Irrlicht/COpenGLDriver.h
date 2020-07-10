@@ -204,7 +204,7 @@ template<> struct pipeline_for_bindpoint<EPBP_GRAPHICS> { using type = COpenGLRe
 template<E_PIPELINE_BIND_POINT PBP>
 using pipeline_for_bindpoint_t = typename pipeline_for_bindpoint<PBP>::type;
 
-class COpenGLDriver final : public CNullDriver, COpenGLFeatureMap
+class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public COpenGLFunctionTable
 {
     protected:
 		//! destructor
@@ -855,6 +855,7 @@ class COpenGLDriver final : public CNullDriver, COpenGLFeatureMap
         struct SAuxContext
         {
         //public:
+
             struct SPipelineCacheVal
             {
                 GLuint GLname;
@@ -898,6 +899,8 @@ class COpenGLDriver final : public CNullDriver, COpenGLFeatureMap
         //private:
             std::thread::id threadId;
             uint8_t ID; //index in array of contexts, just to be easier in use
+			COpenGLFunctionTable* FunctionTable;	//Function Table Object
+
             #ifdef _IRR_WINDOWS_API_
                 HGLRC ctx;
             #endif
@@ -975,7 +978,7 @@ class COpenGLDriver final : public CNullDriver, COpenGLFeatureMap
 
                     if (CNullDriver::ReallocationCounter-it->second.lastUsed>1000) //maybe make this configurable
                     {
-                        glVertex.pglDeleteVertexArrays(1, &it->second.GLname);
+                        FunctionTable->glVertex.pglDeleteVertexArrays(1, &it->second.GLname);
                         it = VAOMap.erase(it);
                         if (exitOnFirstDelete)
                             return;
@@ -994,7 +997,7 @@ class COpenGLDriver final : public CNullDriver, COpenGLFeatureMap
 
                     if (CNullDriver::ReallocationCounter-it->second.lastUsed > 1000) //maybe make this configurable
                     {
-						COpenGLFunctionTable::glShader.pglDeleteProgramPipelines(1, &it->second.GLname);
+						FunctionTable->glShader.pglDeleteProgramPipelines(1, &it->second.GLname);
                         it = GraphicsPipelineMap.erase(it);
                         if (exitOnFirstDelete)
                             return;

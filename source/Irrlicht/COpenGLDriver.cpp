@@ -222,7 +222,6 @@ namespace irr
 {
 namespace video
 {
-
 // -----------------------------------------------------------------------
 // WINDOWS CONSTRUCTOR
 // -----------------------------------------------------------------------
@@ -587,12 +586,16 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
         AuxContexts[0].threadId = std::this_thread::get_id();
         AuxContexts[0].ctx = hrc;
         AuxContexts[0].ID = 0u;
+        AuxContexts[0].FunctionTable = this;
+
     }
 	for (size_t i=1; i<=Params.AuxGLContexts; i++)
     {
         AuxContexts[i].threadId = std::thread::id(); //invalid ID
         AuxContexts[i].ctx = wglCreateContextAttribs_ARB(HDc, hrc, iAttribs);
         AuxContexts[i].ID = static_cast<uint8_t>(i);
+        AuxContexts[i].FunctionTable = this;
+
     }
 
 	// set exposed data
@@ -1088,8 +1091,8 @@ bool COpenGLDriver::genericDriverInit(asset::IAssetManager* assMgr)
 	initExtensions(Params.Stencilbuffer);
 
     char buf[32];
-    const uint32_t maj = ShaderLanguageVersion/10;
-    snprintf(buf, 32, "%u.%u", maj, ShaderLanguageVersion-maj*10);
+    const uint32_t maj = COpenGLFeatureMap::ShaderLanguageVersion/10;
+    snprintf(buf, 32, "%u.%u", maj, COpenGLFeatureMap::ShaderLanguageVersion-maj*10);
     os::Printer::log("GLSL version", buf, ELL_INFORMATION);
 
     if (Version<430)
@@ -2496,7 +2499,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
 
                 if (brandNewVAO)
                 {
-                    COpenGLFunctionTable::glVertex.pglVertexArrayAttribBinding(vao, attr, bnd);
+                   glVertex.pglVertexArrayAttribBinding(vao, attr, bnd);
 
                     const asset::E_FORMAT format = static_cast<asset::E_FORMAT>(hashVal.attribFormatAndComponentCount[attr]);
 

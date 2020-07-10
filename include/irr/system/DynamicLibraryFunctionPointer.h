@@ -46,7 +46,7 @@ class DynamicLibraryFunctionPointer
 			assert(error);
 			return error(name);
 		}
-
+		/*
 		template<typename... T>
 		inline result_type operator()(std::function<void(const char*)> error, T&& ... args)
 		{
@@ -56,6 +56,7 @@ class DynamicLibraryFunctionPointer
 				error(name);
 			return result_type{};
 		}
+		*/
 
 		template<typename... T>
 		inline result_type operator()(T&& ... args)
