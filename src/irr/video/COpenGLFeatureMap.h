@@ -9,7 +9,13 @@ namespace irr {
 	{
 
 
-static const char* const OpenGLFeatureStrings[] = {
+
+
+class COpenGLFeatureMap
+{
+public:
+
+	inline static const char* const OpenGLFeatureStrings[] = {
 	"GL_3DFX_multisample",
 	"GL_3DFX_tbuffer",
 	"GL_3DFX_texture_compression_FXT1",
@@ -514,12 +520,6 @@ static const char* const OpenGLFeatureStrings[] = {
 	"GL_NVX_gpu_memory_info",
 	"GL_NVX_multiview_per_view_attributes"
 };
-
-
-class COpenGLFeatureMap
-{
-
-public:
 	enum EOpenGLFeatures {
 		IRR_3DFX_multisample = 0,
 		IRR_3DFX_tbuffer,

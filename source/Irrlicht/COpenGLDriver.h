@@ -26,6 +26,7 @@ namespace irr
 #include "irr/video/COpenGLPipelineLayout.h"
 #include "irr/video/COpenGLComputePipeline.h"
 #include "irr/video/COpenGLFeatureMap.h"
+#include "irr/video/COpenGLCommon.h"
 
 #include "CNullDriver.h"
 // also includes the OpenGL stuff
@@ -204,7 +205,7 @@ template<> struct pipeline_for_bindpoint<EPBP_GRAPHICS> { using type = COpenGLRe
 template<E_PIPELINE_BIND_POINT PBP>
 using pipeline_for_bindpoint_t = typename pipeline_for_bindpoint<PBP>::type;
 
-class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public COpenGLFunctionTable
+class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap
 {
     protected:
 		//! destructor
@@ -470,7 +471,8 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
 				default:
 				{
 					GLint res = GL_FALSE;
-					glGeneral.pglGetInternalformativ(GL_TEXTURE_2D, getSizedOpenGLFormatFromOurFormat(_fmt), GL_COLOR_RENDERABLE, sizeof(res), &res);
+					//this is troublesome, how to obtain context reference here?
+					//functionTable.glGeneral.pglGetInternalformativ(GL_TEXTURE_2D, getSizedOpenGLFormatFromOurFormat(_fmt), GL_COLOR_RENDERABLE, sizeof(res), &res);
 					return res==GL_TRUE;
 				}
             }
@@ -769,7 +771,7 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
 		virtual bool queryFeature(const E_DRIVER_FEATURE& feature) const;
 
 		//!
-		virtual void issueGPUTextureBarrier() { COpenGLFunctionTable::glSync.pglTextureBarrier();}
+		virtual void issueGPUTextureBarrier() { getThreadContext_helper(false)->functionTable.glSync.pglTextureBarrier();}
 
         //! needs to be "deleted" since its not refcounted
         virtual core::smart_refctd_ptr<IDriverFence> placeFence(const bool& implicitFlushWaitSameThread=false) override final
@@ -899,7 +901,7 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
         //private:
             std::thread::id threadId;
             uint8_t ID; //index in array of contexts, just to be easier in use
-			COpenGLFunctionTable* FunctionTable;	//Function Table Object
+			COpenGLFunctionTable functionTable;
 
             #ifdef _IRR_WINDOWS_API_
                 HGLRC ctx;
@@ -978,7 +980,7 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
 
                     if (CNullDriver::ReallocationCounter-it->second.lastUsed>1000) //maybe make this configurable
                     {
-                        FunctionTable->glVertex.pglDeleteVertexArrays(1, &it->second.GLname);
+                        functionTable.glVertex.pglDeleteVertexArrays(1, &it->second.GLname);
                         it = VAOMap.erase(it);
                         if (exitOnFirstDelete)
                             return;
@@ -997,7 +999,7 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
 
                     if (CNullDriver::ReallocationCounter-it->second.lastUsed > 1000) //maybe make this configurable
                     {
-						FunctionTable->glShader.pglDeleteProgramPipelines(1, &it->second.GLname);
+						functionTable.glShader.pglDeleteProgramPipelines(1, &it->second.GLname);
                         it = GraphicsPipelineMap.erase(it);
                         if (exitOnFirstDelete)
                             return;
@@ -1071,6 +1073,7 @@ class COpenGLDriver final : public CNullDriver, public COpenGLFeatureMap, public
         core::map<PipelineMapKeyT, GLuint> Pipelines;
 
         bool runningInRenderDoc;
+		_IRR_STATIC_INLINE_CONSTEXPR const char* RUNNING_IN_RENDERDOC_EXTENSION_NAME = "GL_IRR_RUNNING_IN_RENDERDOC";
 
 		// returns the current size of the screen or rendertarget
 		virtual const core::dimension2d<uint32_t>& getCurrentRenderTargetSize();

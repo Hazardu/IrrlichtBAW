@@ -230,14 +230,12 @@ namespace irr {
 				, glIsImageHandleResidentARB
 				, glGetTextureHandleNV
 				, glGetTextureSamplerHandleNV
-				, glMakeTextureHandleResidentARB
 				, glMakeTextureHandleNonResidentNV
 				, glGetImageHandleNV
 				, glMakeImageHandleResidentNV
 				, glMakeImageHandleNonResidentNV
 				, glIsTextureHandleResidentNV
 				, glIsImageHandleResidentNV
-				, glMakeTextureHandleResidentARB
 				, glMakeTextureHandleResidentNV
 			);
 			IRR_SYSTEM_DECLARE_DYNAMIC_FUNCTION_CALLER_CLASS(GLshader, OpenGLFunctionLoader
@@ -479,101 +477,98 @@ namespace irr {
 
 
 
-			void extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets);
-			void extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures);
-			void extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
-			void extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length);
-			void extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
-			void extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-			void extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-			void extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-			void extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
-			void extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
-			void extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels);
-			void extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels);
-			void extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels);
-			void extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
-			void extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
-			void extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data);
-			void extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
-			void extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
-			void extGlGenerateTextureMipmap(GLuint texture, GLenum target);
-			void extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params);
-			void extGlCreateSamplers(GLsizei n, GLuint* samplers);
-			void extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers);
-			void extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats);
-			GLuint64 extGlGetTextureHandle(GLuint texture);
-			GLuint64 extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler);
-			void extGlMakeTextureHandleResident(GLuint64 handle);
-			void extGlMakeTextureHandleNonResident(GLuint64 handle);
-			GLuint64 extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format);
-			void extGlMakeImageHandleResident(GLuint64 handle, GLenum access);
-			void extGlMakeImageHandleNonResident(GLuint64 handle);
-			GLboolean extGlIsTextureHandleResident(GLuint64 handle);
-			GLboolean extGlIsImageHandleResident(GLuint64 handle);
-			void extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers);
-			GLenum extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target);
-			void extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-			void extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer);
-			void extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-			void extGlActiveStencilFace(GLenum face);
-			void extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode);
-			void extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf);
-			void extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs);
-			void extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value);
-			void extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value);
-			void extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value);
-			void extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
-			void extGlCreateBuffers(GLsizei n, GLuint* buffers);
-			void extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers);
-			void extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes);
-			void extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags);
-			void extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
-			void extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
-			void* extGlMapNamedBuffer(GLuint buffer, GLbitfield access);
-			void* extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
-			void extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length);
-			GLboolean extGlUnmapNamedBuffer(GLuint buffer);
-			void extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data);
-			void extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data);
-			void extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
-			GLboolean extGlIsBuffer(GLuint buffer);
-			void extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data);
-			void extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data);
-			void extGlCreateVertexArrays(GLsizei n, GLuint* arrays);
-			void extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer);
-			void extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
-			void extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex);
-			void extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			void extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index);
-			void extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
-			void extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			void extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-			void extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor);
-			void extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids);
-			void extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer);
-			void extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
-			void extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids);
-			void extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			void extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
-			void extGlTextureBarrier();
-			void extGlSwapInterval(int interval);
-			void extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
-			void extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params);
-
-		protected:
-			// constructor
-			COpenGLFunctionTable();
-
-		private:
+			inline void extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets);
+			inline void extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures);
+			inline void extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
+			inline void extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length);
+			inline void extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
+			inline void extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+			inline void extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+			inline void extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
+			inline void extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
+			inline void extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
+			inline void extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels);
+			inline void extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels);
+			inline void extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels);
+			inline void extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels);
+			inline void extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels);
+			inline void extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data);
+			inline void extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data);
+			inline void extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data);
+			inline void extGlGenerateTextureMipmap(GLuint texture, GLenum target);
+			inline void extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params);
+			inline void extGlCreateSamplers(GLsizei n, GLuint* samplers);
+			inline void extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers);
+			inline void extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats);
+			inline GLuint64 extGlGetTextureHandle(GLuint texture);
+			inline GLuint64 extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler);
+			inline void extGlMakeTextureHandleResident(GLuint64 handle);
+			inline void extGlMakeTextureHandleNonResident(GLuint64 handle);
+			inline GLuint64 extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format);
+			inline void extGlMakeImageHandleResident(GLuint64 handle, GLenum access);
+			inline void extGlMakeImageHandleNonResident(GLuint64 handle);
+			inline GLboolean extGlIsTextureHandleResident(GLuint64 handle);
+			inline GLboolean extGlIsImageHandleResident(GLuint64 handle);
+			inline void extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers);
+			inline GLenum extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target);
+			inline void extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
+			inline void extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer);
+			inline void extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+			inline void extGlActiveStencilFace(GLenum face);
+			inline void extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode);
+			inline void extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf);
+			inline void extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs);
+			inline void extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value);
+			inline void extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value);
+			inline void extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value);
+			inline void extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
+			inline void extGlCreateBuffers(GLsizei n, GLuint* buffers);
+			inline void extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers);
+			inline void extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes);
+			inline void extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags);
+			inline void extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
+			inline void extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
+			inline void* extGlMapNamedBuffer(GLuint buffer, GLbitfield access);
+			inline void* extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
+			inline void extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length);
+			inline GLboolean extGlUnmapNamedBuffer(GLuint buffer);
+			inline void extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data);
+			inline void extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data);
+			inline void extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+			inline GLboolean extGlIsBuffer(GLuint buffer);
+			inline void extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data);
+			inline void extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data);
+			inline void extGlCreateVertexArrays(GLsizei n, GLuint* arrays);
+			inline void extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer);
+			inline void extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
+			inline void extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex);
+			inline void extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index);
+			inline void extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index);
+			inline void extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
+			inline void extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
+			inline void extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
+			inline void extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor);
+			inline void extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids);
+			inline void extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer);
+			inline void extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+			inline void extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids);
+			inline void extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
+			inline void extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset);
+			inline void extGlTextureBarrier();
+			inline void extGlSwapInterval(int interval);
+			inline void extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
+			inline void extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params);
 
 			static bool IsIntelGPU;
 			static bool needsDSAFramebufferHack;
+			// constructor
+			COpenGLFunctionTable();
+
 
 		};	// end of class COpenGLFunctionTable
 
 
-		void COpenGLFunctionTable::extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets)
+		inline void COpenGLFunctionTable::extGlBindTextures(const GLuint& first, const GLsizei& count, const GLuint* textures, const GLenum* targets)
 		{
 			const GLenum supportedTargets[] = { GL_TEXTURE_1D,GL_TEXTURE_2D, // GL 1.x
 												GL_TEXTURE_3D,GL_TEXTURE_RECTANGLE,GL_TEXTURE_CUBE_MAP, // GL 2.x
@@ -606,14 +601,14 @@ namespace irr {
 				glTexture.pglActiveTexture(activeTex);
 			}
 		}
-		void COpenGLFunctionTable::extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures)
+		inline void COpenGLFunctionTable::extGlCreateTextures(GLenum target, GLsizei n, GLuint* textures)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglCreateTextures(target, n, textures);
 			else
 				glGenTextures(n, textures);
 		}
-		void COpenGLFunctionTable::extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer)
+		inline void COpenGLFunctionTable::extGlTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureBuffer(texture, internalformat, buffer);
@@ -628,7 +623,7 @@ namespace irr {
 				glBindTexture(GL_TEXTURE_BUFFER, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length)
+		inline void COpenGLFunctionTable::extGlTextureBufferRange(GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizei length)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -651,7 +646,7 @@ namespace irr {
 				glBindTexture(GL_TEXTURE_BUFFER, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
+		inline void COpenGLFunctionTable::extGlTextureStorage1D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -680,7 +675,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+		inline void COpenGLFunctionTable::extGlTextureStorage2D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -718,7 +713,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+		inline void COpenGLFunctionTable::extGlTextureStorage3D(GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage3D(texture, levels, internalformat, width, height, depth);
@@ -747,7 +742,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+		inline void COpenGLFunctionTable::extGlTextureStorage2DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage2DMultisample(texture, samples, internalformat, width, height, fixedsamplelocations);
@@ -768,7 +763,7 @@ namespace irr {
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations)
+		inline void COpenGLFunctionTable::extGlTextureStorage3DMultisample(GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureStorage3DMultisample(texture, samples, internalformat, width, height, depth, fixedsamplelocations);
@@ -789,7 +784,7 @@ namespace irr {
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels)
+		inline void COpenGLFunctionTable::extGlGetTextureSubImage(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_get_texture_sub_image])
 				glTexture.pglGetTextureSubImage(texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, bufSize, pixels);
@@ -798,7 +793,7 @@ namespace irr {
 				os::Printer::log("EDF_GET_TEXTURE_SUB_IMAGE Not Available! Tell DevSH to implement!\n", ELL_ERROR);
 #endif // _IRR_DEBUG
 		}
-		void COpenGLFunctionTable::extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels)
+		inline void COpenGLFunctionTable::extGlGetTextureImage(GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSizeHint, void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglGetTextureImage(texture, level, format, type, bufSizeHint, pixels);
@@ -847,7 +842,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels)
+		inline void COpenGLFunctionTable::extGlGetCompressedTextureImage(GLuint texture, GLenum target, GLint level, GLsizei bufSizeHint, void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglGetCompressedTextureImage(texture, level, bufSizeHint, pixels);
@@ -896,7 +891,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels)
+		inline void COpenGLFunctionTable::extGlTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage1D(texture, level, xoffset, width, format, type, pixels);
@@ -919,7 +914,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels)
+		inline void COpenGLFunctionTable::extGlTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, type, pixels);
@@ -959,7 +954,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
+		inline void COpenGLFunctionTable::extGlTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureSubImage3D(texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
@@ -994,7 +989,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data)
+		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage1D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1023,7 +1018,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
+		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage2D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1063,7 +1058,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data)
+		inline void COpenGLFunctionTable::extGlCompressedTextureSubImage3D(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1101,7 +1096,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlGenerateTextureMipmap(GLuint texture, GLenum target)
+		inline void COpenGLFunctionTable::extGlGenerateTextureMipmap(GLuint texture, GLenum target)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1160,7 +1155,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params)
+		inline void COpenGLFunctionTable::extGlTextureParameterIuiv(GLuint texture, GLenum target, GLenum pname, const GLuint* params)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				glTexture.pglTextureParameterIuiv(texture, pname, params);
@@ -1213,7 +1208,7 @@ namespace irr {
 				glBindTexture(target, bound);
 			}
 		}
-		void COpenGLFunctionTable::extGlCreateSamplers(GLsizei n, GLuint* samplers)
+		inline void COpenGLFunctionTable::extGlCreateSamplers(GLsizei n, GLuint* samplers)
 		{
 			if (glTexture.pglCreateSamplers)
 				glTexture.pglCreateSamplers(n, samplers);
@@ -1221,7 +1216,7 @@ namespace irr {
 				glTexture.pglGenSamplers(n, samplers);
 			else memset(samplers, 0, 4 * n);
 		}
-		void COpenGLFunctionTable::extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers)
+		inline void COpenGLFunctionTable::extGlBindSamplers(const GLuint& first, const GLsizei& count, const GLuint* samplers)
 		{
 			if (COpenGLFeatureMap::Version >= 440 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
@@ -1246,22 +1241,7 @@ namespace irr {
 				}
 			}
 		}
-		//void COpenGLFunctionTable::extGlBindImageTextures(GLuint first, GLsizei count, const GLuint* textures, const GLenum* formats)
-		//{
-		//	if (glTexture.pglBindImageTextures)
-		//		glTexture.pglBindImageTextures(first, count, textures);
-		//	else
-		//	{
-		//		for (GLsizei i = 0; i < count; i++)
-		//		{
-		//			if (!textures || textures[i] == 0u)
-		//				extGlBindImageTexture(first + i, 0u, 0u, GL_FALSE, 0, GL_READ_WRITE, GL_R8);
-		//			else
-		//				extGlBindImageTexture(first + i, textures[i], 0, GL_TRUE, 0, GL_READ_WRITE, formats[i]);
-		//		}
-		//	}
-		//}
-		GLuint64 COpenGLFunctionTable::extGlGetTextureHandle(GLuint texture)
+		inline GLuint64 COpenGLFunctionTable::extGlGetTextureHandle(GLuint texture)
 		{
 			if (glTexture.pglGetTextureHandleARB)
 				return glTexture.pglGetTextureHandleARB(texture);
@@ -1269,7 +1249,7 @@ namespace irr {
 				return glTexture.pglGetTextureHandleNV(texture);
 			return 0ull;
 		}
-		GLuint64 COpenGLFunctionTable::extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler)
+		inline GLuint64 COpenGLFunctionTable::extGlGetTextureSamplerHandle(GLuint texture, GLuint sampler)
 		{
 			if (glTexture.pglGetTextureSamplerHandleARB)
 				return glTexture.pglGetTextureSamplerHandleARB(texture, sampler);
@@ -1277,21 +1257,21 @@ namespace irr {
 				return glTexture.pglGetTextureSamplerHandleNV(texture, sampler);
 			return 0ull;
 		}
-		void COpenGLFunctionTable::extGlMakeTextureHandleResident(GLuint64 handle)
+		inline void COpenGLFunctionTable::extGlMakeTextureHandleResident(GLuint64 handle)
 		{
 			if (glTexture.pglMakeTextureHandleResidentARB)
 				return glTexture.pglMakeTextureHandleResidentARB(handle);
 			else if (glTexture.pglMakeTextureHandleResidentNV)
 				return glTexture.pglMakeTextureHandleResidentNV(handle);
 		}
-		void COpenGLFunctionTable::extGlMakeTextureHandleNonResident(GLuint64 handle)
+		inline void COpenGLFunctionTable::extGlMakeTextureHandleNonResident(GLuint64 handle)
 		{
 			if (glTexture.pglMakeTextureHandleNonResidentARB)
 				return glTexture.pglMakeTextureHandleNonResidentARB(handle);
 			else if (glTexture.pglMakeTextureHandleNonResidentNV)
 				return glTexture.pglMakeTextureHandleNonResidentNV(handle);
 		}
-		GLuint64 COpenGLFunctionTable::extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format)
+		inline GLuint64 COpenGLFunctionTable::extGlGetImageHandle(GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format)
 		{
 			if (glTexture.pglGetImageHandleARB)
 				return glTexture.pglGetImageHandleARB(texture, level, layered, layer, format);
@@ -1299,21 +1279,21 @@ namespace irr {
 				return glTexture.pglGetImageHandleNV(texture, level, layered, layer, format);
 			return 0ull;
 		}
-		void COpenGLFunctionTable::extGlMakeImageHandleResident(GLuint64 handle, GLenum access)
+		inline void COpenGLFunctionTable::extGlMakeImageHandleResident(GLuint64 handle, GLenum access)
 		{
 			if (glTexture.pglMakeImageHandleResidentARB)
 				return glTexture.pglMakeImageHandleResidentARB(handle, access);
 			else if (glTexture.pglMakeImageHandleResidentNV)
 				return glTexture.pglMakeImageHandleResidentNV(handle, access);
 		}
-		void COpenGLFunctionTable::extGlMakeImageHandleNonResident(GLuint64 handle)
+		inline void COpenGLFunctionTable::extGlMakeImageHandleNonResident(GLuint64 handle)
 		{
 			if (glTexture.pglMakeImageHandleNonResidentARB)
 				return glTexture.pglMakeImageHandleNonResidentARB(handle);
 			else if (glTexture.pglMakeImageHandleNonResidentNV)
 				return glTexture.pglMakeImageHandleNonResidentNV(handle);
 		}
-		GLboolean COpenGLFunctionTable::extGlIsTextureHandleResident(GLuint64 handle)
+		inline GLboolean COpenGLFunctionTable::extGlIsTextureHandleResident(GLuint64 handle)
 		{
 			if (glTexture.pglIsTextureHandleResidentARB)
 				return glTexture.pglIsTextureHandleResidentARB(handle);
@@ -1321,7 +1301,7 @@ namespace irr {
 				return glTexture.pglIsTextureHandleResidentNV(handle);
 			return false;
 		}
-		GLboolean COpenGLFunctionTable::extGlIsImageHandleResident(GLuint64 handle)
+		inline GLboolean COpenGLFunctionTable::extGlIsImageHandleResident(GLuint64 handle)
 		{
 			if (glTexture.pglIsTextureHandleResidentARB)
 				return glTexture.pglIsTextureHandleResidentARB(handle);
@@ -1329,9 +1309,9 @@ namespace irr {
 				return glTexture.pglIsTextureHandleResidentNV(handle);
 			return false;
 		}
-		void COpenGLFunctionTable::extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers)
+		inline void COpenGLFunctionTable::extGlCreateFramebuffers(GLsizei n, GLuint* framebuffers)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1342,9 +1322,9 @@ namespace irr {
 
 			glFrameBuffer.pglGenFramebuffers(n, framebuffers);
 		}
-		GLenum COpenGLFunctionTable::extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target)
+		inline GLenum COpenGLFunctionTable::extGlCheckNamedFramebufferStatus(GLuint framebuffer, GLenum target)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 					return glFrameBuffer.pglCheckNamedFramebufferStatus(framebuffer, target);
@@ -1364,9 +1344,9 @@ namespace irr {
 
 			return retval;
 		}
-		void COpenGLFunctionTable::extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
+		inline void COpenGLFunctionTable::extGlNamedFramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1389,9 +1369,9 @@ namespace irr {
 			if (bound != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, bound);
 		}
-		void COpenGLFunctionTable::extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer)
+		inline void COpenGLFunctionTable::extGlNamedFramebufferTextureLayer(GLuint framebuffer, GLenum attachment, GLuint texture, GLenum textureType, GLint level, GLint layer)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1402,7 +1382,7 @@ namespace irr {
 
 			if (textureType != GL_TEXTURE_CUBE_MAP)
 			{
-				if (!COpenGLFeatureMap::needsDSAFramebufferHack && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				if (!needsDSAFramebufferHack && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTextureLayerEXT(framebuffer, attachment, texture, level, layer);
 				}
@@ -1424,7 +1404,7 @@ namespace irr {
 					GL_TEXTURE_CUBE_MAP_POSITIVE_X,GL_TEXTURE_CUBE_MAP_NEGATIVE_X,GL_TEXTURE_CUBE_MAP_POSITIVE_Y,GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,GL_TEXTURE_CUBE_MAP_POSITIVE_Z,GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
 				};
 
-				if (!COpenGLFeatureMap::needsDSAFramebufferHack && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
+				if (!needsDSAFramebufferHack && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
 				{
 					glFrameBuffer.pglNamedFramebufferTexture2DEXT(framebuffer, attachment, CubeMapFaceToCubeMapFaceGLenum[layer], texture, level);
 				}
@@ -1441,9 +1421,9 @@ namespace irr {
 				}
 			}
 		}
-		void COpenGLFunctionTable::extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+		inline void COpenGLFunctionTable::extGlBlitNamedFramebuffer(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1469,9 +1449,9 @@ namespace irr {
 			if (static_cast<GLint>(drawFramebuffer) != boundDrawFBO)
 				glFrameBuffer.pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, boundDrawFBO);
 		}
-		void COpenGLFunctionTable::extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode)
+		inline void COpenGLFunctionTable::extGlNamedFramebufferReadBuffer(GLuint framebuffer, GLenum mode)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1494,9 +1474,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_READ_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf)
+		inline void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffer(GLuint framebuffer, GLenum buf)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1519,9 +1499,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs)
+		inline void COpenGLFunctionTable::extGlNamedFramebufferDrawBuffers(GLuint framebuffer, GLsizei n, const GLenum* bufs)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1544,9 +1524,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value)
+		inline void COpenGLFunctionTable::extGlClearNamedFramebufferiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1566,9 +1546,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value)
+		inline void COpenGLFunctionTable::extGlClearNamedFramebufferuiv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1588,9 +1568,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value)
+		inline void COpenGLFunctionTable::extGlClearNamedFramebufferfv(GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1610,9 +1590,9 @@ namespace irr {
 			if (static_cast<GLuint>(boundFBO) != framebuffer)
 				glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
+		inline void COpenGLFunctionTable::extGlClearNamedFramebufferfi(GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
 		{
-			if (!COpenGLFeatureMap::needsDSAFramebufferHack)
+			if (!needsDSAFramebufferHack)
 			{
 				if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 				{
@@ -1629,7 +1609,7 @@ namespace irr {
 			glFrameBuffer.pglClearBufferfi(buffer, drawbuffer, depth, stencil);
 			glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, boundFBO);
 		}
-		void COpenGLFunctionTable::extGlCreateBuffers(GLsizei n, GLuint* buffers)
+		inline void COpenGLFunctionTable::extGlCreateBuffers(GLsizei n, GLuint* buffers)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1646,8 +1626,7 @@ namespace irr {
 					memset(buffers, 0, n * sizeof(GLuint));
 			}
 		}
-
-		void COpenGLFunctionTable::extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers)
+		inline void COpenGLFunctionTable::extGlBindBuffersBase(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers)
 		{
 			if (COpenGLFeatureMap::Version >= 440 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
@@ -1663,8 +1642,7 @@ namespace irr {
 				}
 			}
 		}
-
-		void COpenGLFunctionTable::extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes)
+		inline void COpenGLFunctionTable::extGlBindBuffersRange(const GLenum& target, const GLuint& first, const GLsizei& count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes)
 		{
 			if (COpenGLFeatureMap::Version >= 440 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_multi_bind])
 			{
@@ -1688,8 +1666,7 @@ namespace irr {
 				}
 			}
 		}
-
-		void COpenGLFunctionTable::extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags)
+		inline void COpenGLFunctionTable::extGlNamedBufferStorage(GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1710,8 +1687,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data)
+		inline void COpenGLFunctionTable::extGlNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1732,8 +1708,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data)
+		inline void COpenGLFunctionTable::extGlGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size, void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1754,8 +1729,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void* COpenGLFunctionTable::extGlMapNamedBuffer(GLuint buffer, GLbitfield access)
+		inline void* COpenGLFunctionTable::extGlMapNamedBuffer(GLuint buffer, GLbitfield access)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1779,8 +1753,7 @@ namespace irr {
 			}
 			return NULL;
 		}
-
-		void* COpenGLFunctionTable::extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access)
+		inline void* COpenGLFunctionTable::extGlMapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1804,8 +1777,7 @@ namespace irr {
 			}
 			return NULL;
 		}
-
-		void COpenGLFunctionTable::extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length)
+		inline void COpenGLFunctionTable::extGlFlushMappedNamedBufferRange(GLuint buffer, GLintptr offset, GLsizeiptr length)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1826,8 +1798,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		GLboolean COpenGLFunctionTable::extGlUnmapNamedBuffer(GLuint buffer)
+		inline GLboolean COpenGLFunctionTable::extGlUnmapNamedBuffer(GLuint buffer)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1851,8 +1822,7 @@ namespace irr {
 			}
 			return false;
 		}
-
-		void COpenGLFunctionTable::extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data)
+		inline void COpenGLFunctionTable::extGlClearNamedBufferData(GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1873,8 +1843,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data)
+		inline void COpenGLFunctionTable::extGlClearNamedBufferSubData(GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1895,8 +1864,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size)
+		inline void COpenGLFunctionTable::extGlCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1920,8 +1888,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_COPY_WRITE_BUFFER, boundWrite);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data)
+		inline void COpenGLFunctionTable::extGlGetNamedBufferParameteriv(const GLuint& buffer, const GLenum& value, GLint* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1942,8 +1909,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data)
+		inline void COpenGLFunctionTable::extGlGetNamedBufferParameteri64v(const GLuint& buffer, const GLenum& value, GLint64* data)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1959,9 +1925,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_ARRAY_BUFFER, bound);
 			}
 		}
-
-
-		void COpenGLFunctionTable::extGlCreateVertexArrays(GLsizei n, GLuint* arrays)
+		inline void COpenGLFunctionTable::extGlCreateVertexArrays(GLsizei n, GLuint* arrays)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1976,8 +1940,7 @@ namespace irr {
 					memset(arrays, 0, sizeof(GLuint) * n);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer)
+		inline void COpenGLFunctionTable::extGlVertexArrayElementBuffer(GLuint vaobj, GLuint buffer)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -1994,8 +1957,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride)
+		inline void COpenGLFunctionTable::extGlVertexArrayVertexBuffer(GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2017,8 +1979,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex)
+		inline void COpenGLFunctionTable::extGlVertexArrayAttribBinding(GLuint vaobj, GLuint attribindex, GLuint bindingindex)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2040,8 +2001,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index)
+		inline void COpenGLFunctionTable::extGlEnableVertexArrayAttrib(GLuint vaobj, GLuint index)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2063,8 +2023,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index)
+		inline void COpenGLFunctionTable::extGlDisableVertexArrayAttrib(GLuint vaobj, GLuint index)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2086,15 +2045,14 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset)
+		inline void COpenGLFunctionTable::extGlVertexArrayAttribFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribFormat)
 					glVertex.pglVertexArrayAttribFormat(vaobj, attribindex, size, type, normalized, relativeoffset);
 			}
-			else if (!COpenGLFeatureMap::IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribFormatEXT)
 					glVertex.pglVertexArrayVertexAttribFormatEXT(vaobj, attribindex, size, type, normalized, relativeoffset);
@@ -2109,15 +2067,14 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
+		inline void COpenGLFunctionTable::extGlVertexArrayAttribIFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribIFormat)
 					glVertex.pglVertexArrayAttribIFormat(vaobj, attribindex, size, type, relativeoffset);
 			}
-			else if (!COpenGLFeatureMap::IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribIFormatEXT)
 					glVertex.pglVertexArrayVertexAttribIFormatEXT(vaobj, attribindex, size, type, relativeoffset);
@@ -2132,15 +2089,14 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
+		inline void COpenGLFunctionTable::extGlVertexArrayAttribLFormat(GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayAttribLFormat)
 					glVertex.pglVertexArrayAttribLFormat(vaobj, attribindex, size, type, relativeoffset);
 			}
-			else if (!COpenGLFeatureMap::IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
+			else if (!IsIntelGPU && COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_EXT_direct_state_access])
 			{
 				if (glVertex.pglVertexArrayVertexAttribLFormatEXT)
 					glVertex.pglVertexArrayVertexAttribLFormatEXT(vaobj, attribindex, size, type, relativeoffset);
@@ -2155,8 +2111,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor)
+		inline void COpenGLFunctionTable::extGlVertexArrayBindingDivisor(GLuint vaobj, GLuint bindingindex, GLuint divisor)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2178,10 +2133,7 @@ namespace irr {
 				glVertex.pglBindVertexArray(restoreVertexArray);
 			}
 		}
-
-
-
-		void COpenGLFunctionTable::extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids)
+		inline void COpenGLFunctionTable::extGlCreateTransformFeedbacks(GLsizei n, GLuint* ids)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2194,7 +2146,7 @@ namespace irr {
 					glTransformFeedback.pglGenTransformFeedbacks(n, ids);
 			}
 		}
-		void COpenGLFunctionTable::extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer)
+		inline void COpenGLFunctionTable::extGlTransformFeedbackBufferBase(GLuint xfb, GLuint index, GLuint buffer)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2210,7 +2162,7 @@ namespace irr {
 				//	extGlBindTransformFeedback(GL_TRANSFORM_FEEDBACK, restoreXFormFeedback);
 			}
 		}
-		void COpenGLFunctionTable::extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
+		inline void COpenGLFunctionTable::extGlTransformFeedbackBufferRange(GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2226,8 +2178,7 @@ namespace irr {
 				//	extGlBindTransformFeedback(GL_TRANSFORM_FEEDBACK, restoreXFormFeedback);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids)
+		inline void COpenGLFunctionTable::extGlCreateQueries(GLenum target, GLsizei n, GLuint* ids)
 		{
 			if (COpenGLFeatureMap::Version >= 450 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_direct_state_access])
 			{
@@ -2240,7 +2191,7 @@ namespace irr {
 					glQuery.pglGenQueries(n, ids);
 			}
 		}
-		void COpenGLFunctionTable::extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
+		inline void COpenGLFunctionTable::extGlGetQueryBufferObjectuiv(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
 		{
 			if (COpenGLFeatureMap::Version < 440 && !COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_query_buffer_object])
 			{
@@ -2265,7 +2216,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_QUERY_BUFFER, restoreQueryBuffer);
 			}
 		}
-		void COpenGLFunctionTable::extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
+		inline void COpenGLFunctionTable::extGlGetQueryBufferObjectui64v(GLuint id, GLuint buffer, GLenum pname, GLintptr offset)
 		{
 			if (COpenGLFeatureMap::Version < 440 && !COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_query_buffer_object])
 			{
@@ -2290,10 +2241,7 @@ namespace irr {
 				glBuffer.pglBindBuffer(GL_QUERY_BUFFER, restoreQueryBuffer);
 			}
 		}
-
-
-
-		void COpenGLFunctionTable::extGlTextureBarrier()
+		inline void COpenGLFunctionTable::extGlTextureBarrier()
 		{
 			if (COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_texture_barrier])
 				glSync.pglTextureBarrier();
@@ -2304,9 +2252,7 @@ namespace irr {
 				os::Printer::log("EDF_TEXTURE_BARRIER Not Available!\n", ELL_ERROR);
 #endif // _IRR_DEBUG
 		}
-
-
-		void COpenGLFunctionTable::extGlSwapInterval(int interval)
+		inline void COpenGLFunctionTable::extGlSwapInterval(int interval)
 		{
 			// we have wglext, so try to use that
 #if defined(_IRR_WINDOWS_API_) && defined(_IRR_COMPILE_WITH_WINDOWS_DEVICE_)
@@ -2333,8 +2279,7 @@ namespace irr {
 #endif
 #endif
 		}
-
-		void COpenGLFunctionTable::extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params)
+		inline void COpenGLFunctionTable::extGlGetInternalformativ(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params)
 		{
 			if (COpenGLFeatureMap::Version >= 460 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_internalformat_query])
 			{
@@ -2342,8 +2287,7 @@ namespace irr {
 					glGeneral.pglGetInternalformativ(target, internalformat, pname, bufSize, params);
 			}
 		}
-
-		void COpenGLFunctionTable::extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params)
+		inline void COpenGLFunctionTable::extGlGetInternalformati64v(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params)
 		{
 			if (COpenGLFeatureMap::Version >= 460 || COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::EOpenGLFeatures::IRR_ARB_internalformat_query])
 			{

@@ -2,7 +2,7 @@
 #define __IRR_C_OPENGL_COMMON_H_INCLUDED__
 
 #include "IrrCompileConfig.h"
-#include "COpenGLDriver.h"
+#include "irr/video/COpenGLFeatureMap.h"
 
 #ifdef _IRR_COMPILE_WITH_OPENGL_
 namespace irr
@@ -52,14 +52,14 @@ inline GLenum	getSizedOpenGLFormatFromOurFormat(asset::E_FORMAT format)
 			return GL_R8;
 			break;
 		case asset::EF_R8_SRGB:
-			if (!COpenGLDriver::FeatureAvailable[COpenGLDriver::IRR_EXT_texture_sRGB_R8])
+			if (!COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::IRR_EXT_texture_sRGB_R8])
 				return GL_SR8_EXT;
 			break;
 		case asset::EF_R8G8_UNORM:
 			return GL_RG8;
 			break;
 		case asset::EF_R8G8_SRGB:
-			if (!COpenGLDriver::FeatureAvailable[COpenGLDriver::IRR_EXT_texture_sRGB_RG8])
+			if (!COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::IRR_EXT_texture_sRGB_RG8])
 				return GL_SRG8_EXT;
 			break;
 		case asset::EF_R8G8B8_UNORM:
@@ -868,7 +868,7 @@ inline void getOpenGLFormatAndParametersFromColorFormat(asset::E_FORMAT format, 
 		break;
 		case asset::EF_R8_SRGB:
 		{
-			if (!COpenGLDriver::FeatureAvailable[COpenGLDriver::IRR_EXT_texture_sRGB_R8])
+			if (!COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::IRR_EXT_texture_sRGB_R8])
 				break;
 			colorformat = GL_RED;
 			type = GL_UNSIGNED_BYTE;
@@ -888,7 +888,7 @@ inline void getOpenGLFormatAndParametersFromColorFormat(asset::E_FORMAT format, 
 		break;
 		case asset::EF_R8G8_SRGB:
 		{
-			if (!COpenGLDriver::FeatureAvailable[COpenGLDriver::IRR_EXT_texture_sRGB_RG8])
+			if (!COpenGLFeatureMap::FeatureAvailable[COpenGLFeatureMap::IRR_EXT_texture_sRGB_RG8])
 				break;
 			colorformat = GL_RG;
 			type = GL_UNSIGNED_BYTE;

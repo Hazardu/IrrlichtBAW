@@ -229,7 +229,7 @@ namespace video
 //! Windows constructor and init code
 COpenGLDriver::COpenGLDriver(const irr::SIrrlichtCreationParameters& params,
 		io::IFileSystem* io, CIrrDeviceWin32* device, const asset::IGLSLCompiler* glslcomp)
-: CNullDriver(device, io, params), COpenGLFunctionTable(),
+: CNullDriver(device, io, params),
 	runningInRenderDoc(false),  ColorFormat(asset::EF_R8G8B8_UNORM),
 	HDc(0), Window(static_cast<HWND>(params.WindowId)), Win32Device(device),
 	AuxContexts(0), GLSLCompiler(glslcomp), DeviceType(EIDT_WIN32)
@@ -586,7 +586,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
         AuxContexts[0].threadId = std::this_thread::get_id();
         AuxContexts[0].ctx = hrc;
         AuxContexts[0].ID = 0u;
-        AuxContexts[0].FunctionTable = this;
+        
 
     }
 	for (size_t i=1; i<=Params.AuxGLContexts; i++)
@@ -594,7 +594,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
         AuxContexts[i].threadId = std::thread::id(); //invalid ID
         AuxContexts[i].ctx = wglCreateContextAttribs_ARB(HDc, hrc, iAttribs);
         AuxContexts[i].ID = static_cast<uint8_t>(i);
-        AuxContexts[i].FunctionTable = this;
+        
 
     }
 
@@ -635,7 +635,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
 #endif // _IRR_COMPILE_WITH_OPENCL_
 	genericDriverInit(device->getAssetManager());
 
-	COpenGLFunctionTable::extGlSwapInterval(Params.Vsync ? 1 : 0);
+    getThreadContext_helper(true)->functionTable.extGlSwapInterval(Params.Vsync ? 1 : 0);
 	return true;
 }
 
@@ -684,7 +684,7 @@ bool COpenGLDriver::deinitAuxContext()
 //! Linux constructor and init code
 COpenGLDriver::COpenGLDriver(const SIrrlichtCreationParameters& params,
 		io::IFileSystem* io, CIrrDeviceLinux* device, const asset::IGLSLCompiler* glslcomp)
-		: CNullDriver(device, io, Params), COpenGLFunctionTable(),
+		: CNullDriver(device, io, Params),
 			runningInRenderDoc(false), ColorFormat(asset::EF_R8G8B8_UNORM),
 			X11Device(device), DeviceType(EIDT_X11), AuxContexts(0), GLSLCompiler(glslcomp)
 {
@@ -772,7 +772,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceLinux* device, SAuxContext* auxCtxts)
 
 	// set vsync
 	//if (queryOpenGLFeature(IRR_))
-        COpenGLFunctionTable::glShader.pglSwapInterval(Params.Vsync ? -1 : 0);
+        found->functionTable.glShader.pglSwapInterval(Params.Vsync ? -1 : 0);
 	return true;
 }
 
@@ -961,7 +961,7 @@ void COpenGLDriver::cleanUpContextBeforeDelete()
         return;
 
     found->CurrentRendertargetSize = Params.WindowSize;
-    COpenGLFunctionTable::glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, 0);
+    found->functionTable.glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (found->CurrentFBO)
     {
         found->CurrentFBO->drop();
@@ -970,17 +970,17 @@ void COpenGLDriver::cleanUpContextBeforeDelete()
 
     removeAllFrameBuffers();
 
-    COpenGLFunctionTable::glVertex.pglBindVertexArray(0);
+    found->functionTable.glVertex.pglBindVertexArray(0);
     for (auto& vao : found->VAOMap)
     {
-        COpenGLFunctionTable::glVertex.pglDeleteVertexArrays(1, &vao.second.GLname);
+        found->functionTable.glVertex.pglDeleteVertexArrays(1, &vao.second.GLname);
     }
     found->VAOMap.clear();
 
-    COpenGLFunctionTable::glShader.pglUseProgram(0);
-    COpenGLFunctionTable::glShader.pglBindProgramPipeline(0);
+    found->functionTable.glShader.pglUseProgram(0);
+    found->functionTable.glShader.pglBindProgramPipeline(0);
     for (auto& ppln : found->GraphicsPipelineMap)
-        COpenGLFunctionTable::glShader.pglDeleteProgramPipelines(1, &ppln.second.GLname);
+        found->functionTable.glShader.pglDeleteProgramPipelines(1, &ppln.second.GLname);
     found->GraphicsPipelineMap.clear();
 
     //force drop of all all grabbed (through smart_refctd_ptr) resources (descriptor sets, buffers, program pipeline)
@@ -1107,12 +1107,12 @@ bool COpenGLDriver::genericDriverInit(asset::IAssetManager* assMgr)
 	glViewport(0, 0, Params.WindowSize.Width, Params.WindowSize.Height);
 
 	// adjust flat coloring scheme to DirectX version
-	///COpenGLFunctionTable::glShader.pglProvokingVertex(GL_FIRST_VERTEX_CONVENTION_EXT);
+	///found->functionTable.glShader.pglProvokingVertex(GL_FIRST_VERTEX_CONVENTION_EXT);
 
 	// We need to reset once more at the beginning of the first rendering.
 	// This fixes problems with intermediate changes to the material during texture load.
     SAuxContext* found = getThreadContext_helper(false);
-    COpenGLFunctionTable::glGeneral.pglClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE); //once set and should never change (engine doesnt track it)
+    found->functionTable.glGeneral.pglClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE); //once set and should never change (engine doesnt track it)
     glEnable(GL_FRAMEBUFFER_SRGB);//once set and should never change (engine doesnt track it)
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);//once set and should never change (engine doesnt track it)
     glDepthRange(1.0, 0.0);//once set and should never change (engine doesnt track it)
@@ -1267,7 +1267,7 @@ bool COpenGLDriver::dispatch(uint32_t _groupCountX, uint32_t _groupCountY, uint3
 
     ctx->flushStateCompute(GSB_PIPELINE | GSB_DESCRIPTOR_SETS | GSB_PUSH_CONSTANTS);
 
-    COpenGLFunctionTable::glCompute.pglDispatchCompute(_groupCountX, _groupCountY, _groupCountZ);
+    ctx->functionTable.glCompute.pglDispatchCompute(_groupCountX, _groupCountY, _groupCountZ);
 
     return true;
 }
@@ -1282,7 +1282,7 @@ bool COpenGLDriver::dispatchIndirect(const IGPUBuffer* _indirectBuf, size_t _off
 
     ctx->flushStateCompute(GSB_PIPELINE | GSB_DISPATCH_INDIRECT | GSB_DESCRIPTOR_SETS | GSB_PUSH_CONSTANTS);
 
-    COpenGLFunctionTable::glCompute.pglDispatchComputeIndirect(static_cast<GLintptr>(_offset));
+    ctx->functionTable.glCompute.pglDispatchComputeIndirect(static_cast<GLintptr>(_offset));
 
     return true;
 }
@@ -1517,8 +1517,8 @@ core::smart_refctd_ptr<IGPURenderpassIndependentPipeline> COpenGLDriver::createG
         auto bin = cache ? cache->find(key) : COpenGLSpecializedShader::SProgramBinary{0,nullptr};
         if (bin.binary)
         {
-            const GLuint GLname = COpenGLFunctionTable::glShader.pglCreateProgram();
-            COpenGLFunctionTable::glShader.pglProgramBinary(GLname, bin.format, bin.binary->data(), bin.binary->size());
+            const GLuint GLname = ctx->functionTable.glShader.pglCreateProgram();
+            ctx->functionTable.glShader.pglProgramBinary(GLname, bin.format, bin.binary->data(), bin.binary->size());
             GLnames[ix] = GLname;
             binaries[ix] = bin;
 
@@ -1565,8 +1565,8 @@ core::smart_refctd_ptr<IGPUComputePipeline> COpenGLDriver::createGPUComputePipel
     auto bin = cache ? cache->find(key) : COpenGLSpecializedShader::SProgramBinary{0,nullptr};
     if (bin.binary)
     {
-        const GLuint GLshader = COpenGLFunctionTable::glShader.pglCreateProgram();
-        COpenGLFunctionTable::glShader.pglProgramBinary(GLname, bin.format, bin.binary->data(), bin.binary->size());
+        const GLuint GLshader = ctx->functionTable.glShader.pglCreateProgram();
+        ctx->functionTable.glShader.pglProgramBinary(GLname, bin.format, bin.binary->data(), bin.binary->size());
         GLname = GLshader;
         binary = bin;
     }
@@ -1626,6 +1626,9 @@ void COpenGLDriver::updateDescriptorSets(	uint32_t descriptorWriteCount, const I
 
 void COpenGLDriver::flushMappedMemoryRanges(uint32_t memoryRangeCount, const video::IDriverMemoryAllocation::MappedMemoryRange* pMemoryRanges)
 {
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
     for (uint32_t i=0; i<memoryRangeCount; i++)
     {
         auto range = pMemoryRanges+i;
@@ -1633,12 +1636,15 @@ void COpenGLDriver::flushMappedMemoryRanges(uint32_t memoryRangeCount, const vid
         if (!range->memory->haveToMakeVisible())
             os::Printer::log("Why are you flushing mapped memory that does not need to be flushed!?",ELL_WARNING);
         #endif // _IRR_DEBUG
-        COpenGLFunctionTable::glBuffer.pglFlushMappedNamedBufferRange(static_cast<COpenGLBuffer*>(range->memory)->getOpenGLName(),range->offset,range->length);
+        found->functionTable.glBuffer.pglFlushMappedNamedBufferRange(static_cast<COpenGLBuffer*>(range->memory)->getOpenGLName(),range->offset,range->length);
     }
 }
 
 void COpenGLDriver::invalidateMappedMemoryRanges(uint32_t memoryRangeCount, const video::IDriverMemoryAllocation::MappedMemoryRange* pMemoryRanges)
 {
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
     for (uint32_t i=0; i<memoryRangeCount; i++)
     {
         auto range = pMemoryRanges+i;
@@ -1646,7 +1652,7 @@ void COpenGLDriver::invalidateMappedMemoryRanges(uint32_t memoryRangeCount, cons
         if (!range->memory->haveToMakeVisible())
             os::Printer::log("Why are you invalidating mapped memory that does not need to be invalidated!?",ELL_WARNING);
         #endif // _IRR_DEBUG
-        COpenGLFunctionTable::glSync.pglMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+        found->functionTable.glSync.pglMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     }
 }
 
@@ -1655,7 +1661,10 @@ void COpenGLDriver::copyBuffer(IGPUBuffer* readBuffer, IGPUBuffer* writeBuffer, 
 {
     COpenGLBuffer* readbuffer = static_cast<COpenGLBuffer*>(readBuffer);
     COpenGLBuffer* writebuffer = static_cast<COpenGLBuffer*>(writeBuffer);
-    COpenGLFunctionTable::glBuffer.pglCopyNamedBufferSubData(readbuffer->getOpenGLName(),writebuffer->getOpenGLName(),readOffset,writeOffset,length);
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
+    found->functionTable.glBuffer.pglCopyNamedBufferSubData(readbuffer->getOpenGLName(),writebuffer->getOpenGLName(),readOffset,writeOffset,length);
 }
 
 void COpenGLDriver::copyImage(IGPUImage* srcImage, IGPUImage* dstImage, uint32_t regionCount, const IGPUImage::SImageCopy* pRegions)
@@ -1668,9 +1677,12 @@ void COpenGLDriver::copyImage(IGPUImage* srcImage, IGPUImage* dstImage, uint32_t
 	IGPUImage::E_TYPE srcType = srcImage->getCreationParameters().type;
 	IGPUImage::E_TYPE dstType = dstImage->getCreationParameters().type;
 	GLenum type2Target[3u] = {GL_TEXTURE_1D_ARRAY,GL_TEXTURE_2D_ARRAY,GL_TEXTURE_3D};
-	for (auto it=pRegions; it!=pRegions+regionCount; it++)
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
+    for (auto it=pRegions; it!=pRegions+regionCount; it++)
 	{
-		COpenGLFunctionTable::glTexture.pglCopyImageSubData(	src->getOpenGLName(),type2Target[srcType],it->srcSubresource.mipLevel,
+		found->functionTable.glTexture.pglCopyImageSubData(	src->getOpenGLName(),type2Target[srcType],it->srcSubresource.mipLevel,
 								it->srcOffset.x,srcType==IGPUImage::ET_1D ? it->srcSubresource.baseArrayLayer:it->srcOffset.y,srcType==IGPUImage::ET_2D ? it->srcSubresource.baseArrayLayer:it->srcOffset.z,
 								dst->getOpenGLName(),type2Target[dstType],it->dstSubresource.mipLevel,
 								it->dstOffset.x,dstType==IGPUImage::ET_1D ? it->dstSubresource.baseArrayLayer:it->dstOffset.y,dstType==IGPUImage::ET_2D ? it->dstSubresource.baseArrayLayer:it->dstOffset.z,
@@ -1722,7 +1734,7 @@ void COpenGLDriver::copyBufferToImage(IGPUBuffer* srcBuffer, IGPUImage* dstImage
 			{
 				case IGPUImage::ET_1D:
 					imageSize *= it->imageSubresource.layerCount;
-					COpenGLFunctionTable::glTexture.pglCompressedTextureSubImage2D(	dst,GL_TEXTURE_1D_ARRAY,it->imageSubresource.mipLevel,
+					ctx->functionTable.glTexture.pglCompressedTextureSubImage2D(	dst,GL_TEXTURE_1D_ARRAY,it->imageSubresource.mipLevel,
 														it->imageOffset.x,it->imageSubresource.baseArrayLayer,
 														it->imageExtent.width,it->imageSubresource.layerCount,
 														dstImageGL->getOpenGLSizedFormat(),imageSize,reinterpret_cast<const void*>(it->bufferOffset));
@@ -1730,7 +1742,7 @@ void COpenGLDriver::copyBufferToImage(IGPUBuffer* srcBuffer, IGPUImage* dstImage
 				case IGPUImage::ET_2D:
 					imageSize *= (it->bufferImageHeight ? it->bufferImageHeight:it->imageExtent.height);
 					imageSize *= it->imageSubresource.layerCount;
-					COpenGLFunctionTable::glTexture.pglCompressedTextureSubImage3D(	dst,GL_TEXTURE_2D_ARRAY,it->imageSubresource.mipLevel,
+                    ctx->functionTable.glTexture.pglCompressedTextureSubImage3D(	dst,GL_TEXTURE_2D_ARRAY,it->imageSubresource.mipLevel,
 														it->imageOffset.x,it->imageOffset.y,it->imageSubresource.baseArrayLayer,
 														it->imageExtent.width,it->imageExtent.height,it->imageSubresource.layerCount,
 														dstImageGL->getOpenGLSizedFormat(),imageSize,reinterpret_cast<const void*>(it->bufferOffset));
@@ -1738,7 +1750,7 @@ void COpenGLDriver::copyBufferToImage(IGPUBuffer* srcBuffer, IGPUImage* dstImage
 				case IGPUImage::ET_3D:
 					imageSize *= (it->bufferImageHeight ? it->bufferImageHeight:it->imageExtent.height);
 					imageSize *= it->imageExtent.depth;
-					COpenGLFunctionTable::glTexture.pglCompressedTextureSubImage3D(	dst,GL_TEXTURE_3D,it->imageSubresource.mipLevel,
+                    ctx->functionTable.glTexture.pglCompressedTextureSubImage3D(	dst,GL_TEXTURE_3D,it->imageSubresource.mipLevel,
 														it->imageOffset.x,it->imageOffset.y,it->imageOffset.z,
 														it->imageExtent.width,it->imageExtent.height,it->imageExtent.depth,
 														dstImageGL->getOpenGLSizedFormat(),imageSize,reinterpret_cast<const void*>(it->bufferOffset));
@@ -1751,19 +1763,19 @@ void COpenGLDriver::copyBufferToImage(IGPUBuffer* srcBuffer, IGPUImage* dstImage
 			switch (type)
 			{
 				case IGPUImage::ET_1D:
-					COpenGLFunctionTable::glTexture.pglTextureSubImage2D(	dst,GL_TEXTURE_1D_ARRAY,it->imageSubresource.mipLevel,
+                    ctx->functionTable.glTexture.pglTextureSubImage2D(	dst,GL_TEXTURE_1D_ARRAY,it->imageSubresource.mipLevel,
 											it->imageOffset.x,it->imageSubresource.baseArrayLayer,
 											it->imageExtent.width,it->imageSubresource.layerCount,
 											glfmt,gltype,reinterpret_cast<const void*>(it->bufferOffset));
 					break;
 				case IGPUImage::ET_2D:
-					COpenGLFunctionTable::glTexture.pglTextureSubImage3D(dst,GL_TEXTURE_2D_ARRAY,it->imageSubresource.mipLevel,
+                    ctx->functionTable.glTexture.pglTextureSubImage3D(dst,GL_TEXTURE_2D_ARRAY,it->imageSubresource.mipLevel,
 											it->imageOffset.x,it->imageOffset.y,it->imageSubresource.baseArrayLayer,
 											it->imageExtent.width,it->imageExtent.height,it->imageSubresource.layerCount,
 											glfmt,gltype,reinterpret_cast<const void*>(it->bufferOffset));
 					break;
 				case IGPUImage::ET_3D:
-					COpenGLFunctionTable::glTexture.pglTextureSubImage3D(dst,GL_TEXTURE_3D,it->imageSubresource.mipLevel,
+                    ctx->functionTable.glTexture.pglTextureSubImage3D(dst,GL_TEXTURE_3D,it->imageSubresource.mipLevel,
 											it->imageOffset.x,it->imageOffset.y,it->imageOffset.z,
 											it->imageExtent.width,it->imageExtent.height,it->imageExtent.depth,
 											glfmt,gltype,reinterpret_cast<const void*>(it->bufferOffset));
@@ -1815,14 +1827,14 @@ void COpenGLDriver::copyImageToBuffer(IGPUImage* srcImage, IGPUBuffer* dstBuffer
             ctx->nextState.pixelPack.BCdepth = blockDims[2];
             ctx->flushStateGraphics(GSB_PIXEL_PACK_UNPACK);
 
-			COpenGLFunctionTable::glTexture.pglGetCompressedTextureSubImage(	src,it->imageSubresource.mipLevel,it->imageOffset.x,yStart,zStart,it->imageExtent.width,yRange,zRange,
+            ctx->functionTable.glTexture.pglGetCompressedTextureSubImage(	src,it->imageSubresource.mipLevel,it->imageOffset.x,yStart,zStart,it->imageExtent.width,yRange,zRange,
 												dstBuffer->getSize()-it->bufferOffset,reinterpret_cast<void*>(it->bufferOffset));
 		}
 		else
 		{
             ctx->flushStateGraphics(GSB_PIXEL_PACK_UNPACK);
 
-			COpenGLFunctionTable::glTexture.pglGetTextureSubImage(src,it->imageSubresource.mipLevel,it->imageOffset.x,yStart,zStart,it->imageExtent.width,yRange,zRange,
+            ctx->functionTable.glTexture.pglGetTextureSubImage(src,it->imageSubresource.mipLevel,it->imageOffset.x,yStart,zStart,it->imageExtent.width,yRange,zRange,
 									glfmt,gltype,dstBuffer->getSize()-it->bufferOffset,reinterpret_cast<void*>(it->bufferOffset));
 		}
 	}
@@ -1848,7 +1860,9 @@ void COpenGLDriver::beginQuery(IQueryObject* query)
 {
     if (!query)
         return; //error
-
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
     COpenGLQuery* queryGL = static_cast<COpenGLQuery*>(query);
     if (queryGL->getGLHandle()==0||queryGL->isActive())
         return;
@@ -1860,7 +1874,7 @@ void COpenGLDriver::beginQuery(IQueryObject* query)
     currentQuery[query->getQueryObjectType()] = query;
 
 
-    COpenGLFunctionTable::glQuery.pglBeginQuery(queryGL->getType(),queryGL->getGLHandle());
+    found->functionTable.glQuery.pglBeginQuery(queryGL->getType(),queryGL->getGLHandle());
     queryGL->flagBegun();
 }
 void COpenGLDriver::endQuery(IQueryObject* query)
@@ -1869,7 +1883,9 @@ void COpenGLDriver::endQuery(IQueryObject* query)
         return; //error
     if (currentQuery[query->getQueryObjectType()]!=query)
         return; //error
-
+    SAuxContext* found = getThreadContext_helper(false);
+    if (!found)
+        return;
     COpenGLQuery* queryGL = static_cast<COpenGLQuery*>(query);
     if (queryGL->getGLHandle()==0||!queryGL->isActive())
         return;
@@ -1879,7 +1895,7 @@ void COpenGLDriver::endQuery(IQueryObject* query)
     currentQuery[query->getQueryObjectType()] = nullptr;
 
 
-    COpenGLFunctionTable::glQuery.pglEndQuery(queryGL->getType());
+    found->functionTable.glQuery.pglEndQuery(queryGL->getType());
     queryGL->flagEnded();
 }
 
@@ -1962,15 +1978,15 @@ void COpenGLDriver::drawMeshBuffer(const IGPUMeshBuffer* mb)
 
     GLenum primType = getGLprimitiveType(found->currentState.pipeline.graphics.pipeline->getPrimitiveAssemblyParams().primitiveType);
     if (primType==GL_POINTS)
-        COpenGLFunctionTable::glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
+        found->functionTable.glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 
     if (indexSize) {
         static_assert(sizeof(mb->getIndexBufferBinding().offset) == sizeof(void*), "Might break without this requirement");
         const void* const idxBufOffset = reinterpret_cast<void*>(mb->getIndexBufferBinding().offset);
-        COpenGLFunctionTable::glDrawing.pglDrawElementsInstancedBaseVertexBaseInstance(primType, mb->getIndexCount(), indexSize, idxBufOffset, mb->getInstanceCount(), mb->getBaseVertex(), mb->getBaseInstance());
+        found->functionTable.glDrawing.pglDrawElementsInstancedBaseVertexBaseInstance(primType, mb->getIndexCount(), indexSize, idxBufOffset, mb->getInstanceCount(), mb->getBaseVertex(), mb->getBaseInstance());
     }
     else
-		COpenGLFunctionTable::glDrawing.pglDrawArraysInstancedBaseInstance(primType, mb->getBaseVertex(), mb->getIndexCount(), mb->getInstanceCount(), mb->getBaseInstance());
+		found->functionTable.glDrawing.pglDrawArraysInstancedBaseInstance(primType, mb->getBaseVertex(), mb->getIndexCount(), mb->getInstanceCount(), mb->getBaseInstance());
 }
 
 
@@ -2007,13 +2023,13 @@ void COpenGLDriver::drawArraysIndirect(const asset::SBufferBinding<IGPUBuffer> _
 
     GLenum primType = getGLprimitiveType(found->currentState.pipeline.graphics.pipeline->getPrimitiveAssemblyParams().primitiveType);
     if (primType == GL_POINTS)
-        COpenGLFunctionTable::glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
+        found->functionTable.glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 
     //actual drawing
     if (countBuffer)
-        COpenGLFunctionTable::glDrawing.pglMultiDrawArraysIndirectCount(primType, (void*)offset, countOffset, maxCount, stride);
+        found->functionTable.glDrawing.pglMultiDrawArraysIndirectCount(primType, (void*)offset, countOffset, maxCount, stride);
     else
-        COpenGLFunctionTable::glDrawing.pglMultiDrawArraysIndirect(primType, (void*)offset, maxCount, stride);
+        found->functionTable.glDrawing.pglMultiDrawArraysIndirect(primType, (void*)offset, maxCount, stride);
 }
 
 
@@ -2094,13 +2110,13 @@ void COpenGLDriver::drawIndexedIndirect(const asset::SBufferBinding<IGPUBuffer> 
 	GLenum indexSize = (indexType!=asset::EIT_16BIT) ? GL_UNSIGNED_INT:GL_UNSIGNED_SHORT;
     GLenum primType = getGLprimitiveType(found->currentState.pipeline.graphics.pipeline->getPrimitiveAssemblyParams().primitiveType);
     if (primType == GL_POINTS)
-        COpenGLFunctionTable::glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
+        found->functionTable.glFragment.pglPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 
     //actual drawing
     if (countBuffer)
-        COpenGLFunctionTable::glDrawing.pglMultiDrawElementsIndirectCount(primType, indexSize, (void*)offset, countOffset, maxCount, stride);
+        found->functionTable.glDrawing.pglMultiDrawElementsIndirectCount(primType, indexSize, (void*)offset, countOffset, maxCount, stride);
     else
-        COpenGLFunctionTable::glDrawing.pglMultiDrawElementsIndirect(primType,indexSize,(void*)offset,maxCount,stride);
+        found->functionTable.glDrawing.pglMultiDrawElementsIndirect(primType,indexSize,(void*)offset,maxCount,stride);
 }
 
 void COpenGLDriver::SAuxContext::flushState_descriptors(E_PIPELINE_BIND_POINT _pbp, const COpenGLPipelineLayout* _currentLayout, const COpenGLPipelineLayout* _prevLayout)
@@ -2111,7 +2127,6 @@ void COpenGLDriver::SAuxContext::flushState_descriptors(E_PIPELINE_BIND_POINT _p
         compatibilityLimit = _prevLayout->isCompatibleUpToSet(IGPUPipelineLayout::DESCRIPTOR_SET_COUNT-1u, _currentLayout)+1u;
 	if (!_prevLayout && !_currentLayout)
         compatibilityLimit = static_cast<int32_t>(IGPUPipelineLayout::DESCRIPTOR_SET_COUNT);
-
     int64_t newUboCount = 0u, newSsboCount = 0u, newTexCount = 0u, newImgCount = 0u;
 	if (_currentLayout)
     for (uint32_t i=0u; i<static_cast<int32_t>(IGPUPipelineLayout::DESCRIPTOR_SET_COUNT); ++i)
@@ -2152,15 +2167,15 @@ count = (first_count.resname.count - std::max(0, static_cast<int32_t>(first_coun
         if (localStorageImageCount)
         {
             assert(multibind_params.textureImages.textures);
-            COpenGLFunctionTable::glTexture.pglBindImageTextures(first_count.textureImages.first, localStorageImageCount, multibind_params.textureImages.textures, nullptr); //formats=nullptr: assuming ARB_multi_bind (or GL>4.4) is always available
+            functionTable.glTexture.pglBindImageTextures(first_count.textureImages.first, localStorageImageCount, multibind_params.textureImages.textures, nullptr); //formats=nullptr: assuming ARB_multi_bind (or GL>4.4) is always available
         }
 		
 		const GLsizei localTextureCount = newTexCount-first_count.textures.first;
 		if (localTextureCount)
 		{
             assert(multibind_params.textures.textures && multibind_params.textures.samplers);
-			COpenGLFunctionTable::glTexture.pglBindTextures(first_count.textures.first, localTextureCount, multibind_params.textures.textures, nullptr); //targets=nullptr: assuming ARB_multi_bind (or GL>4.4) is always available
-			COpenGLFunctionTable::glTexture.pglBindSamplers(first_count.textures.first, localTextureCount, multibind_params.textures.samplers);
+			functionTable.glTexture.pglBindTextures(first_count.textures.first, localTextureCount, multibind_params.textures.textures, nullptr); //targets=nullptr: assuming ARB_multi_bind (or GL>4.4) is always available
+			functionTable.glTexture.pglBindSamplers(first_count.textures.first, localTextureCount, multibind_params.textures.samplers);
 		}
 
 		bool nonNullSet = !!nextState.descriptorsParams[_pbp].descSets[i].set;
@@ -2188,7 +2203,7 @@ count = (first_count.resname.count - std::max(0, static_cast<int32_t>(first_coun
 					sizesArray[s] = nextState.descriptorsParams[_pbp].descSets[i].set->getSSBO(s)->getSize()-offsetsArray[s];
 			}
             assert(multibind_params.ssbos.buffers);
-			COpenGLFunctionTable::glBuffer.pglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, first_count.ssbos.first, localSsboCount, multibind_params.ssbos.buffers, nonNullSet ? offsetsArray:nullptr, nonNullSet ? sizesArray:nullptr);
+			functionTable.glBuffer.pglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, first_count.ssbos.first, localSsboCount, multibind_params.ssbos.buffers, nonNullSet ? offsetsArray:nullptr, nonNullSet ? sizesArray:nullptr);
 		}
 
 		const GLsizei localUboCount = (newUboCount - first_count.ubos.first);//"local" as in this DS
@@ -2207,7 +2222,7 @@ count = (first_count.resname.count - std::max(0, static_cast<int32_t>(first_coun
 					sizesArray[s] = nextState.descriptorsParams[_pbp].descSets[i].set->getUBO(s)->getSize()-offsetsArray[s];
 			}
             assert(multibind_params.ubos.buffers);
-			COpenGLFunctionTable::glBuffer.pglBindBuffersRange(GL_UNIFORM_BUFFER, first_count.ubos.first, localUboCount, multibind_params.ubos.buffers, nonNullSet ? offsetsArray:nullptr, nonNullSet ? sizesArray:nullptr);
+			functionTable.glBuffer.pglBindBuffersRange(GL_UNIFORM_BUFFER, first_count.ubos.first, localUboCount, multibind_params.ubos.buffers, nonNullSet ? offsetsArray:nullptr, nonNullSet ? sizesArray:nullptr);
 		}
     }
 
@@ -2224,15 +2239,15 @@ count = (first_count.resname.count - std::max(0, static_cast<int32_t>(first_coun
 
         int64_t diff = 0LL;
         if ((diff = prevUboCount - newUboCount) > 0LL)
-            COpenGLFunctionTable::glBuffer.pglBindBuffersRange(GL_UNIFORM_BUFFER, newUboCount, diff, nullptr, nullptr, nullptr);
+            functionTable.glBuffer.pglBindBuffersRange(GL_UNIFORM_BUFFER, newUboCount, diff, nullptr, nullptr, nullptr);
         if ((diff = prevSsboCount - newSsboCount) > 0LL)
-            COpenGLFunctionTable::glBuffer.pglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, newSsboCount, diff, nullptr, nullptr, nullptr);
+            functionTable.glBuffer.pglBindBuffersRange(GL_SHADER_STORAGE_BUFFER, newSsboCount, diff, nullptr, nullptr, nullptr);
         if ((diff = prevTexCount - newTexCount) > 0LL) {
-            COpenGLFunctionTable::glTexture.pglBindTextures(newTexCount, diff, nullptr, nullptr);
-            COpenGLFunctionTable::glTexture.pglBindSamplers(newTexCount, diff, nullptr);
+            functionTable.glTexture.pglBindTextures(newTexCount, diff, nullptr, nullptr);
+            functionTable.glTexture.pglBindSamplers(newTexCount, diff, nullptr);
         }
         if ((diff = prevImgCount - newImgCount) > 0LL)
-            COpenGLFunctionTable::glTexture.pglBindImageTextures(newImgCount, diff, nullptr, nullptr);
+            functionTable.glTexture.pglBindImageTextures(newImgCount, diff, nullptr, nullptr);
     }
 
     //update state in state tracker
@@ -2248,7 +2263,6 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
 	const COpenGLPipelineLayout* prevLayout = nullptr;
 	if ((stateBits & GSB_DESCRIPTOR_SETS) && currentState.pipeline.graphics.pipeline)
 		prevLayout = static_cast<const COpenGLPipelineLayout*>(currentState.pipeline.graphics.pipeline->getLayout());
-    
 	if (stateBits & GSB_PIPELINE)
     {
         if (nextState.pipeline.graphics.pipeline != currentState.pipeline.graphics.pipeline)
@@ -2280,7 +2294,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
                         GraphicsPipelineMap.insert(found, lookingFor);
                     }
                 }
-                COpenGLFunctionTable::glShader.pglBindProgramPipeline(currentState.pipeline.graphics.usedPipeline);
+                functionTable.glShader.pglBindProgramPipeline(currentState.pipeline.graphics.usedPipeline);
 
                 currentState.pipeline.graphics.usedShadersHash = nextState.pipeline.graphics.usedShadersHash;
             }
@@ -2294,7 +2308,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
     {
         currentState.pipeline.compute.pipeline = nullptr;
         currentState.pipeline.compute.usedShader = 0u;
-        COpenGLFunctionTable::glShader.pglUseProgram(0);
+        functionTable.glShader.pglUseProgram(0);
     }
 
     if (stateBits & GSB_RASTER_PARAMETERS)
@@ -2320,19 +2334,19 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             UPDATE_STATE(rasterParams.stencilTestEnable);
         }
         if (nextState.rasterParams.stencilTestEnable && STATE_NEQ(rasterParams.stencilOp_front)) {
-            COpenGLFunctionTable::glFragment.pglStencilOpSeparate(GL_FRONT, nextState.rasterParams.stencilOp_front.sfail, nextState.rasterParams.stencilOp_front.dpfail, nextState.rasterParams.stencilOp_front.dppass);
+            functionTable.glFragment.pglStencilOpSeparate(GL_FRONT, nextState.rasterParams.stencilOp_front.sfail, nextState.rasterParams.stencilOp_front.dpfail, nextState.rasterParams.stencilOp_front.dppass);
             UPDATE_STATE(rasterParams.stencilOp_front);
         }
         if (nextState.rasterParams.stencilTestEnable && STATE_NEQ(rasterParams.stencilOp_back)) {
-            COpenGLFunctionTable::glFragment.pglStencilOpSeparate(GL_BACK, nextState.rasterParams.stencilOp_back.sfail, nextState.rasterParams.stencilOp_back.dpfail, nextState.rasterParams.stencilOp_back.dppass);
+            functionTable.glFragment.pglStencilOpSeparate(GL_BACK, nextState.rasterParams.stencilOp_back.sfail, nextState.rasterParams.stencilOp_back.dpfail, nextState.rasterParams.stencilOp_back.dppass);
             UPDATE_STATE(rasterParams.stencilOp_back);
         }
         if (nextState.rasterParams.stencilTestEnable && STATE_NEQ(rasterParams.stencilFunc_front)) {
-            COpenGLFunctionTable::glFragment.pglStencilFuncSeparate(GL_FRONT, nextState.rasterParams.stencilFunc_front.func, nextState.rasterParams.stencilFunc_front.ref, nextState.rasterParams.stencilFunc_front.mask);
+            functionTable.glFragment.pglStencilFuncSeparate(GL_FRONT, nextState.rasterParams.stencilFunc_front.func, nextState.rasterParams.stencilFunc_front.ref, nextState.rasterParams.stencilFunc_front.mask);
             UPDATE_STATE(rasterParams.stencilFunc_front);
         }
         if (nextState.rasterParams.stencilTestEnable && STATE_NEQ(rasterParams.stencilFunc_back)) {
-            COpenGLFunctionTable::glFragment.pglStencilFuncSeparate(GL_FRONT, nextState.rasterParams.stencilFunc_back.func, nextState.rasterParams.stencilFunc_back.ref, nextState.rasterParams.stencilFunc_back.mask);
+            functionTable.glFragment.pglStencilFuncSeparate(GL_FRONT, nextState.rasterParams.stencilFunc_back.func, nextState.rasterParams.stencilFunc_back.ref, nextState.rasterParams.stencilFunc_back.mask);
             UPDATE_STATE(rasterParams.stencilFunc_back);
         }
         if (STATE_NEQ(rasterParams.depthTestEnable)) {
@@ -2374,7 +2388,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             UPDATE_STATE(rasterParams.sampleShadingEnable);
         }
         if (nextState.rasterParams.sampleShadingEnable && STATE_NEQ(rasterParams.minSampleShading)) {
-            COpenGLFunctionTable::glFragment.pglMinSampleShading(nextState.rasterParams.minSampleShading);
+            functionTable.glFragment.pglMinSampleShading(nextState.rasterParams.minSampleShading);
             UPDATE_STATE(rasterParams.minSampleShading);
         }
         if (STATE_NEQ(rasterParams.sampleMaskEnable)) {
@@ -2382,11 +2396,11 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             UPDATE_STATE(rasterParams.sampleMaskEnable);
         }
         if (nextState.rasterParams.sampleMaskEnable && STATE_NEQ(rasterParams.sampleMask[0])) {
-            COpenGLFunctionTable::glFragment.pglSampleMaski(0u, nextState.rasterParams.sampleMask[0]);
+            functionTable.glFragment.pglSampleMaski(0u, nextState.rasterParams.sampleMask[0]);
             UPDATE_STATE(rasterParams.sampleMask[0]);
         }
         if (nextState.rasterParams.sampleMaskEnable && STATE_NEQ(rasterParams.sampleMask[1])) {
-            COpenGLFunctionTable::glFragment.pglSampleMaski(1u, nextState.rasterParams.sampleMask[1]);
+            functionTable.glFragment.pglSampleMaski(1u, nextState.rasterParams.sampleMask[1]);
             UPDATE_STATE(rasterParams.sampleMask[1]);
         }
         if (STATE_NEQ(rasterParams.depthWriteEnable)) {
@@ -2411,19 +2425,19 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             glLogicOp(nextState.rasterParams.logicOp);
             UPDATE_STATE(rasterParams.logicOp);
         }
-        //decltype(COpenGLFunctionTable::glGeneral.pglEnablei)* disable_enable_indexed_fptr[2]{ &COpenGLFunctionTable::glGeneral.pglDisablei, &COpenGLFunctionTable::glGeneral.pglEnablei };
+        //decltype(found->functionTable.glGeneral.pglEnablei)* disable_enable_indexed_fptr[2]{ &found->functionTable.glGeneral.pglDisablei, &found->functionTable.glGeneral.pglEnablei };
         for (GLuint i=0u; i<asset::SBlendParams::MAX_COLOR_ATTACHMENT_COUNT; i++)
         {
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].blendEnable)) {
                 if (nextState.rasterParams.drawbufferBlend[i].blendEnable == GL_TRUE)
-                    COpenGLFunctionTable::glGeneral.pglEnablei(GL_BLEND, i);
+                    functionTable.glGeneral.pglEnablei(GL_BLEND, i);
                 else
-                    COpenGLFunctionTable::glGeneral.pglDisablei(GL_BLEND, i);
+                    functionTable.glGeneral.pglDisablei(GL_BLEND, i);
                 
                 UPDATE_STATE(rasterParams.drawbufferBlend[i].blendEnable);
             }
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].blendFunc)) {
-                COpenGLFunctionTable::glFragment.pglBlendFuncSeparatei(i,
+                functionTable.glFragment.pglBlendFuncSeparatei(i,
                     nextState.rasterParams.drawbufferBlend[i].blendFunc.srcRGB,
                     nextState.rasterParams.drawbufferBlend[i].blendFunc.dstRGB,
                     nextState.rasterParams.drawbufferBlend[i].blendFunc.srcAlpha,
@@ -2432,14 +2446,14 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
                 UPDATE_STATE(rasterParams.drawbufferBlend[i].blendFunc);
             }
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].blendEquation)) {
-                COpenGLFunctionTable::glFragment.pglBlendEquationSeparatei(i,
+                functionTable.glFragment.pglBlendEquationSeparatei(i,
                     nextState.rasterParams.drawbufferBlend[i].blendEquation.modeRGB,
                     nextState.rasterParams.drawbufferBlend[i].blendEquation.modeAlpha
                 );
                 UPDATE_STATE(rasterParams.drawbufferBlend[i].blendEquation);
             }
             if (STATE_NEQ(rasterParams.drawbufferBlend[i].colorMask)) {
-                COpenGLFunctionTable::glFragment.pglColorMaski(i,
+                functionTable.glFragment.pglColorMaski(i,
                     nextState.rasterParams.drawbufferBlend[i].colorMask.colorWritemask[0],
                     nextState.rasterParams.drawbufferBlend[i].colorMask.colorWritemask[1],
                     nextState.rasterParams.drawbufferBlend[i].colorMask.colorWritemask[2],
@@ -2468,7 +2482,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
             else
             {
                 GLuint GLvao;
-                COpenGLFunctionTable::glVertex.pglCreateVertexArrays(1u, &GLvao);
+                functionTable.glVertex.pglCreateVertexArrays(1u, &GLvao);
                 SOpenGLState::SVAO vao;
                 vao.GLname = GLvao;
                 vao.lastUsed = CNullDriver::ReallocationCounter++;
@@ -2483,14 +2497,14 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
                 brandNewVAO = true;
             }
             GLuint vao = currentState.vertexInputParams.vao.second.GLname;
-            COpenGLFunctionTable::glVertex.pglBindVertexArray(vao);
+            functionTable.glVertex.pglBindVertexArray(vao);
 
             bool updatedBindings[asset::SVertexInputParams::MAX_ATTR_BUF_BINDING_COUNT]{};
             for (uint32_t attr = 0u; attr < asset::SVertexInputParams::MAX_VERTEX_ATTRIB_COUNT; ++attr)
             {
                 if (hashVal.attribFormatAndComponentCount[attr] != asset::EF_UNKNOWN) {
                     if (brandNewVAO)
-                        COpenGLFunctionTable::glVertex.pglEnableVertexArrayAttrib(currentState.vertexInputParams.vao.second.GLname, attr);
+                        functionTable.glVertex.pglEnableVertexArrayAttrib(currentState.vertexInputParams.vao.second.GLname, attr);
                 }
                 else 
                     continue;
@@ -2499,19 +2513,19 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
 
                 if (brandNewVAO)
                 {
-                   glVertex.pglVertexArrayAttribBinding(vao, attr, bnd);
+                    functionTable.glVertex.pglVertexArrayAttribBinding(vao, attr, bnd);
 
                     const asset::E_FORMAT format = static_cast<asset::E_FORMAT>(hashVal.attribFormatAndComponentCount[attr]);
 
                     if (isFloatingPointFormat(format) && getTexelOrBlockBytesize(format) == getFormatChannelCount(format) * sizeof(double))//DOUBLE
-                        COpenGLFunctionTable::glVertex.pglVertexArrayAttribLFormat(vao, attr, getFormatChannelCount(format), GL_DOUBLE, hashVal.getRelativeOffsetForAttrib(attr));
+                        functionTable.glVertex.pglVertexArrayAttribLFormat(vao, attr, getFormatChannelCount(format), GL_DOUBLE, hashVal.getRelativeOffsetForAttrib(attr));
                     else if (isFloatingPointFormat(format) || isScaledFormat(format) || isNormalizedFormat(format))//FLOATING-POINT, SCALED ("weak integer"), NORMALIZED
-                        COpenGLFunctionTable::glVertex.pglVertexArrayAttribFormat(vao, attr, isBGRALayoutFormat(format) ? GL_BGRA : getFormatChannelCount(format), formatEnumToGLenum(format), isNormalizedFormat(format) ? GL_TRUE : GL_FALSE, hashVal.getRelativeOffsetForAttrib(attr));
+                        functionTable.glVertex.pglVertexArrayAttribFormat(vao, attr, isBGRALayoutFormat(format) ? GL_BGRA : getFormatChannelCount(format), formatEnumToGLenum(format), isNormalizedFormat(format) ? GL_TRUE : GL_FALSE, hashVal.getRelativeOffsetForAttrib(attr));
                     else if (isIntegerFormat(format))//INTEGERS
-                        COpenGLFunctionTable::glVertex.pglVertexArrayAttribIFormat(vao, attr, getFormatChannelCount(format), formatEnumToGLenum(format), hashVal.getRelativeOffsetForAttrib(attr));
+                        functionTable.glVertex.pglVertexArrayAttribIFormat(vao, attr, getFormatChannelCount(format), formatEnumToGLenum(format), hashVal.getRelativeOffsetForAttrib(attr));
 
                     if (!updatedBindings[bnd]) {
-                        COpenGLFunctionTable::glVertex.pglVertexArrayBindingDivisor(vao, bnd, hashVal.getDivisorForBinding(bnd));
+                        functionTable.glVertex.pglVertexArrayBindingDivisor(vao, bnd, hashVal.getDivisorForBinding(bnd));
                         updatedBindings[bnd] = true;
                     }
                 }
@@ -2533,14 +2547,14 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
                 if (STATE_NEQ(vertexInputParams.vao.vtxBindings[bnd]))//this if-statement also doesnt allow GlVertexArrayVertexBuffer be called multiple times for single binding
                 {
                     assert(nextState.vertexInputParams.vao.vtxBindings[bnd].buffer);//something went wrong
-                    COpenGLFunctionTable::glVertex.pglVertexArrayVertexBuffer(GLvao, bnd, nextState.vertexInputParams.vao.vtxBindings[bnd].buffer->getOpenGLName(), nextState.vertexInputParams.vao.vtxBindings[bnd].offset, hash.getStrideForBinding(bnd));
+                    functionTable.glVertex.pglVertexArrayVertexBuffer(GLvao, bnd, nextState.vertexInputParams.vao.vtxBindings[bnd].buffer->getOpenGLName(), nextState.vertexInputParams.vao.vtxBindings[bnd].offset, hash.getStrideForBinding(bnd));
                     UPDATE_STATE(vertexInputParams.vao.vtxBindings[bnd]);
                     anyBindingChanged = true;
                 }
             }
             if (STATE_NEQ(vertexInputParams.vao.idxBinding))
             {
-                COpenGLFunctionTable::glVertex.pglVertexArrayElementBuffer(GLvao, nextState.vertexInputParams.vao.idxBinding ? nextState.vertexInputParams.vao.idxBinding->getOpenGLName() : 0u);
+                functionTable.glVertex.pglVertexArrayElementBuffer(GLvao, nextState.vertexInputParams.vao.idxBinding ? nextState.vertexInputParams.vao.idxBinding->getOpenGLName() : 0u);
                 UPDATE_STATE(vertexInputParams.vao.idxBinding);
                 anyBindingChanged = true;
             }
@@ -2556,12 +2570,12 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
         }
         if (STATE_NEQ(vertexInputParams.indirectDrawBuf))
         {
-            COpenGLFunctionTable::glBuffer.pglBindBuffer(GL_DRAW_INDIRECT_BUFFER, nextState.vertexInputParams.indirectDrawBuf ? nextState.vertexInputParams.indirectDrawBuf->getOpenGLName() : 0u);
+            functionTable.glBuffer.pglBindBuffer(GL_DRAW_INDIRECT_BUFFER, nextState.vertexInputParams.indirectDrawBuf ? nextState.vertexInputParams.indirectDrawBuf->getOpenGLName() : 0u);
             UPDATE_STATE(vertexInputParams.indirectDrawBuf);
         }
         if (STATE_NEQ(vertexInputParams.parameterBuf))
         {
-            COpenGLFunctionTable::glBuffer.pglBindBuffer(GL_PARAMETER_BUFFER, nextState.vertexInputParams.parameterBuf ? nextState.vertexInputParams.parameterBuf->getOpenGLName() : 0u);
+            functionTable.glBuffer.pglBindBuffer(GL_PARAMETER_BUFFER, nextState.vertexInputParams.parameterBuf ? nextState.vertexInputParams.parameterBuf->getOpenGLName() : 0u);
             UPDATE_STATE(vertexInputParams.parameterBuf);
         }
     }
@@ -2575,7 +2589,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
         //PACK
         if (STATE_NEQ(pixelPack.buffer))
         {
-            COpenGLFunctionTable::glBuffer.pglBindBuffer(GL_PIXEL_PACK_BUFFER, nextState.pixelPack.buffer ? nextState.pixelPack.buffer->getOpenGLName() : 0u);
+            functionTable.glBuffer.pglBindBuffer(GL_PIXEL_PACK_BUFFER, nextState.pixelPack.buffer ? nextState.pixelPack.buffer->getOpenGLName() : 0u);
             UPDATE_STATE(pixelPack.buffer);
         }
         if (STATE_NEQ(pixelPack.alignment))
@@ -2612,7 +2626,7 @@ void COpenGLDriver::SAuxContext::flushStateGraphics(uint32_t stateBits)
         //UNPACK
         if (STATE_NEQ(pixelUnpack.buffer))
         {
-            COpenGLFunctionTable::glBuffer.pglBindBuffer(GL_PIXEL_UNPACK_BUFFER, nextState.pixelUnpack.buffer ? nextState.pixelUnpack.buffer->getOpenGLName() : 0u);
+            functionTable.glBuffer.pglBindBuffer(GL_PIXEL_UNPACK_BUFFER, nextState.pixelUnpack.buffer ? nextState.pixelUnpack.buffer->getOpenGLName() : 0u);
             UPDATE_STATE(pixelUnpack.buffer);
         }
         if (STATE_NEQ(pixelUnpack.alignment))
@@ -2661,7 +2675,7 @@ void COpenGLDriver::SAuxContext::flushStateCompute(uint32_t stateBits)
         if (nextState.pipeline.compute.usedShader != currentState.pipeline.compute.usedShader)
         {
             const GLuint GLname = nextState.pipeline.compute.usedShader;
-            COpenGLFunctionTable::glShader.pglUseProgram(GLname);
+            functionTable.glShader.pglUseProgram(GLname);
             currentState.pipeline.compute.usedShader = GLname;
         }
         if (nextState.pipeline.compute.pipeline != currentState.pipeline.compute.pipeline)
@@ -2679,7 +2693,7 @@ void COpenGLDriver::SAuxContext::flushStateCompute(uint32_t stateBits)
         if (currentState.dispatchIndirect.buffer != nextState.dispatchIndirect.buffer)
         {
             const GLuint GLname = nextState.dispatchIndirect.buffer ? nextState.dispatchIndirect.buffer->getOpenGLName() : 0u;
-            COpenGLFunctionTable::glBuffer.pglBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, GLname);
+            functionTable.glBuffer.pglBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, GLname);
             currentState.dispatchIndirect.buffer = nextState.dispatchIndirect.buffer;
         }
     }
@@ -2741,13 +2755,13 @@ GLuint COpenGLDriver::SAuxContext::createGraphicsPipeline(const SOpenGLState::SG
     const GLenum stageFlags[5]{ GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT, GL_TESS_EVALUATION_SHADER_BIT, GL_GEOMETRY_SHADER_BIT, GL_FRAGMENT_SHADER_BIT };
 
     GLuint GLpipeline = 0u;
-    COpenGLFunctionTable::glShader.pglCreateProgramPipelines(1u, &GLpipeline);
+    functionTable.glShader.pglCreateProgramPipelines(1u, &GLpipeline);
 
     for (uint32_t ix = 0u; ix < STAGE_CNT; ++ix) {
         GLuint progName = _hash[ix];
 
         if (progName)
-            COpenGLFunctionTable::glShader.pglUseProgramStages(GLpipeline, stageFlags[ix], progName);
+            functionTable.glShader.pglUseProgramStages(GLpipeline, stageFlags[ix], progName);
     }
 
     return GLpipeline;
@@ -3010,7 +3024,7 @@ void COpenGLDriver::blitRenderTargets(IFrameBuffer* in, IFrameBuffer* out,
     if (out)
         outFBOHandle = static_cast<COpenGLFrameBuffer*>(out)->getOpenGLName();
 
-    COpenGLFunctionTable::glFrameBuffer.pglBlitNamedFramebuffer(inFBOHandle,outFBOHandle,
+    found->functionTable.glFrameBuffer.pglBlitNamedFramebuffer(inFBOHandle,outFBOHandle,
                         srcRect.UpperLeftCorner.X,srcRect.UpperLeftCorner.Y,srcRect.LowerRightCorner.X,srcRect.LowerRightCorner.Y,
                         dstRect.UpperLeftCorner.X,dstRect.UpperLeftCorner.Y,dstRect.LowerRightCorner.X,dstRect.LowerRightCorner.Y,
 						GL_COLOR_BUFFER_BIT|(copyDepth ? GL_DEPTH_BUFFER_BIT:0)|(copyStencil ? GL_STENCIL_BUFFER_BIT:0),
@@ -3056,7 +3070,7 @@ bool COpenGLDriver::setRenderTarget(IFrameBuffer* frameBuffer, bool setNewViewpo
     if (!frameBuffer)
     {
         found->CurrentRendertargetSize = Params.WindowSize;
-        COpenGLFunctionTable::glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, 0);
+        found->functionTable.glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, 0);
         if (found->CurrentFBO)
             found->CurrentFBO->drop();
         found->CurrentFBO = NULL;
@@ -3073,7 +3087,7 @@ bool COpenGLDriver::setRenderTarget(IFrameBuffer* frameBuffer, bool setNewViewpo
     found->CurrentRendertargetSize = newRTTSize;
 
 
-    COpenGLFunctionTable::glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, static_cast<COpenGLFrameBuffer*>(frameBuffer)->getOpenGLName());
+    found->functionTable.glFrameBuffer.pglBindFramebuffer(GL_FRAMEBUFFER, static_cast<COpenGLFrameBuffer*>(frameBuffer)->getOpenGLName());
     if (setNewViewport)
         setViewPort(core::recti(0,0,newRTTSize.Width,newRTTSize.Height));
 
@@ -3116,9 +3130,9 @@ void COpenGLDriver::clearZBuffer(const float &depth)
     found->flushStateGraphics(GSB_RASTER_PARAMETERS);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(found->CurrentFBO->getOpenGLName(),GL_DEPTH,0,&depth);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(found->CurrentFBO->getOpenGLName(),GL_DEPTH,0,&depth);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0,GL_DEPTH,0,&depth);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0,GL_DEPTH,0,&depth);
 
     found->nextState.rasterParams.depthWriteEnable = depthWrite;
     found->nextState.rasterParams.rasterizerDiscardEnable = rasterizerDiscard;
@@ -3140,9 +3154,9 @@ void COpenGLDriver::clearStencilBuffer(const int32_t &stencil)
     found->flushStateGraphics(GSB_RASTER_PARAMETERS);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferiv(found->CurrentFBO->getOpenGLName(),GL_STENCIL,0,&stencil);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferiv(found->CurrentFBO->getOpenGLName(),GL_STENCIL,0,&stencil);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferiv(0,GL_STENCIL,0,&stencil);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferiv(0,GL_STENCIL,0,&stencil);
 
     found->nextState.rasterParams.stencilFunc_back.mask = smask_back;
     found->nextState.rasterParams.stencilFunc_front.mask = smask_front;
@@ -3167,9 +3181,9 @@ void COpenGLDriver::clearZStencilBuffers(const float &depth, const int32_t &sten
     found->flushStateGraphics(GSB_RASTER_PARAMETERS);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfi(found->CurrentFBO->getOpenGLName(),GL_DEPTH_STENCIL,0,depth,stencil);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfi(found->CurrentFBO->getOpenGLName(),GL_DEPTH_STENCIL,0,depth,stencil);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfi(0,GL_DEPTH_STENCIL,0,depth,stencil);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfi(0,GL_DEPTH_STENCIL,0,depth,stencil);
 
     found->nextState.rasterParams.depthWriteEnable = depthWrite;
     found->nextState.rasterParams.stencilFunc_back.mask = smask_back;
@@ -3192,9 +3206,9 @@ void COpenGLDriver::clearColorBuffer(const E_FBO_ATTACHMENT_POINT &attachment, c
     clearColor_gatherAndOverrideState(found, attIx, &rasterizerDiscard, colormask);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferiv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferiv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferiv(0,GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferiv(0,GL_COLOR,attIx,vals);
 
     clearColor_bringbackState(found, attIx, rasterizerDiscard, colormask);
 }
@@ -3213,9 +3227,9 @@ void COpenGLDriver::clearColorBuffer(const E_FBO_ATTACHMENT_POINT &attachment, c
     clearColor_gatherAndOverrideState(found, attIx, &rasterizerDiscard, colormask);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(0,GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(0,GL_COLOR,attIx,vals);
 
     clearColor_bringbackState(found, attIx, rasterizerDiscard, colormask);
 }
@@ -3234,9 +3248,9 @@ void COpenGLDriver::clearColorBuffer(const E_FBO_ATTACHMENT_POINT &attachment, c
     clearColor_gatherAndOverrideState(found, attIx, &rasterizerDiscard, colormask);
 
     if (found->CurrentFBO)
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(found->CurrentFBO->getOpenGLName(),GL_COLOR,attIx,vals);
     else
-        COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0,GL_COLOR,attIx,vals);
+        found->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0,GL_COLOR,attIx,vals);
 
     clearColor_bringbackState(found, attIx, rasterizerDiscard, colormask);
 }
@@ -3253,16 +3267,16 @@ void COpenGLDriver::clearScreen(const E_SCREEN_BUFFERS &buffer, const float* val
     switch (buffer)
     {
         case ESB_BACK_LEFT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
             break;
         case ESB_BACK_RIGHT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
             break;
         case ESB_FRONT_LEFT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0, GL_COLOR, 0, vals);
             break;
         case ESB_FRONT_RIGHT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferfv(0,GL_COLOR,0,vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferfv(0,GL_COLOR,0,vals);
             break;
     }
     clearColor_bringbackState(ctx, 0u, rasterDiscard, colorWmask);
@@ -3279,16 +3293,16 @@ void COpenGLDriver::clearScreen(const E_SCREEN_BUFFERS &buffer, const uint32_t* 
     switch (buffer)
     {
         case ESB_BACK_LEFT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
             break;
         case ESB_BACK_RIGHT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
             break;
         case ESB_FRONT_LEFT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(0, GL_COLOR, 0, vals);
             break;
         case ESB_FRONT_RIGHT:
-            COpenGLFunctionTable::glFrameBuffer.pglClearNamedFramebufferuiv(0,GL_COLOR,0,vals);
+            ctx->functionTable.glFrameBuffer.pglClearNamedFramebufferuiv(0,GL_COLOR,0,vals);
             break;
     }
     clearColor_bringbackState(ctx, 0u, rasterDiscard, colorWmask);
@@ -3309,11 +3323,13 @@ void COpenGLDriver::initExtensions(bool stencilBuffer)
 {
     core::stringc vendorString = (char*)glGetString(GL_VENDOR);
     if (vendorString.find("Intel")!=-1 || vendorString.find("INTEL")!=-1)
-	    IsIntelGPU = true;
+	    COpenGLFunctionTable::IsIntelGPU = true;
 
 	//TextureCompressionExtension = FeatureAvailable[IRR_ARB_texture_compression];
 	//StencilBuffer = stencilBuffer;
-
+    auto ctx = getThreadContext_helper(false);
+    if (!ctx)
+        return;
 
 	GLint num = 0;
 
@@ -3324,9 +3340,9 @@ void COpenGLDriver::initExtensions(bool stencilBuffer)
 	glGetIntegerv(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &reqTBOAlignment);
     assert(core::is_alignment(reqTBOAlignment));
 
-    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxUBOSize));
-    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxSSBOSize));
-    COpenGLFunctionTable::glGeneral.pglGetInteger64v(GL_MAX_TEXTURE_BUFFER_SIZE, reinterpret_cast<GLint64*>(&maxTBOSizeInTexels));
+    ctx->functionTable.glGeneral.pglGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxUBOSize));
+    ctx->functionTable.glGeneral.pglGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, reinterpret_cast<GLint64*>(&maxSSBOSize));
+    ctx->functionTable.glGeneral.pglGetInteger64v(GL_MAX_TEXTURE_BUFFER_SIZE, reinterpret_cast<GLint64*>(&maxTBOSizeInTexels));
     maxBufferSize = std::max(maxUBOSize, maxSSBOSize);
 
     glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, reinterpret_cast<GLint*>(&maxUBOBindings));
@@ -3337,9 +3353,9 @@ void COpenGLDriver::initExtensions(bool stencilBuffer)
 
 	glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &minMemoryMapAlignment);
 
-    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, MaxComputeWGSize);
-    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, MaxComputeWGSize + 1);
-    COpenGLFunctionTable::glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, MaxComputeWGSize+2);
+    ctx->functionTable.glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, MaxComputeWGSize);
+    ctx->functionTable.glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, MaxComputeWGSize + 1);
+    ctx->functionTable.glGeneral.pglGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, MaxComputeWGSize+2);
 
 
 	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &num);
@@ -3379,7 +3395,7 @@ void COpenGLDriver::initExtensions(bool stencilBuffer)
 
 
 	//! For EXT-DSA testing
-	if (IsIntelGPU)
+	if (COpenGLFunctionTable::IsIntelGPU)
 	{
 		Version = 440;
 		FeatureAvailable[IRR_ARB_direct_state_access] = false;
