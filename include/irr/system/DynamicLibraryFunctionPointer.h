@@ -46,9 +46,9 @@ class DynamicLibraryFunctionPointer
 			assert(error);
 			return error(name);
 		}
-		/*
 		template<typename... T>
-		inline result_type operator()(std::function<void(const char*)> error, T&& ... args)
+		typename std::enable_if<!std::is_void<result_type>::value,void>
+		operator()(std::function<void(const char*)> error, T&& ... args)
 		{
 			if (p)
 				return p(std::forward<T>(args)...);
@@ -56,7 +56,7 @@ class DynamicLibraryFunctionPointer
 				error(name);
 			return result_type{};
 		}
-		*/
+		
 
 		template<typename... T>
 		inline result_type operator()(T&& ... args)
