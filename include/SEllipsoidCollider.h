@@ -2,6 +2,7 @@
 #define __S_ELLIPSOID_COLLIDER_H_INCLUDED__
 
 #include "vectorSIMD.h"
+#include "irr/core/math/glslFunctions.tcc"
 
 namespace irr
 {
@@ -24,7 +25,7 @@ class SEllipsoidCollider// : public AllocationOverrideDefault EBO inheritance pr
                 }
             }
 
-            reciprocalAxes = reciprocal(axisLengths);
+            reciprocalAxes = reciprocal_approxim(axisLengths);
 
             validEllipse = true;
         }
@@ -33,8 +34,9 @@ class SEllipsoidCollider// : public AllocationOverrideDefault EBO inheritance pr
         {
             origin += negativeCenter;
             origin *= reciprocalAxes;
-
-            float originLen2 = dot(origin,origin).x;
+			origin.makeSafe3D();
+            
+			float originLen2 = dot(origin,origin).x;
             if (originLen2<=1.f) //point is inside
             {
                 collisionDistance = 0.f;
@@ -49,7 +51,7 @@ class SEllipsoidCollider// : public AllocationOverrideDefault EBO inheritance pr
             if (partDet>1.0)
                 return false;
 
-            float t = -dirDotOrigin-sqrtf(1.0-partDet);
+            float t = -dirDotOrigin-core::sqrt(1.f-partDet);
             if (t<0.f)
                 return false;
 

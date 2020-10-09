@@ -8,9 +8,9 @@ using namespace asset;
 using namespace ext;
 using namespace DebugDraw;
 
-CDraw3DLine* CDraw3DLine::create(IVideoDriver* _driver)
+core::smart_refctd_ptr<CDraw3DLine> CDraw3DLine::create(IVideoDriver* _driver)
 {
-    return new CDraw3DLine(_driver);
+    return core::smart_refctd_ptr<CDraw3DLine>(new CDraw3DLine(_driver),core::dont_grab);
 }
 
 CDraw3DLine::CDraw3DLine(IVideoDriver* _driver)
@@ -63,7 +63,7 @@ void CDraw3DLine::draw(
 
     m_meshBuffer->setBaseVertex(offset[0]/sizeof(S3DLineVertex));
 
-    m_driver->setTransform(E4X3TS_WORLD, core::matrix4x3());
+    m_driver->setTransform(E4X3TS_WORLD, core::matrix3x4SIMD());
     m_driver->setMaterial(m_material);
     m_driver->drawMeshBuffer(m_meshBuffer.get());
 
@@ -87,7 +87,7 @@ void CDraw3DLine::draw(const core::vector<std::pair<S3DLineVertex, S3DLineVertex
     m_meshBuffer->setBaseVertex(offset[0]/sizeof(S3DLineVertex));
     m_meshBuffer->setIndexCount(linesData.size() * 2);
 
-    m_driver->setTransform(E4X3TS_WORLD, core::matrix4x3());
+    m_driver->setTransform(E4X3TS_WORLD, core::matrix3x4SIMD());
     m_driver->setMaterial(m_material);
     m_driver->drawMeshBuffer(m_meshBuffer.get());
 

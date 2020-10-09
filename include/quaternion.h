@@ -5,16 +5,17 @@
 #define __IRR_QUATERNION_H_INCLUDED__
 
 
-
-#include "irr/core/math/irrMath.h"
-#include "matrix4x3.h"
 #include "vectorSIMD.h"
+
+#include "irr/core/math/glslFunctions.h"
 
 
 namespace irr
 {
 namespace core
 {
+
+class matrix3x4SIMD;
 
 
 //! Quaternion class for representing rotations.
@@ -35,7 +36,7 @@ class quaternion : private vectorSIMDf
 		inline quaternion(const float& pitch, const float& yaw, const float& roll) {set(pitch,yaw,roll);}
 
 		//! Constructor which converts a matrix to a quaternion
-		inline quaternion(const matrix4x3& mat) {*this = mat;}
+		explicit quaternion(const matrix3x4SIMD& m);
 
         inline float* getPointer() {return pointer;}
 
@@ -47,78 +48,6 @@ class quaternion : private vectorSIMDf
 
 		//! Assignment operator
 		inline quaternion& operator=(const quaternion& other) {return reinterpret_cast<quaternion&>(vectorSIMDf::operator=(other));}
-
-		//! Matrix assignment operator
-		inline quaternion& operator=(const matrix4x3& m)
-        {
-/*
-            __m128 one = _mm_set1_ps(1.f);
-            __m128 Qx  = _mm_xor_ps(_mm_load1_ps(&m(0,0)),_mm_castsiWRONGCASTSPEAKTODEVSH128_ps(_mm_set_epi32(0x80000000u,0x80000000u,0,0)));
-            __m128 Qy  = _mm_xor_ps(_mm_load1_ps(&m(1,1)),_mm_castsiWRONGCASTSPEAKTODEVSH128_ps(_mm_set_epi32(0x80000000u,0,0x80000000u,0)));
-            __m128 Qz  = _mm_xor_ps(_mm_load1_ps(&m(2,2)),_mm_castsiWRONGCASTSPEAKTODEVSH128_ps(_mm_set_epi32(0,0x80000000u,0x80000000u,0)));
-
-            __m128 output = _mm_add_ps(_mm_add_ps(one,Qx),_mm_add_ps(Qy,Qz));
-            output = _mm_and_ps(_mm_mul_ps(_mm_sqrt_ps(output),_mm_set1_ps(0.5f)),_mm_castsiWRONGCASTSPEAKTODEVSH128_ps(_mm_set_epi32(0x7fffffffu,0x7fffffffu,0x7fffffffu,0xffffffffu)));
-
-            __m128 mask = _mm_and_ps(_mm_cmplt_ps(_mm_set_ps(m(1,0),m(0,2),m(2,1),0.f),_mm_set_ps(m(0,1),m(2,0),m(1,2),0.f)),_mm_castsiWRONGCASTSPEAKTODEVSH128_ps(_mm_set_epi32(0x80000000u,0x80000000u,0x80000000u,0)));
-
-            _mm_store_ps(pointer,_mm_or_ps(output,mask));
-*/
-
-            const float diag = m(0,0) + m(1,1) + m(2,2);
-
-            if( diag > -1.0f )
-            {
-                const float scale = sqrtf(diag+1.f) * 2.0f; // get scale from diagonal
-
-                // TODO: speed this up
-                X = (m(2,1) - m(1,2)) / scale;
-                Y = (m(0,2) - m(2,0)) / scale;
-                Z = (m(1,0) - m(0,1)) / scale;
-                W = 0.25f * scale;
-            }
-            else
-            {
-                if (m(0,0)>m(1,1) && m(0,0)>m(2,2))
-                {
-                    // 1st element of diag is greatest value
-                    // find scale according to 1st element, and double it
-                    const float scale = sqrtf(1.0f + m(0,0) - m(1,1) - m(2,2)) * 2.0f;
-
-                    // TODO: speed this up
-                    X = 0.25f * scale;
-                    Y = (m(0,1) + m(1,0)) / scale;
-                    Z = (m(2,0) + m(0,2)) / scale;
-                    W = (m(2,1) - m(1,2)) / scale;
-                }
-                else if (m(1,1)>m(2,2))
-                {
-                    // 2nd element of diag is greatest value
-                    // find scale according to 2nd element, and double it
-                    const float scale = sqrtf(1.0f + m(1,1) - m(0,0) - m(2,2)) * 2.0f;
-
-                    // TODO: speed this up
-                    X = (m(0,1) + m(1,0)) / scale;
-                    Y = 0.25f * scale;
-                    Z = (m(1,2) + m(2,1)) / scale;
-                    W = (m(0,2) - m(2,0)) / scale;
-                }
-                else
-                {
-                    // 3rd element of diag is greatest value
-                    // find scale according to 3rd element, and double it
-                    const float scale = sqrtf(1.0f + m(2,2) - m(0,0) - m(1,1)) * 2.0f;
-
-                    // TODO: speed this up
-                    X = (m(0,2) + m(2,0)) / scale;
-                    Y = (m(1,2) + m(2,1)) / scale;
-                    Z = 0.25f * scale;
-                    W = (m(1,0) - m(0,1)) / scale;
-                }
-            }
-            *this = normalize(*this);
-            return *this;
-        }
 
 		//! Multiplication operator with scalar
 		inline quaternion operator*(const float& s) const
@@ -202,21 +131,11 @@ class quaternion : private vectorSIMDf
         inline vectorSIMDf transformVect(const vectorSIMDf& vec)
         {
             vectorSIMDf direction = *reinterpret_cast<const vectorSIMDf*>(this);
-            vectorSIMDf scale = direction.getLength();
+            vectorSIMDf scale = core::length(direction);
             direction.makeSafe3D();
 
-            return scale*vec+direction.crossProduct(vec*W+direction.crossProduct(vec))*2.f;
+            return scale*vec+cross(direction,vec*W+cross(direction,vec))*2.f;
         }
-
-		//! Calculates the dot product
-		inline vectorSIMDf dotProduct(const quaternion& other) const
-		{
-		    return vectorSIMDf::dotProduct(reinterpret_cast<const vectorSIMDf&>(other));
-		}
-		inline float dotProductAsFloat(const quaternion& other) const
-		{
-		    return vectorSIMDf::dotProductAsFloat(reinterpret_cast<const vectorSIMDf&>(other));
-		}
 
 		//! Sets new quaternion
 		inline quaternion& set(const vectorSIMDf& xyzw)
@@ -234,18 +153,6 @@ class quaternion : private vectorSIMDf
 		    *this = quat;
 		    return *this;
 		}
-
-		//! Creates a matrix from this quaternion
-        inline matrix4x3 getMatrix() const
-        {
-            matrix4x3 m;
-            getMatrix(m);
-            return m;
-        }
-
-		//! Creates a matrix from this quaternion
-		void getMatrix( matrix4x3 &dest, const vector3df_SIMD &translation=vectorSIMDf() ) const;
-		void getMatrix_Sub3x3Transposed( matrix4x3 &dest, const vector3df_SIMD &translation=vectorSIMDf() ) const;
 
 		//! Inverts this quaternion
 		inline void makeInverse()
@@ -345,66 +252,21 @@ class quaternion : private vectorSIMDf
 static_assert(sizeof(quaternion) == sizeof(vectorSIMDf), "Quaternion not same size as vec4");
 
 
-
-/*!
-	Creates a matrix from this quaternion
-*/
-inline void quaternion::getMatrix(matrix4x3 &dest,
-		const core::vector3df_SIMD &center) const
-{
-	dest(0,0) = 1.0f - 2.0f*Y*Y - 2.0f*Z*Z;
-	dest(1,0) = 2.0f*X*Y + 2.0f*Z*W;
-	dest(2,0) = 2.0f*X*Z - 2.0f*Y*W;
-
-	dest(0,1) = 2.0f*X*Y - 2.0f*Z*W;
-	dest(1,1) = 1.0f - 2.0f*X*X - 2.0f*Z*Z;
-	dest(2,1) = 2.0f*Z*Y + 2.0f*X*W;
-
-	dest(0,2) = 2.0f*X*Z + 2.0f*Y*W;
-	dest(1,2) = 2.0f*Z*Y - 2.0f*X*W;
-	dest(2,2) = 1.0f - 2.0f*X*X - 2.0f*Y*Y;
-
-	dest(0,3) = center.X;
-	dest(1,3) = center.Y;
-	dest(2,3) = center.Z;
-}
-
-inline void quaternion::getMatrix_Sub3x3Transposed(matrix4x3 &dest,
-		const core::vector3df_SIMD &center) const
-{
-	dest(0,0) = 1.0f - 2.0f*Y*Y - 2.0f*Z*Z;
-	dest(0,1) = 2.0f*X*Y + 2.0f*Z*W;
-	dest(0,2) = 2.0f*X*Z - 2.0f*Y*W;
-
-	dest(1,0) = 2.0f*X*Y - 2.0f*Z*W;
-	dest(1,1) = 1.0f - 2.0f*X*X - 2.0f*Z*Z;
-	dest(1,2) = 2.0f*Z*Y + 2.0f*X*W;
-
-	dest(2,0) = 2.0f*X*Z + 2.0f*Y*W;
-	dest(2,1) = 2.0f*Z*Y - 2.0f*X*W;
-	dest(2,2) = 1.0f - 2.0f*X*X - 2.0f*Y*Y;
-
-	dest(0,3) = center.X;
-	dest(1,3) = center.Y;
-	dest(2,3) = center.Z;
-}
-
-
 // set this quaternion to the result of the linear interpolation between two quaternions
 inline quaternion quaternion::lerp(const quaternion &q1, const quaternion &q2, const float& interpolant, const bool& wrongDoubleCover)
 {
     vectorSIMDf retval;
 	if (wrongDoubleCover)
-        retval = mix(reinterpret_cast<const vectorSIMDf&>(q1),-reinterpret_cast<const vectorSIMDf&>(q2),vectorSIMDf(interpolant));
+        retval = mix<vectorSIMDf>(reinterpret_cast<const vectorSIMDf&>(q1),-reinterpret_cast<const vectorSIMDf&>(q2),vectorSIMDf(interpolant));
     else
-        retval = mix(reinterpret_cast<const vectorSIMDf&>(q1), reinterpret_cast<const vectorSIMDf&>(q2),vectorSIMDf(interpolant));
+        retval = mix<vectorSIMDf>(reinterpret_cast<const vectorSIMDf&>(q1), reinterpret_cast<const vectorSIMDf&>(q2),vectorSIMDf(interpolant));
     return reinterpret_cast<const quaternion&>(retval);
 }
 
 // set this quaternion to the result of the linear interpolation between two quaternions
 inline quaternion quaternion::lerp(const quaternion &q1, const quaternion &q2, const float& interpolant)
 {
-	const float angle = q1.dotProductAsFloat(q2);
+	const float angle = dot<vectorSIMDf>(q1,q2)[0];
     return lerp(q1,q2,interpolant,angle < 0.0f);
 }
 
@@ -421,7 +283,7 @@ inline float quaternion::flerp_adjustedinterpolant(const float& angle, const flo
 // set this quaternion to the result of an approximate slerp
 inline quaternion quaternion::flerp(const quaternion &q1, const quaternion &q2, const float& interpolant)
 {
-	const float angle = q1.dotProductAsFloat(q2);
+	const float angle = dot<vectorSIMDf>(q1,q2)[0];
     return lerp(q1,q2,flerp_adjustedinterpolant(fabsf(angle),interpolant,(interpolant - 0.5f) * (interpolant - 0.5f),interpolant * (interpolant - 0.5f) * (interpolant - 1.f)),angle < 0.0f);
 }
 
@@ -429,7 +291,7 @@ inline quaternion quaternion::flerp(const quaternion &q1, const quaternion &q2, 
 // set this quaternion to the result of the interpolation between two quaternions
 inline quaternion quaternion::slerp(const quaternion &q1, const quaternion &q2, const float& interpolant, const float& threshold)
 {
-	float angle = q1.dotProductAsFloat(q2);
+	float angle = dot<vectorSIMDf>(q1,q2)[0];
 
 	// make sure we use the short rotation
 	bool wrongDoubleCover = angle < 0.0f;
@@ -440,12 +302,12 @@ inline quaternion quaternion::slerp(const quaternion &q1, const quaternion &q2, 
 	{ // acosf + sinf
         vectorSIMDf retval;
 
-		const float sinARcp  = reciprocal_squareroot(1.f-angle*angle);
+		const float sinARcp  = inversesqrt(1.f-angle*angle);
 		const float sinAt = sinf(acosf(angle) * interpolant); // could this line be optimized?
 		//1sqrt 3min/add 5mul from now on
 		const float sinAt_over_sinA = sinAt*sinARcp;
 
-        const float scale = sqrtf(1.f-sinAt*sinAt)-angle*sinAt_over_sinA; //cosAt-cos(A)sin(tA)/sin(A) = (sin(A)cos(tA)-cos(A)sin(tA))/sin(A)
+        const float scale = core::sqrt(1.f-sinAt*sinAt)-angle*sinAt_over_sinA; //cosAt-cos(A)sin(tA)/sin(A) = (sin(A)cos(tA)-cos(A)sin(tA))/sin(A)
         if (wrongDoubleCover) // make sure we use the short rotation
             retval = reinterpret_cast<const vectorSIMDf&>(q1)*scale - reinterpret_cast<const vectorSIMDf&>(q2)*sinAt_over_sinA;
         else
@@ -473,7 +335,7 @@ inline quaternion quaternion::fromAngleAxis(const float& angle, const vector3df_
 
 inline void quaternion::toAngleAxis(float& angle, vector3df_SIMD &axis) const
 {
-    vectorSIMDf scale = reinterpret_cast<const vectorSIMDf*>(this)->getLength();
+    vectorSIMDf scale = core::length(*reinterpret_cast<const vectorSIMDf*>(this));
 
 	if (scale.X==0.f)
 	{
@@ -504,7 +366,7 @@ inline void quaternion::toEuler(vector3df_SIMD& euler) const
 		// bank = rotation about x-axis
 		euler.X = 0;
 		// attitude = rotation about y-axis
-		euler.Y = (float) (PI64/2.0);
+		euler.Y = core::HALF_PI<float>();
 	}
 	else if (core::equals(test, -1.0, 0.000001))
 	{
@@ -513,7 +375,7 @@ inline void quaternion::toEuler(vector3df_SIMD& euler) const
 		// bank = rotation about x-axis
 		euler.X = 0;
 		// attitude = rotation about y-axis
-		euler.Y = (float) (PI64/-2.0);
+		euler.Y = -core::HALF_PI<float>();
 	}
 	else
 	{
@@ -535,7 +397,7 @@ inline quaternion quaternion::rotationFromTo(const vector3df_SIMD& from, const v
 	v0 = core::normalize(v0);
 	v1 = core::normalize(v1);
 
-	const vectorSIMDf dddd = v0.dotProduct(v1);
+	const vectorSIMDf dddd = core::dot(v0,v1);
 	quaternion tmp;
 	if (dddd.X >= 1.0f) // If dot == 1, vectors are the same
 	{
@@ -544,19 +406,19 @@ inline quaternion quaternion::rotationFromTo(const vector3df_SIMD& from, const v
 	else if (dddd.X <= -1.0f) // exactly opposite
 	{
 		vector3df_SIMD axis(1.0f, 0.f, 0.f);
-		axis = axis.crossProduct(v0);
-		if (axis.getLengthAsFloat()==0.f)
+		axis = cross(axis,v0);
+		if (length(axis)[0]==0.f)
 		{
 			axis.set(0.f,1.f,0.f);
-			axis = axis.crossProduct(v0);
+			axis = cross(axis,v0);
 		}
 		// same as fromAngleAxis(PI, axis).normalize();
 		reinterpret_cast<vectorSIMDf&>(tmp) = axis;
 		return normalize(tmp);
 	}
 
-    vectorSIMDf s = sqrt(vectorSIMDf(2.f,2.f,2.f,0.f)+dddd*2.f);
-	reinterpret_cast<vectorSIMDf&>(tmp) = v0.crossProduct(v1)*reciprocal(s);
+    vectorSIMDf s = core::sqrt(vectorSIMDf(2.f,2.f,2.f,0.f)+dddd*2.f);
+	reinterpret_cast<vectorSIMDf&>(tmp) = cross(v0,v1)*reciprocal_approxim(s);
 	tmp.W = s.X*0.5f;
     return normalize(tmp);
 }
@@ -568,21 +430,21 @@ inline quaternion& quaternion::set(const float& roll, const float& pitch, const 
 	double angle;
 
 	angle = roll * 0.5;
-	const double sr = sin(angle);
-	const double cr = cos(angle);
+	const float sr = sin(angle);
+	const float cr = cos(angle);
 
 	angle = pitch * 0.5;
-	const double sp = sin(angle);
-	const double cp = cos(angle);
+	const float sp = sin(angle);
+	const float cp = cos(angle);
 
 	angle = yaw * 0.5;
-	const double sy = sin(angle);
-	const double cy = cos(angle);
+	const float sy = sin(angle);
+	const float cy = cos(angle);
 
-	const double cpcy = cp * cy;
-	const double spcy = sp * cy;
-	const double cpsy = cp * sy;
-	const double spsy = sp * sy;
+	const float cpcy = cp * cy;
+	const float spcy = sp * cy;
+	const float cpsy = cp * sy;
+	const float spsy = sp * sy;
 
     *reinterpret_cast<vectorSIMDf*>(this) = vectorSIMDf(sr,cr,cr,cr)*vectorSIMDf(cpcy,spcy,cpsy,cpcy)+vectorSIMDf(-cr,sr,-sr,sr)*vectorSIMDf(spsy,cpsy,spcy,spsy);
 

@@ -2,6 +2,8 @@
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
+#include "irr/core/core.h"
+
 #include "IVideoDriver.h"
 #include "ISceneManager.h"
 #include "ICameraSceneNode.h"
@@ -177,13 +179,14 @@ void CSkyBoxSceneNode::render()
 	{
 		// draw perspective skybox
 
-		core::matrix4x3 translate(AbsoluteTransformation);
-		translate.setTranslation(camera->getAbsolutePosition());
+		core::matrix3x4SIMD translate;
+		translate.set(AbsoluteTransformation);
+		translate.setTranslation(core::vectorSIMDf().set(camera->getAbsolutePosition()));
 
 		// Draw the sky box between the near and far clip plane
 		const float viewDistance = (camera->getNearValue() + camera->getFarValue()) * 0.5f;
-		core::matrix4x3 scale;
-		scale.setScale(core::vector3df(viewDistance, viewDistance, viewDistance));
+		core::matrix3x4SIMD scale;
+		scale.setScale(core::vectorSIMDf(viewDistance, viewDistance, viewDistance));
 
 		driver->setTransform(video::E4X3TS_WORLD, concatenateBFollowedByA(translate,scale));
 
@@ -198,12 +201,9 @@ void CSkyBoxSceneNode::render()
 		// draw orthogonal skybox,
 		// simply choose one texture and draw it as 2d picture.
 		// there could be better ways to do this, but currently I think this is ok.
-
-		core::vector3df lookVect = camera->getTarget() - camera->getAbsolutePosition();
-		lookVect.normalize();
-		core::vector3df absVect( core::abs_(lookVect.X),
-					 core::abs_(lookVect.Y),
-					 core::abs_(lookVect.Z));
+		core::vectorSIMDf absPos; absPos.set(camera->getAbsolutePosition());
+		core::vectorSIMDf lookVect = core::normalize(camera->getTarget() - absPos);
+		core::vectorSIMDf absVect = core::abs(lookVect);
 
 		int idx = 0;
 
@@ -256,24 +256,6 @@ void CSkyBoxSceneNode::OnRegisterSceneNode()
 		SceneManager->registerNodeForRendering(this, ESNRP_SKY_BOX);
 
 	ISceneNode::OnRegisterSceneNode();
-}
-
-
-//! returns the material based on the zero based index i. To get the amount
-//! of materials used by this scene node, use getMaterialCount().
-//! This function is needed for inserting the node into the scene hirachy on a
-//! optimal position for minimizing renderstate changes, but can also be used
-//! to directly modify the material of a scene node.
-video::SGPUMaterial& CSkyBoxSceneNode::getMaterial(uint32_t i)
-{
-	return Material[i];
-}
-
-
-//! returns amount of materials used by this scene node.
-uint32_t CSkyBoxSceneNode::getMaterialCount() const
-{
-	return 6;
 }
 
 } // end namespace scene

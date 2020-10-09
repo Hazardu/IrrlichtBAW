@@ -17,7 +17,7 @@ namespace scene
             core::smart_refctd_ptr<video::IGPUSkinnedMesh> mesh;
             CSkinningStateManager* boneStateManager;
 
-            core::vector<video::SGPUMaterial> Materials;
+            //core::vector<video::SGPUMaterial> Materials;
             core::aabbox3d<float> Box;
             IAnimationEndCallBack<ISkinnedMeshSceneNode>* LoopCallBack;
 
@@ -91,22 +91,6 @@ namespace scene
 
             virtual float getDesiredUpdateFrequency() const {return 1000.f/desiredUpdateFrequency;}
 
-            //! returns the material based on the zero based index i. To get the amount
-            //! of materials used by this scene node, use getMaterialCount().
-            //! This function is needed for inserting the node into the scene hirachy on a
-            //! optimal position for minimizing renderstate changes, but can also be used
-            //! to directly modify the material of a scene node.
-            virtual video::SGPUMaterial& getMaterial(uint32_t i)
-            {
-                if (i >= Materials.size())
-                    return ISceneNode::getMaterial(i);
-
-                return Materials[i];
-            }
-
-            //! returns amount of materials used by this scene node.
-            virtual uint32_t getMaterialCount() const {return Materials.size();}
-
             virtual size_t getBoneCount() const { return boneStateManager->getBoneCount(); }
 
             //! frame
@@ -163,7 +147,8 @@ namespace scene
             virtual void setMesh(core::smart_refctd_ptr<video::IGPUSkinnedMesh>&& inMesh, const ISkinningStateManager::E_BONE_UPDATE_MODE& boneControl=ISkinningStateManager::EBUM_NONE);
 
             //! Returns the current mesh
-            virtual video::IGPUSkinnedMesh* getMesh(void) {return mesh.get();}
+            virtual video::IGPUSkinnedMesh* getMesh(void) override {return mesh.get();}
+            virtual const video::IGPUSkinnedMesh* getMesh(void) const override {return mesh.get();}
 
             //! animates the joints in the mesh based on the current frame.
             /** Also takes in to account transitions. */

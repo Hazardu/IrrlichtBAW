@@ -160,7 +160,7 @@ int main()
 
     //! read cache results -- speeds up mesh generation
 	{
-        io::IReadFile* cacheFile = device->getFileSystem()->createAndOpenFile("./normalCache101010.sse");
+        io::IReadFile* cacheFile = device->getFileSystem()->createAndOpenFile("../../tmp/normalCache101010.sse");
         if (cacheFile)
         {
             asset::normalCacheFor2_10_10_10Quant.resize(cacheFile->getSize()/sizeof(asset::QuantizationCacheEntry2_10_10_10));
@@ -172,13 +172,13 @@ int main()
         }
 	}
 
-	core::matrix4x3* instanceXForm = new core::matrix4x3[kInstanceCount];
+	auto* instanceXForm = new core::matrix3x4SIMD[kInstanceCount];
 	video::IGPUMeshBuffer* mbuff[kInstanceCount] = {NULL};
 	video::IGPUBuffer* indirectDrawBuffer = NULL;
 
     auto vaospec = driver->createGPUMeshDataFormatDesc();
 	{
-        asset::ICPUMesh* cpumesh[kInstanceCount];
+        core::smart_refctd_ptr<asset::ICPUMesh> cpumesh[kInstanceCount];
 
         size_t vertexSize = 0;
         std::vector<uint8_t> vertexData;
@@ -232,7 +232,7 @@ int main()
 
         //! cache results -- speeds up mesh generation on second run
         {
-            io::IWriteFile* cacheFile = device->getFileSystem()->createAndWriteFile("./normalCache101010.sse");
+            io::IWriteFile* cacheFile = device->getFileSystem()->createAndWriteFile("../../tmp/normalCache101010.sse");
             cacheFile->write(asset::normalCacheFor2_10_10_10Quant.data(),asset::normalCacheFor2_10_10_10Quant.size()*sizeof(asset::QuantizationCacheEntry2_10_10_10));
             cacheFile->drop();
         }
@@ -291,11 +291,10 @@ int main()
             mbuff[i]->setMeshDataAndFormat(core::smart_refctd_ptr(vaospec));
             mbuff[i]->setPrimitiveType(asset::EPT_TRIANGLES);
 
-            cpumesh[i]->drop();
 
-
-            instanceXForm[i].setScale(dist3D(mt)*0.0025f+1.f);
-            instanceXForm[i].setTranslation(core::vector3df(dist3D(mt),dist3D(mt),dist3D(mt)));
+            float scale = dist3D(mt)*0.0025f+1.f;
+            instanceXForm[i].setScale(core::vectorSIMDf(scale,scale,scale));
+            instanceXForm[i].setTranslation(core::vectorSIMDf(dist3D(mt),dist3D(mt),dist3D(mt)));
         }
 
         indirectDrawBuffer = driver->createFilledDeviceLocalGPUBufferOnDedMem(sizeof(indirectDrawData),indirectDrawData);
@@ -349,7 +348,7 @@ int main()
                 for (size_t i=0; i<kInstanceCount; i++)
                 {
                     perObjectData[i].modelViewProjMatrix = core::concatenateBFollowedByA(driver->getTransform(video::EPTS_PROJ_VIEW),instanceXForm[i]);
-                    instanceXForm[i].getSub3x3InverseTranspose(perObjectData[i].normalMat);
+                    instanceXForm[i].getSub3x3InverseTransposePacked(perObjectData[i].normalMat);
                 }
                 updateSSBO(perObjectData,sizeof(perObjectData));
             }
@@ -375,7 +374,7 @@ int main()
 
                 mb2draw[unculledNum] = mbuff[i];
                 perObjectData[unculledNum].modelViewProjMatrix = core::concatenateBFollowedByA(driver->getTransform(video::EPTS_PROJ_VIEW),instanceXForm[i]);
-                instanceXForm[i].getSub3x3InverseTranspose(perObjectData[unculledNum].normalMat);
+                instanceXForm[i].getSub3x3InverseTransposePacked(perObjectData[unculledNum].normalMat);
                 unculledNum++;
             }
             updateSSBO(perObjectData,sizeof(perObjectData));
@@ -399,7 +398,7 @@ int main()
 		if (time-lastFPSTime > 1000)
 		{
 			std::wostringstream str;
-			str << L"Builtin Nodes Demo - Irrlicht Engine [" << driver->getName() << "] FPS:" << driver->getFPS() << " PrimitvesDrawn:" << driver->getPrimitiveCountDrawn();
+			str << L"MultiDrawIndirect Benchmark - Irrlicht Engine [" << driver->getName() << "] FPS:" << driver->getFPS() << " PrimitvesDrawn:" << driver->getPrimitiveCountDrawn();
 
 			device->setWindowCaption(str.str());
 			lastFPSTime = time;

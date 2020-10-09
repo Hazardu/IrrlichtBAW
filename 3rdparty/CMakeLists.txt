@@ -30,11 +30,31 @@ update_git_submodule(./libpng)
 update_git_submodule(./openssl)
 update_git_submodule(./libjpeg-turbo)
 update_git_submodule(./libjpeg) # soon to be killed
+update_git_submodule(./parallel-hashmap)
 # exceptions that get automatically cloned
 update_git_submodule(./glm)
 update_git_submodule(./freetype2)
 update_git_submodule(./portable-file-dialogs)
 
+
+add_subdirectory(openssl openssl EXCLUDE_FROM_ALL)
+
+# zlib (target is zlibstatic)
+set(_OLD_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+set(_OLD_SKIP_INSTALL_ALL ${SKIP_INSTALL_ALL})
+set(BUILD_SHARED_LIBS OFF)
+set(SKIP_INSTALL_ALL ON)
+add_subdirectory(zlib zlib EXCLUDE_FROM_ALL)
+set(SKIP_INSTALL_ALL ${_OLD_SKIP_INSTALL_ALL})
+set(BUILD_SHARED_LIBS ${_OLD_BUILD_SHARED_LIBS})
+get_target_property(ZLIB_BINARY_DIR zlibstatic "BINARY_DIR")
+get_target_property(ZLIB_NAME zlibstatic "NAME")
+get_target_property(ZLIB_DEBUG_POSTFIX zlibstatic "DEBUG_POSTFIX")
+#message(FATAL_ERROR ${THIRD_PARTY_SOURCE_DIR})
+set(ZLIB_INCLUDE_DIR "${THIRD_PARTY_SOURCE_DIR}/zlib;${THIRD_PARTY_BINARY_DIR}/zlib" CACHE STRING "" FORCE)
+# This probably breaks the non-MSVC build in like 50 different ways
+set(ZLIB_LIBRARY_DEBUG "${ZLIB_BINARY_DIR}/Debug/${CMAKE_STATIC_LIBRARY_PREFIX}${ZLIB_NAME}${ZLIB_DEBUG_POSTFIX}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "" FORCE)
+set(ZLIB_LIBRARY_RELEASE "${ZLIB_BINARY_DIR}/Release/${CMAKE_STATIC_LIBRARY_PREFIX}${ZLIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "" FORCE)
 
 
 set(SPIRV_HEADERS_SKIP_EXAMPLES ON CACHE BOOL "Skip SPIRV-Headers examples")
@@ -59,8 +79,6 @@ if (UNIX)
 endif()
 add_subdirectory(shaderc shaderc EXCLUDE_FROM_ALL)
 
-add_subdirectory(openssl openssl EXCLUDE_FROM_ALL)
-
 #manipulating libjpeg cmake options from within cmake script
 #option(ENABLE_SHARED "jpeg-turbo" OFF)
 #set(CMAKE_INSTALL_DOCDIR "${CMAKE_CURRENT_BINARY_DIR}/doc" CACHE PATH "For libjpeg-turbo" FORCE)
@@ -71,29 +89,14 @@ add_subdirectory(libjpeg libjpeg EXCLUDE_FROM_ALL)
 
 #manipulating libpng cmake options from within cmake script
 option(PNG_BUILD_ZLIB "Custom zlib Location, else find_package is used" OFF)
-set(PNG_BUILD_ZLIB ON)
-set(ZLIB_INCLUDE_DIR ${THIRD_PARTY_SOURCE_DIR}/zlib) #for pnglib
-set(ZLIB_LIBRARY "$<TARGET_OBJECTS:zlib>") #for pnglib
+set(PNG_BUILD_ZLIB OFF)
 option(PNG_SHARED "Build shared lib" OFF)
 option(PNG_TESTS  "Build libpng tests" OFF)
 add_subdirectory(libpng libpng EXCLUDE_FROM_ALL)
-add_dependencies(png_static zlib) #CMake doesn't get it itself
+add_dependencies(png_static zlibstatic) #CMake doesn't get it itself
 
 irr_adjust_flags()
 
-add_library(zlib OBJECT
-	zlib/adler32.c
-	zlib/crc32.c
-	zlib/deflate.c
-	zlib/infback.c
-	zlib/inffast.c
-	zlib/inflate.c
-	zlib/inftrees.c
-	zlib/trees.c
-	zlib/uncompr.c
-	#zlib/zcompress.c
-	zlib/zutil.c
-)
 add_library(lzma OBJECT
 	lzma/C/Alloc.c
 	lzma/C/LzFind.c
@@ -155,7 +158,7 @@ if (IRR_FAST_MATH)
 endif()
 option(GLM_TEST_ENABLE_SIMD_SSE4_2 "Enable SSE 4.2 optimizations" ON)
 option(GLM_TEST_ENABLE "Build unit tests" OFF)
-add_subdirectory(glm EXCLUDE_FROM_ALL)
+#add_subdirectory(glm EXCLUDE_FROM_ALL)
 set(BUILD_SHARED_LIBS ${_OLD_BUILD_SHARED_LIBS})
 set(BUILD_STATIC_LIBS ${_OLD_BUILD_STATIC_LIBS})
 
@@ -171,6 +174,15 @@ if (IRR_BUILD_MITSUBA_LOADER)
    option(INSTALL "EXPAT: install expat files in cmake install target" OFF)
    set(MSVC_USE_STATIC_CRT ON CACHE BOOL "Use /MT flag (static CRT) when compiling in MSVC")
    add_subdirectory(libexpat/expat EXCLUDE_FROM_ALL)
+
+   set(MITSUBA_LOADER_DEPENDENTS
+      expat
+   )
+   set(MITSUBA_LOADER_DEPENDENTS ${MITSUBA_LOADER_DEPENDENTS} PARENT_SCOPE)
+   set(MITSUBA_LOADER_DEPENDENT_LIBS
+      expat
+   )
+   set(MITSUBA_LOADER_DEPENDENT_LIBS ${MITSUBA_LOADER_DEPENDENT_LIBS} PARENT_SCOPE)
 endif()
 
 if (IRR_BUILD_CEGUI)
@@ -209,7 +221,6 @@ if (IRR_BUILD_CEGUI)
 			debug ${CMAKE_CURRENT_BINARY_DIR}/CEGUI/cegui/lib/CEGUICommonDialogs-0_Static_d.lib
 			debug Dbghelp.lib
 		)
-		set(CEGUI_LIBS ${CEGUI_LIBS} PARENT_SCOPE)
 	else()
 		set(CEGUI_LIBS
 			${CMAKE_CURRENT_BINARY_DIR}/CEGUI/cegui/lib/libCEGUIOpenGLRenderer-0_Static.a
@@ -225,8 +236,8 @@ if (IRR_BUILD_CEGUI)
 			${CEGUI_DEPS_INSTALL_PATH}/lib/libpcrecpp.a
 			${CEGUI_DEPS_INSTALL_PATH}/lib/libpcreposix.a
 		)
-		set(CEGUI_LIBS ${CEGUI_LIBS} PARENT_SCOPE)
 	endif()
+	set(CEGUI_LIBS ${CEGUI_LIBS} PARENT_SCOPE)
 
 	#[[ unsure if needed for now
 		install(
@@ -286,10 +297,28 @@ if (IRR_BUILD_CEGUI)
 	)
 endif()
 
-if (IRR_BUILD_BULLET)
-	execute_process(COMMAND git submodule update --init --recursive ./bullet3
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+if (IRR_BUILD_RADEON_RAYS)
+	update_git_submodule(./radeonrays)
+
+	option(RR_NO_TESTS "RADEON_RAYS: don't do tests" ON)
+	option(RR_ENABLE_STATIC "RADEON_RAYS: compile into a static library" ON)
+	option(RR_EMBED_KERNELS "RADEON_RAYS: so we don't have to go looking for OpenCL kernel code" ON)
+	option(RR_USE_VULKAN "RADEON_RAYS: use Vulkan (only if you have RR 3.0)" OFF)
+	set(MSVC_USE_STATIC_CRT ON CACHE BOOL "Use /MT flag (static CRT) when compiling in MSVC")
+	add_subdirectory(radeonrays EXCLUDE_FROM_ALL)
+
+	set(RADEON_RAYS_DEPENDENTS
+		RadeonRays
 	)
+	set(RADEON_RAYS_DEPENDENTS ${RADEON_RAYS_DEPENDENTS} PARENT_SCOPE)
+	set(RADEON_RAYS_DEPENDENT_LIBS
+		RadeonRays
+	)
+	set(RADEON_RAYS_DEPENDENT_LIBS ${RADEON_RAYS_DEPENDENT_LIBS} PARENT_SCOPE)
+endif()
+
+if (IRR_BUILD_BULLET)
+	update_git_submodule(./bullet3)
 	set(BULLET_INCLUDE_PATH
 		${CMAKE_CURRENT_SOURCE_DIR}/bullet3/src
 	)

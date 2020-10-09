@@ -12,6 +12,7 @@
 #include "CFinalBoneHierarchy.h"
 #include "irr/asset/IAssetManager.h"
 #include "irr/asset/bawformat/legacy/CBAWLegacy.h"
+#include "irr/asset/bawformat/legacy/CBAWVersionUpFunctions.h"
 #include "irr/video/CGPUMesh.h"
 #include "irr/video/CGPUSkinnedMesh.h"
 
@@ -44,7 +45,7 @@ CBAWMeshFileLoader::CBAWMeshFileLoader(IAssetManager* _manager) : m_manager(_man
 #endif
 }
 
-asset::SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const asset::IAssetLoader::SAssetLoadParams& _params, asset::IAssetLoader::IAssetLoaderOverride* _override, uint32_t _hierarchyLevel)
+SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const asset::IAssetLoader::SAssetLoadParams& _params, asset::IAssetLoader::IAssetLoaderOverride* _override, uint32_t _hierarchyLevel)
 {
 #ifdef _IRR_DEBUG
     auto time = std::chrono::high_resolution_clock::now();
@@ -59,7 +60,7 @@ asset::SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 
     ctx.inner.mainFile = tryCreateNewestFormatVersionFile(ctx.inner.mainFile, _override, std::make_integer_sequence<uint64_t, _IRR_BAW_FORMAT_VERSION>{});
 
-    asset::BlobHeaderV1* headers = nullptr;
+    BlobHeaderLatest* headers = nullptr;
 
     auto exitRoutine = [&] {
         if (ctx.inner.mainFile != _file) // if mainFile is temparary memory file created just to update format to the newest version
@@ -97,13 +98,14 @@ asset::SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 
     const std::string rootCacheKey = ctx.inner.mainFile->getFileName().c_str();
 
-	const asset::BlobLoadingParams params{
+	asset::BlobLoadingParams params{
         this,
         m_manager,
         m_fileSystem,
         ctx.inner.mainFile->getFileName()[ctx.inner.mainFile->getFileName().size()-1] == '/' ? ctx.inner.mainFile->getFileName() : ctx.inner.mainFile->getFileName()+"/",
         ctx.inner.params,
-        _override
+        _override,
+		{}
     };
 	core::stack<SBlobData*> toLoad, toFinalize;
 	toLoad.push(&meshBlobDataIter->second);
@@ -192,6 +194,150 @@ asset::SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const as
             insertAssetIntoCache(ctx, _override, retval, blobType, hierLvl, thisCacheKey);
 	}
 
+	// flip meshes if needed
+	const core::matrix3x4SIMD xFlip(
+		-1.f,0.f,0.f,0.f,
+		 0.f,1.f,0.f,0.f,
+		 0.f,0.f,1.f,0.f
+	);
+	while (!params.meshesToFlip.empty())
+	{
+		auto mesh = params.meshesToFlip.top();
+		params.meshesToFlip.pop();
+
+		if (mesh->getReferenceCount() < 2)
+			continue;
+
+		auto bbox = mesh->getBoundingBox();
+		bbox.MinEdge.X *= -1.f;
+		bbox.MaxEdge.X *= -1.f;
+		mesh->setBoundingBox(bbox);
+		
+		bool isSkinnedMesh = mesh->getMeshType()==asset::EMT_ANIMATED_SKINNED;
+		if (isSkinnedMesh)
+		{
+			auto sm = static_cast<CCPUSkinnedMesh*>(mesh.get());
+			const auto* fbhRef = sm->getBoneReferenceHierarchy();
+
+			const auto boneCount = fbhRef->getBoneCount();
+			const CFinalBoneHierarchy::BoneReferenceData* bones = fbhRef->getBoneData();
+			core::vector<core::stringc> boneNames(boneCount);
+			for (auto k = 0; k < boneCount; k++)
+				boneNames[k] = fbhRef->getBoneName(k);
+			auto fbhCopy = core::make_smart_refctd_ptr<CFinalBoneHierarchy>(
+				bones, bones + boneCount,
+				boneNames.data(), boneNames.data() + boneCount,
+				fbhRef->getBoneTreeLevelEnd(), fbhRef->getBoneTreeLevelEnd() + fbhRef->getHierarchyLevels(),
+				fbhRef->getKeys(), fbhRef->getKeys() + fbhRef->getKeyFrameCount(),
+				fbhRef->getInterpolatedAnimationData(), fbhRef->getInterpolatedAnimationData() + fbhRef->getAnimationCount(),
+				fbhRef->getNonInterpolatedAnimationData(), fbhRef->getNonInterpolatedAnimationData() + fbhRef->getAnimationCount(),
+				!fbhRef->flipsXOnOutput()
+			);
+
+			// flip
+            auto newbones = const_cast<CFinalBoneHierarchy::BoneReferenceData*>(const_cast<const CFinalBoneHierarchy*>(fbhCopy.get())->getBoneData());
+            for (auto j=0u; j<fbhCopy->getBoneCount(); j++)
+            {
+                auto& bone = newbones[j];
+				bone.PoseBindMatrix = core::concatenateBFollowedByA(bone.PoseBindMatrix,xFlip);
+				bone.MinBBoxEdge[0] = -bone.MinBBoxEdge[0];
+				bone.MaxBBoxEdge[0] = -bone.MaxBBoxEdge[0];
+            }
+
+			sm->setBoneReferenceHierarchy(std::move(fbhCopy));
+		}
+
+		for (auto i = 0ull; i < mesh->getMeshBufferCount(); ++i)
+		{
+			auto mb = mesh->getMeshBuffer(i);
+			auto* originalMeshFormat = mb->getMeshDataAndFormat();
+			const auto positionAttribute = mb->getPositionAttributeIx();
+			const auto normalAttribute = mb->getNormalAttributeIx();
+			auto normalBuffer = core::smart_refctd_ptr<ICPUBuffer>(const_cast<ICPUBuffer*>(originalMeshFormat->getMappedBuffer(normalAttribute)));
+			const bool hasNormal = normalBuffer && normalBuffer->getPointer();
+
+			auto copy = m_manager->getMeshManipulator()->createMeshBufferDuplicate(mb);
+			auto meshFormat = copy->getMeshDataAndFormat();
+
+			meshFormat->setIndexBuffer(core::smart_refctd_ptr<ICPUBuffer>(const_cast<ICPUBuffer*>(originalMeshFormat->getIndexBuffer())));
+			for (uint32_t i=0u; i<EVAI_COUNT; i++)
+			{
+				auto attrId = static_cast<E_VERTEX_ATTRIBUTE_ID>(i);
+				const ICPUBuffer* oldBuf = originalMeshFormat->getMappedBuffer(attrId);
+				if (!oldBuf || i==positionAttribute || i==normalAttribute)
+					continue;
+
+				meshFormat->setVertexAttrBuffer(
+					core::smart_refctd_ptr<ICPUBuffer>(const_cast<ICPUBuffer*>(oldBuf)), attrId, originalMeshFormat->getAttribFormat(attrId),
+					originalMeshFormat->getMappedBufferStride(attrId), originalMeshFormat->getMappedBufferOffset(attrId),
+					originalMeshFormat->getAttribDivisor(attrId)
+				);
+			}
+
+			mb->setMeshDataAndFormat(core::smart_refctd_ptr<IMeshDataFormatDesc<ICPUBuffer> >(meshFormat));
+
+			// do the flip
+			const auto positionFormat = originalMeshFormat->getAttribFormat(positionAttribute);
+			// we cannot handle the vertices changing places relative to the bone (no unsigned position formats)
+			assert(!isSkinnedMesh || asset::isSignedFormat(positionFormat) || asset::isFloatingPointFormat(positionFormat));
+			const auto positionDivisor = originalMeshFormat->getAttribDivisor(positionAttribute);
+			assert(positionDivisor<2u);
+
+			const auto normalFormat = originalMeshFormat->getAttribFormat(normalAttribute);
+			const auto normalDivisor = originalMeshFormat->getAttribDivisor(normalAttribute);
+			assert(normalDivisor<2u);
+
+			const auto vertexCount = mb->calcVertexCount();
+			const auto instanceCount = mb->getInstanceCount();
+
+			// get attributes from copy meshbuffer
+			// flip attributes
+			// set attributes on meshbuffer (writes to new buffers)
+			auto flipAndCopyAttribute_impl = [&](auto& tmpStorage, auto divisor, auto attrID)
+			{
+				const auto count = divisor ? instanceCount:vertexCount;
+				for (std::remove_const<decltype(count)>::type ix = 0; ix < count; ix++)
+				{
+					copy->getAttribute(tmpStorage, attrID, ix);
+					tmpStorage[0] = -tmpStorage[0];
+					mb->setAttribute(tmpStorage, attrID, ix);
+				}
+			};
+			auto flipAndCopyAttribute = [&](auto divisor, auto attrID, auto attrFormat)
+			{
+				if (asset::isIntegerFormat(attrFormat))
+				{
+					// whole bunch of integer hacks make it work perfectly
+					uint32_t out[] = { 0, 0, 0, 1 };
+					flipAndCopyAttribute_impl(out,divisor,attrID);
+				}
+				else
+				{
+					core::vectorSIMDf out(0.f, 0.f, 0.f, 1.f);
+					flipAndCopyAttribute_impl(out,divisor,attrID);
+				}
+			};
+
+			flipAndCopyAttribute(positionDivisor, positionAttribute, positionFormat);
+			if (hasNormal)
+				flipAndCopyAttribute(normalDivisor, normalAttribute, normalFormat);
+
+			// drop the copies we don't use (implicit)
+
+			auto bbox = mb->getBoundingBox();
+			bbox.MinEdge.X *= -1.f;
+			bbox.MaxEdge.X *= -1.f;
+			if (!asset::isSignedFormat(positionFormat))
+			{
+				assert(asset::isNormalizedFormat(positionFormat)); // TODO: a function that will give us the MAX range for integer formats
+				auto range = 1.f;
+				bbox.MinEdge.X += range;
+				bbox.MaxEdge.X += range;
+			}
+			mb->setBoundingBox(bbox);
+		}
+	}
+
 	ctx.releaseAllButThisOne(meshBlobDataIter); // call drop on all loaded objects except mesh
 
 #ifdef _IRR_DEBUG
@@ -201,8 +347,9 @@ asset::SAssetBundle CBAWMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 	os::Printer::log(tmpString.str());
 #endif // _IRR_DEBUG
 
-    asset::ICPUMesh* mesh = reinterpret_cast<asset::ICPUMesh*>(retval);
-    return {core::smart_refctd_ptr<asset::IAsset>(mesh,core::dont_grab)};
+	asset::ICPUMesh* mesh = reinterpret_cast<asset::ICPUMesh*>(retval);
+		
+    return SAssetBundle({core::smart_refctd_ptr<asset::IAsset>(mesh,core::dont_grab)});
 }
 
 bool CBAWMeshFileLoader::safeRead(io::IReadFile * _file, void * _buf, size_t _size) const
@@ -229,115 +376,6 @@ bool CBAWMeshFileLoader::decompressLz4(void * _dst, size_t _dstSize, const void 
 {
 	int res = LZ4_decompress_safe((const char*)_src, (char*)_dst, _srcSize, _dstSize);
 	return res >= 0;
-}
-
-template<>
-io::IReadFile* CBAWMeshFileLoader::createConvertIntoVer_spec<1>(SContext& _ctx, io::IReadFile* _baw0file, asset::IAssetLoader::IAssetLoaderOverride* _override, const CommonDataTuple<0>& _common)
-{
-    uint32_t blobCnt{};
-    asset::legacyv0::BlobHeaderV0* headers = nullptr;
-    uint32_t* offsets = nullptr;
-    uint32_t baseOffsetv0{};
-    uint32_t baseOffsetv1{};
-    std::tie(blobCnt, headers, offsets, baseOffsetv0, baseOffsetv1) = _common;
-
-    io::CMemoryWriteFile* const baw1mem = new io::CMemoryWriteFile(0u, _baw0file->getFileName());
-
-    std::vector<uint32_t> newoffsets(blobCnt);
-    int32_t offsetDiff = 0;
-    for (uint32_t i = 0u; i < blobCnt; ++i)
-    {
-        asset::legacyv0::BlobHeaderV0& hdr = headers[i];
-        const uint32_t offset = offsets[i];
-        uint32_t& newoffset = newoffsets[i];
-
-        newoffset = offset + offsetDiff;
-
-        bool adjustDiff = false;
-        uint32_t prevBlobSz{};
-        if (hdr.blobType == asset::Blob::EBT_DATA_FORMAT_DESC)
-        {
-            uint8_t stackmem[1u<<10];
-            uint32_t attempt = 0u;
-            uint8_t decrKey[16];
-            size_t decrKeyLen = 16u;
-            void* blob = nullptr;
-            /* to state blob's/asset's hierarchy level we'd have to load (and possibly decrypt and decompress) the blob
-            however we don't need to do this here since we know format's version (baw v0) and so we can be sure that hierarchy level for mesh data descriptors is 2
-            */
-            constexpr uint32_t ICPUMESHDATAFORMATDESC_HIERARCHY_LVL = 2u;
-            while (_override->getDecryptionKey(decrKey, decrKeyLen, attempt, _baw0file, "", genSubAssetCacheKey(_baw0file->getFileName().c_str(), hdr.handle), _ctx.inner, ICPUMESHDATAFORMATDESC_HIERARCHY_LVL))
-            {
-                if (!((hdr.compressionType & asset::Blob::EBCT_AES128_GCM) && decrKeyLen != 16u))
-                    blob = tryReadBlobOnStack<asset::legacyv0::BlobHeaderV0>(SBlobData_t<asset::legacyv0::BlobHeaderV0>(&hdr, baseOffsetv0+offset), _ctx, decrKey, stackmem, sizeof(stackmem));
-                if (blob)
-                    break;
-                ++attempt;
-            }
-
-            const uint32_t absOffset = baseOffsetv1 + newoffset;
-            baw1mem->seek(absOffset);
-            baw1mem->write(
-                asset::MeshDataFormatDescBlobV1(reinterpret_cast<asset::legacyv0::MeshDataFormatDescBlobV0*>(blob)[0]).getData(),
-                sizeof(asset::MeshDataFormatDescBlobV1)
-            );
-
-            prevBlobSz = hdr.effectiveSize();
-            hdr.compressionType = asset::Blob::EBCT_RAW;
-            core::XXHash_256(reinterpret_cast<uint8_t*>(baw1mem->getPointer())+absOffset, sizeof(asset::MeshDataFormatDescBlobV1), hdr.blobHash);
-            hdr.blobSizeDecompr = hdr.blobSize = sizeof(asset::MeshDataFormatDescBlobV1);
-
-            adjustDiff = true;
-        }
-        if (adjustDiff)
-            offsetDiff += static_cast<int32_t>(sizeof(asset::MeshDataFormatDescBlobV1)) - static_cast<int32_t>(prevBlobSz);
-    }
-    uint64_t fileHeader[4] {0u, 0u, 0u, 1u/*baw v1*/};
-    memcpy(fileHeader, asset::BAWFileV1::HEADER_STRING, strlen(asset::BAWFileV1::HEADER_STRING));
-    baw1mem->seek(0u);
-    baw1mem->write(fileHeader, sizeof(fileHeader));
-    baw1mem->write(&blobCnt, 4);
-    baw1mem->write(_ctx.iv, 16);
-    baw1mem->write(newoffsets.data(), newoffsets.size()*4);
-    baw1mem->write(headers, blobCnt*sizeof(headers[0])); // blob header in v0 and in v1 is exact same thing, so we can do this
-
-    uint8_t stackmem[1u<<13]{};
-    size_t newFileSz = 0u;
-    for (uint32_t i = 0u; i < blobCnt; ++i)
-    {
-        uint32_t sz = headers[i].effectiveSize();
-        void* blob = nullptr;
-        if (headers[i].blobType == asset::Blob::EBT_DATA_FORMAT_DESC)
-        {
-            sz = 0u;
-        }
-        else
-        {
-            _baw0file->seek(baseOffsetv0 + offsets[i]);
-            if (sz <= sizeof(stackmem))
-            {
-                blob = stackmem;
-            }
-            else blob = _IRR_ALIGNED_MALLOC(sz, _IRR_SIMD_ALIGNMENT);
-
-            _baw0file->read(blob, sz);
-        }
-
-        baw1mem->seek(baseOffsetv1 + newoffsets[i]);
-        baw1mem->write(blob, sz);
-
-        if (headers[i].blobType != asset::Blob::EBT_DATA_FORMAT_DESC && blob != stackmem)
-            _IRR_ALIGNED_FREE(blob);
-
-        newFileSz = baseOffsetv1 + newoffsets[i] + sz;
-    }
-
-    _IRR_ALIGNED_FREE(offsets);
-    _IRR_ALIGNED_FREE(headers);
-
-    auto ret = new io::CMemoryReadFile(baw1mem->getPointer(), baw1mem->getSize(), _baw0file->getFileName());
-    baw1mem->drop();
-    return ret;
 }
 
 }} // irr::scene

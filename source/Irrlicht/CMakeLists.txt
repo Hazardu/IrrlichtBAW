@@ -38,7 +38,17 @@ irr_get_conf_dir(IRRLICHT_CONF_DIR_DEBUG Debug)
 irr_get_conf_dir(IRRLICHT_CONF_DIR_RELEASE Release)
 
 set(_IRR_COMPILE_WITH_OPENGL_ ${IRR_COMPILE_WITH_OPENGL})
-set(_IRR_COMPILE_WITH_BURNINGSVIDEO_ ${IRR_COMPILE_WITH_BURNINGSVIDEO})
+if (IRR_COMPILE_WITH_OPENCL)
+	find_package(OpenCL)
+
+	if (OpenCL_FOUND)
+		message(STATUS "Building with OpenCL interop")
+		
+		set(_IRR_COMPILE_WITH_OPENCL_ ${IRR_COMPILE_WITH_OPENCL})
+	else()
+		message(STATUS "OpenCL not found")
+	endif()
+endif()
 #set(_IRR_TARGET_ARCH_ARM_ ${IRR_TARGET_ARCH_ARM}) #uncomment in the future
 set(__IRR_FAST_MATH ${IRR_FAST_MATH})
 set(_IRR_DEBUG 0)
@@ -67,6 +77,7 @@ set(IRRLICHT_SRCS_COMMON
 	${IRR_ROOT_PATH}/src/irr/asset/CPLYMeshFileLoader.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/CSTLMeshFileLoader.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/CXMeshFileLoader.cpp
+	${IRR_ROOT_PATH}/src/irr/asset/CBufferLoaderBIN.cpp
 
 # Mesh writers
 	${IRR_ROOT_PATH}/src/irr/asset/CBAWMeshWriter.cpp
@@ -90,6 +101,7 @@ set(IRRLICHT_SRCS_COMMON
 # Other mesh-related stuff
 	${IRR_ROOT_PATH}/src/irr/asset/bawformat/CBAWFile.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/bawformat/legacy/CBAWLegacy.cpp
+	${IRR_ROOT_PATH}/src/irr/asset/bawformat/legacy/CBAWVersionUpFunctions.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/bawformat/CBlobsLoadingManager.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/CForsythVertexCacheOptimizer.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/CSmoothNormalGenerator.cpp
@@ -102,7 +114,6 @@ set(IRRLICHT_SRCS_COMMON
 	${IRR_ROOT_PATH}/src/irr/asset/CCPUSkinnedMesh.cpp
 
 # Scene objects
-	CBillboardSceneNode.cpp
 	CCameraSceneNode.cpp
 	${IRR_ROOT_PATH}/src/irr/asset/CGeometryCreator.cpp
 	CSceneManager.cpp
@@ -153,10 +164,8 @@ set(IRRLICHT_SRCS_COMMON
 	CReadFile.cpp
 	CWriteFile.cpp
 	CMountPointReader.cpp
-	CNPKReader.cpp
 	CPakReader.cpp
 	CTarReader.cpp
-	CWADReader.cpp
 	CZipReader.cpp
 
 # Other
@@ -205,12 +214,25 @@ set(IRRLICHT_SRCS_SERVER
 set(COMMON_INCLUDE_DIRS
 	${THIRD_PARTY_SOURCE_DIR}/convertutf
 	${THIRD_PARTY_SOURCE_DIR}/utfcpp/source
+	$<TARGET_PROPERTY:zlibstatic,BINARY_DIR> #for dynamically generated zconf.h
 	$<TARGET_PROPERTY:png_static,BINARY_DIR> #for dynamically generated pnglibconf.h
 	$<TARGET_PROPERTY:jpeg,BINARY_DIR> #for dynamically generated jconfig.h
 )
 
 irr_adjust_flags() # macro defined in root CMakeLists
 irr_adjust_definitions() # macro defined in root CMakeLists
+
+macro(irr_target_link_zlib _trgt)
+	add_dependencies(${_trgt} zlibstatic)
+	target_link_libraries(${_trgt} INTERFACE
+		zlibstatic
+	)
+	target_include_directories(${_trgt} PUBLIC ${THIRD_PARTY_SOURCE_DIR}/zlib)
+endmacro()
+#Parallel hashmap
+macro(irr_target_include_parallel_hashmap _trgt)
+	target_include_directories(${_trgt} PUBLIC ${THIRD_PARTY_SOURCE_DIR}/parallel-hashmap/parallel_hashmap)
+endmacro()
 
 macro(irr_target_link_openssl _trgt)
 	if(WIN32)
@@ -265,10 +287,12 @@ add_library(Irrlicht STATIC
 )
 
 add_dependencies(Irrlicht openssl_build)
+irr_target_link_zlib(Irrlicht)
 irr_target_link_openssl(Irrlicht)
 irr_target_link_shaderc(Irrlicht)
 irr_target_link_libjpeg(Irrlicht)
 irr_target_link_libpng(Irrlicht)
+irr_target_include_parallel_hashmap(Irrlicht)
 
 target_link_libraries(Irrlicht INTERFACE ${OPENGL_gl_LIBRARY})
 if (UNIX)
@@ -298,13 +322,15 @@ if (UNIX)
 		${X11_xf86vmode_INCLUDE_PATH})
 endif()
 
-find_package(Vulkan)
 
+if (IRR_COMPILE_WITH_OPENCL AND OpenCL_FOUND)
+	target_link_libraries(Irrlicht PUBLIC OpenCL::OpenCL)
+endif()
+
+# TODO: REDO
+find_package(Vulkan)
 if (Vulkan_FOUND)
 	message(STATUS "Building with Vulkan driver")
-	#target_compile_definitions(Irrlicht PRIVATE
-	#	_IRR_COMPILE_WITH_VULKAN_
-	#)
 	#target_link_libraries(Irrlicht INTERFACE Vulkan::Vulkan) # this should work, but it doesn't
 	#target_link_libraries(Irrlicht INTERFACE ${Vulkan_LIBRARY})
 else()
@@ -337,14 +363,15 @@ add_library(IrrlichtServer STATIC
 	$<TARGET_OBJECTS:convert_utf>
 	$<TARGET_OBJECTS:lz4>
 	$<TARGET_OBJECTS:lzma>
-	$<TARGET_OBJECTS:zlib>
 )
 
 add_dependencies(IrrlichtServer openssl_build)
+irr_target_link_zlib(IrrlichtServer)
 irr_target_link_openssl(IrrlichtServer)
 irr_target_link_shaderc(IrrlichtServer)
 irr_target_link_libjpeg(IrrlichtServer)
 irr_target_link_libpng(IrrlichtServer)
+irr_target_include_parallel_hashmap(IrrlichtServer)
 
 target_include_directories(IrrlichtServer PUBLIC 
 	${IRR_ROOT_PATH}/include

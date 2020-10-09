@@ -155,7 +155,7 @@ bool CImageLoaderJPG::isALoadableFileFormat(io::IReadFile* _file) const
 	_file->seek(6);
 	_file->read(&jfif, sizeof(int32_t));
     _file->seek(prevPos);
-	return (jfif == 0x4a464946 || jfif == 0x4649464a);
+	return (jfif == 0x4a464946 || jfif == 0x4649464a || jfif == 0x66697845u || jfif == 0x70747468u); // maybe 0x4a464946 can go
 #endif
 }
 
@@ -317,9 +317,9 @@ asset::SAssetBundle CImageLoaderJPG::loadAsset(io::IReadFile* _file, const asset
 			break;
 	}
 
-	asset::ICPUTexture* tex = asset::ICPUTexture::create({image}, _file->getFileName().c_str());
+	ICPUTexture* tex = ICPUTexture::create({image}, _file->getFileName().c_str());
 	image->drop();
-    return {core::smart_refctd_ptr<IAsset>(tex, core::dont_grab)};
+    return SAssetBundle({core::smart_refctd_ptr<IAsset>(tex, core::dont_grab)});
 #endif
 }
 

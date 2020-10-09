@@ -80,7 +80,7 @@ asset::SAssetBundle CXMeshFileLoader::loadAsset(io::IReadFile* _file, const asse
 	auto time = std::chrono::high_resolution_clock::now();
 //#endif
 
-    SContext ctx(asset::IAssetLoader::SAssetLoadContext{_params, _file}, _override);
+    SContext ctx(asset::IAssetLoader::SAssetLoadContext{_params, _file},_hierarchyLevel, _override);
 
 	if (!_file)
         return {};
@@ -88,7 +88,7 @@ asset::SAssetBundle CXMeshFileLoader::loadAsset(io::IReadFile* _file, const asse
 	ctx.AnimatedMesh = new asset::CCPUSkinnedMesh();
     asset::ICPUMesh* retVal = nullptr;
 
-	if (load(ctx, _file))
+	if (load(ctx, _file, _params))
 	{
         ctx.AnimatedMesh->finalize();
 		if (ctx.AnimatedMesh->isStatic())
@@ -156,6 +156,7 @@ asset::SAssetBundle CXMeshFileLoader::loadAsset(io::IReadFile* _file, const asse
                 meshbuffer->setIndexType(indexType);
 
                 meshbuffer->setPositionAttributeIx(origMeshBuffer->getPositionAttributeIx());
+				meshbuffer->setNormalnAttributeIx(origMeshBuffer->getNormalAttributeIx());
                 for (size_t j=0; j<asset::EVAI_COUNT; j++)
                 {
                     asset::E_VERTEX_ATTRIBUTE_ID attrId = (asset::E_VERTEX_ATTRIBUTE_ID)j;
@@ -202,7 +203,7 @@ asset::SAssetBundle CXMeshFileLoader::loadAsset(io::IReadFile* _file, const asse
 	os::Printer::log(tmpString.str());
 //#endif
 
-	return {core::smart_refctd_ptr<IAsset>(retVal, core::dont_grab)};
+	return SAssetBundle({core::smart_refctd_ptr<IAsset>(retVal, core::dont_grab)});
 }
 
 class SuperSkinningTMPStruct
@@ -214,7 +215,7 @@ class SuperSkinningTMPStruct
         uint32_t redir;
 };
 
-core::matrix4x3 getGlobalMatrix_evil(asset::ICPUSkinnedMesh::SJoint* joint)
+core::matrix3x4SIMD getGlobalMatrix_evil(asset::ICPUSkinnedMesh::SJoint* joint)
 {
     //if (joint->GlobalInversedMatrix.isIdentity())
         //return joint->GlobalInversedMatrix;
@@ -225,12 +226,12 @@ core::matrix4x3 getGlobalMatrix_evil(asset::ICPUSkinnedMesh::SJoint* joint)
 }
 
 
-bool CXMeshFileLoader::load(SContext& _ctx, io::IReadFile* file)
+bool CXMeshFileLoader::load(SContext& _ctx, io::IReadFile* file, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 	if (!readFileIntoMemory(_ctx, file))
 		return false;
 
-	if (!parseFile(_ctx))
+	if (!parseFile(_ctx, _params))
 		return false;
 
 	for (uint32_t n=0; n<_ctx.Meshes.size(); ++n)
@@ -338,47 +339,33 @@ bool CXMeshFileLoader::load(SContext& _ctx, io::IReadFile* file)
                 }
 				if (mesh->AttachedJointID!=-1)
                 {
-                    bool correctBindMatrix = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix.isIdentity();
-                    core::matrix4x3 globalMat,globalMatInvTransp;
+                    bool correctBindMatrix = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix==core::matrix3x4SIMD();
+					core::matrix3x4SIMD globalMat;
+					core::matrix4SIMD globalMatInvTransp;
                     if (correctBindMatrix)
                     {
                         globalMat = getGlobalMatrix_evil(_ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]);
-                        //
-                        globalMatInvTransp(0,0) = globalMat(0,0);
-                        globalMatInvTransp(1,0) = globalMat(0,1);
-                        globalMatInvTransp(2,0) = globalMat(0,2);
-                        globalMatInvTransp(0,1) = globalMat(1,0);
-                        globalMatInvTransp(1,1) = globalMat(1,1);
-                        globalMatInvTransp(2,1) = globalMat(1,2);
-                        globalMatInvTransp(0,2) = globalMat(2,0);
-                        globalMatInvTransp(1,2) = globalMat(2,1);
-                        globalMatInvTransp(2,2) = globalMat(2,2);
-                        globalMatInvTransp(0,3) = globalMat(3,0);
-                        globalMatInvTransp(1,3) = globalMat(3,1);
-                        globalMatInvTransp(2,3) = globalMat(3,2);
-                        globalMatInvTransp.makeInverse();
+						core::matrix3x4SIMD tmp;
+						globalMat.getInverse(tmp);
+						globalMatInvTransp = core::matrix4SIMD(tmp);
                     }
                     else
                     {
-                        _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix.getInverse(globalMat);
-                        globalMatInvTransp(0,0) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(0,0);
-                        globalMatInvTransp(1,0) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(0,1);
-                        globalMatInvTransp(2,0) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(0,2);
-                        globalMatInvTransp(0,1) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(1,0);
-                        globalMatInvTransp(1,1) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(1,1);
-                        globalMatInvTransp(2,1) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(1,2);
-                        globalMatInvTransp(0,2) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(2,0);
-                        globalMatInvTransp(1,2) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(2,1);
-                        globalMatInvTransp(2,2) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(2,2);
-                        globalMatInvTransp(0,3) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(3,0);
-                        globalMatInvTransp(1,3) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(3,1);
-                        globalMatInvTransp(2,3) = _ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix(3,2);
+						_ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix.getInverse(globalMat);
+						globalMatInvTransp = core::matrix4SIMD(_ctx.AnimatedMesh->getAllJoints()[mesh->AttachedJointID]->GlobalInversedMatrix);
                     }
+					globalMatInvTransp = core::transpose(globalMatInvTransp);
 
                     for (size_t j=0; j<mesh->Vertices.size(); j++)
                     {
-                        globalMat.transformVect(&mesh->Vertices[j].Pos.X);
-                        globalMatInvTransp.mulSub3x3With3x1(&mesh->Vertices[j].Normal.X);
+						core::vectorSIMDf tmp;
+						tmp.set(mesh->Vertices[j].Pos);
+						tmp[3] = 1.f;
+                        globalMat.transformVect(tmp);
+						mesh->Vertices[j].Pos = tmp.getAsVector3df();
+
+						tmp.set(mesh->Vertices[j].Normal);
+						mesh->Vertices[j].Normal = globalMatInvTransp.sub3x3TransformVect(tmp).getAsVector3df();
 
                         reinterpret_cast<SkinnedVertexFinalData*>(vSkinningDataBuf->getPointer())[j].boneWeights = 0x000003ffu;
                         reinterpret_cast<SkinnedVertexFinalData*>(vSkinningDataBuf->getPointer())[j].boneIDs[0] = mesh->AttachedJointID;
@@ -412,7 +399,7 @@ bool CXMeshFileLoader::load(SContext& _ctx, io::IReadFile* file)
                     else
                         buffer->setIndexType(asset::EIT_16BIT);
 
-                    buffer->setMeshDataAndFormat(std::move(desc));
+                    //buffer->setMeshDataAndFormat(std::move(desc));
 
                     if (i>0)
                     {
@@ -606,6 +593,10 @@ bool CXMeshFileLoader::load(SContext& _ctx, io::IReadFile* file)
                     }
 				}
 				desc->setIndexBuffer(std::move(ixbuf));
+
+				for (i = 0; i < mesh->Buffers.size(); ++i)
+					mesh->Buffers[i]->setMeshDataAndFormat(core::smart_refctd_ptr<ICPUMeshDataFormatDesc>(desc));
+
                 delete [] cumBaseVertex;
 				delete [] vCountArray;
 			}
@@ -690,9 +681,9 @@ bool CXMeshFileLoader::readFileIntoMemory(SContext& _ctx, io::IReadFile* file)
 
 
 //! Parses the file
-bool CXMeshFileLoader::parseFile(SContext& _ctx)
+bool CXMeshFileLoader::parseFile(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
-	while(parseDataObject(_ctx))
+	while(parseDataObject(_ctx, _params))
 	{
 		// loop
 	}
@@ -702,7 +693,7 @@ bool CXMeshFileLoader::parseFile(SContext& _ctx)
 
 
 //! Parses the next Data object in the file
-bool CXMeshFileLoader::parseDataObject(SContext& _ctx)
+bool CXMeshFileLoader::parseDataObject(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 	std::string objectName = getNextToken(_ctx);
 
@@ -719,7 +710,7 @@ bool CXMeshFileLoader::parseDataObject(SContext& _ctx)
 	else
 	if (objectName == "Frame")
 	{
-		return parseDataObjectFrame( _ctx, 0 );
+		return parseDataObjectFrame( _ctx, 0 , _params);
 	}
 	else
 	if (objectName == "Mesh")
@@ -732,12 +723,12 @@ bool CXMeshFileLoader::parseDataObject(SContext& _ctx)
 		//mesh->Buffer=AnimatedMesh->addMeshBuffer();
         _ctx.Meshes.push_back(mesh);
 
-		return parseDataObjectMesh(_ctx, *mesh);
+		return parseDataObjectMesh(_ctx, *mesh, _params);
 	}
 	else
 	if (objectName == "AnimationSet")
 	{
-		return parseDataObjectAnimationSet(_ctx);
+		return parseDataObjectAnimationSet(_ctx, _params);
 	}
 	else
 	if (objectName == "Material")
@@ -796,7 +787,7 @@ bool CXMeshFileLoader::parseDataObjectTemplate(SContext& _ctx)
 }
 
 
-bool CXMeshFileLoader::parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *Parent)
+bool CXMeshFileLoader::parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *Parent, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: Reading frame", ELL_DEBUG);
@@ -878,18 +869,14 @@ bool CXMeshFileLoader::parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMe
 		if (objectName == "Frame")
 		{
 
-			if (!parseDataObjectFrame(_ctx, joint))
+			if (!parseDataObjectFrame(_ctx, joint, _params))
 				return false;
 		}
 		else
 		if (objectName == "FrameTransformMatrix")
 		{
-			if (!parseDataObjectTransformationMatrix(_ctx, joint->LocalMatrix))
+			if (!parseDataObjectTransformationMatrix(_ctx, joint->LocalMatrix, _params))
 				return false;
-
-			//joint->LocalAnimatedMatrix
-			//joint->LocalAnimatedMatrix.makeInverse();
-			//joint->LocalMatrix=tmp*joint->LocalAnimatedMatrix;
 		}
 		else
 		if (objectName == "Mesh")
@@ -905,7 +892,7 @@ bool CXMeshFileLoader::parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMe
 
             _ctx.Meshes.push_back(mesh);
 
-			if (!parseDataObjectMesh(_ctx, *mesh))
+			if (!parseDataObjectMesh(_ctx, *mesh, _params))
 				return false;
 		}
 		else
@@ -920,7 +907,8 @@ bool CXMeshFileLoader::parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMe
 }
 
 
-bool CXMeshFileLoader::parseDataObjectTransformationMatrix(SContext& _ctx, core::matrix4x3 &mat)
+
+bool CXMeshFileLoader::parseDataObjectTransformationMatrix(SContext& _ctx, core::matrix3x4SIMD &mat, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: Reading Transformation Matrix", ELL_DEBUG);
@@ -933,7 +921,7 @@ bool CXMeshFileLoader::parseDataObjectTransformationMatrix(SContext& _ctx, core:
 		return false;
 	}
 
-	readMatrix(_ctx, mat);
+	readMatrix(_ctx, mat, _params);
 
 	if (!checkForOneFollowingSemicolons(_ctx))
 	{
@@ -952,7 +940,7 @@ bool CXMeshFileLoader::parseDataObjectTransformationMatrix(SContext& _ctx, core:
 }
 
 
-bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh)
+bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 	std::string name;
 
@@ -978,6 +966,8 @@ bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh)
 	for (uint32_t n=0; n<nVertices; ++n)
 	{
 		readVector3(_ctx, mesh.Vertices[n].Pos);
+		if (_params.loaderFlags & E_LOADER_PARAMETER_FLAGS::ELPF_RIGHT_HANDED_MESHES)
+			performActionBasedOnOrientationSystem<float>(mesh.Vertices[n].Pos.X, [](float& varToFlip) {varToFlip = -varToFlip;});
 	}
 
 	if (!checkForTwoFollowingSemicolons(_ctx))
@@ -1065,7 +1055,7 @@ bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh)
 
 		if (objectName == "MeshNormals")
 		{
-			if (!parseDataObjectMeshNormals(_ctx, mesh))
+			if (!parseDataObjectMeshNormals(_ctx, mesh, _params))
 				return false;
 		}
 		else
@@ -1286,7 +1276,7 @@ bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh)
 		{
 			//mesh.SkinWeights.push_back(SXSkinWeight());
 			//if (!parseDataObjectSkinWeights(mesh.SkinWeights.back()))
-			if (!parseDataObjectSkinWeights(_ctx, mesh))
+			if (!parseDataObjectSkinWeights(_ctx, mesh, _params))
 				return false;
 		}
 		else
@@ -1301,7 +1291,7 @@ bool CXMeshFileLoader::parseDataObjectMesh(SContext& _ctx, SXMesh &mesh)
 }
 
 
-bool CXMeshFileLoader::parseDataObjectSkinWeights(SContext& _ctx, SXMesh &mesh)
+bool CXMeshFileLoader::parseDataObjectSkinWeights(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: Reading mesh skin weights", ELL_DEBUG);
@@ -1385,7 +1375,7 @@ bool CXMeshFileLoader::parseDataObjectSkinWeights(SContext& _ctx, SXMesh &mesh)
 	// transforms the mesh vertices to the space of the bone
 	// When concatenated to the bone's transform, this provides the
 	// world space coordinates of the mesh as affected by the bone
-	readMatrix(_ctx, joint->GlobalInversedMatrix);
+	readMatrix(_ctx, joint->GlobalInversedMatrix, _params);
 
 	if (!checkForOneFollowingSemicolons(_ctx))
 	{
@@ -1437,7 +1427,7 @@ bool CXMeshFileLoader::parseDataObjectSkinMeshHeader(SContext& _ctx, SXMesh& mes
 }
 
 
-bool CXMeshFileLoader::parseDataObjectMeshNormals(SContext& _ctx, SXMesh &mesh)
+bool CXMeshFileLoader::parseDataObjectMeshNormals(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: reading mesh normals", ELL_DEBUG);
@@ -1457,7 +1447,12 @@ bool CXMeshFileLoader::parseDataObjectMeshNormals(SContext& _ctx, SXMesh &mesh)
 
 	// read normals
 	for (uint32_t i=0; i<nNormals; ++i)
+	{
 		readVector3(_ctx, normals[i]);
+
+		if (_params.loaderFlags & E_LOADER_PARAMETER_FLAGS::ELPF_RIGHT_HANDED_MESHES)
+			performActionBasedOnOrientationSystem<float>(normals[i].X, [](float& varToFlip) {varToFlip = -varToFlip; });
+	}
 
 	if (!checkForTwoFollowingSemicolons(_ctx))
 	{
@@ -1577,7 +1572,7 @@ bool CXMeshFileLoader::parseDataObjectMeshVertexColors(SContext& _ctx, SXMesh &m
 
 	mesh.HasVertexColors=true;
 	const typename decltype(mesh.Colors)::size_type nColors = readInt(_ctx);
-	mesh.Colors.resize(core::max_(mesh.Colors.size(),nColors));
+	mesh.Colors.resize(core::max(mesh.Colors.size(),nColors));
 	for (uint32_t i=0; i<nColors; ++i)
 	{
 		const uint32_t Index=readInt(_ctx);
@@ -1737,11 +1732,17 @@ bool CXMeshFileLoader::parseDataObjectMaterial(SContext& _ctx, video::SCPUMateri
 	{
 		core::stringc objectName = getNextToken(_ctx).c_str();
 
-		auto loadAndSetTexture = [&](uint32_t texSlot, auto path)
+		auto loadAndSetTexture = [&](uint32_t texSlot, auto path, const char* relativeDir) -> bool
 		{
-			auto bundle = interm_getAssetInHierarchy(AssetManager, path.c_str(), _ctx.Inner.params, 2u, _ctx.loaderOverride).getContents();
+			auto params = _ctx.Inner.params;
+			params.relativeDir = relativeDir;
+			auto bundle = interm_getAssetInHierarchy(AssetManager, path.c_str(), params, _ctx.topHierarchyLevel+ICPUMesh::IMAGEVIEW_HIERARCHYLEVELS_BELOW, _ctx.loaderOverride).getContents();
 			if (bundle.first != bundle.second)
+			{
 				material.setTexture(texSlot, core::smart_refctd_ptr_static_cast<asset::ICPUTexture>(*bundle.first));
+				return true;
+			}
+			return false;
 		};
 
 		if (objectName.size() == 0)
@@ -1764,19 +1765,9 @@ bool CXMeshFileLoader::parseDataObjectMaterial(SContext& _ctx, video::SCPUMateri
 				return false;
 			core::stringc TextureFileName = tmp.c_str();
 
-			// original name
-			if (FileSystem->existFile(TextureFileName))
-				loadAndSetTexture(textureLayer, TextureFileName);
-			// mesh path
-			else
-			{
-				TextureFileName= _ctx.FilePath + io::IFileSystem::getFileBasename(TextureFileName);
-				if (FileSystem->existFile(TextureFileName))
-					loadAndSetTexture(textureLayer, TextureFileName);
-				// working directory
-				else
-					loadAndSetTexture(textureLayer, io::IFileSystem::getFileBasename(TextureFileName));
-			}
+			// original name as absolute or mesh path, else try working directory
+			if (!loadAndSetTexture(textureLayer, TextureFileName, _ctx.FilePath.c_str()))
+				loadAndSetTexture(textureLayer, io::IFileSystem::getFileBasename(TextureFileName), nullptr);
 			++textureLayer;
 		}
 		else
@@ -1788,19 +1779,9 @@ bool CXMeshFileLoader::parseDataObjectMaterial(SContext& _ctx, video::SCPUMateri
 				return false;
 			core::stringc TextureFileName = tmp.c_str();
 
-			// original name
-            if (FileSystem->existFile(TextureFileName))
-				loadAndSetTexture(1u, TextureFileName);
-			// mesh path
-			else
-			{
-				TextureFileName= _ctx.FilePath + io::IFileSystem::getFileBasename(TextureFileName);
-                if (FileSystem->existFile(TextureFileName))
-					material.setTexture(1, core::smart_refctd_ptr_static_cast<asset::ICPUTexture>(*interm_getAssetInHierarchy(AssetManager, TextureFileName.c_str(), _ctx.Inner.params, 2u, _ctx.loaderOverride).getContents().first));
-				// working directory
-                else
-					loadAndSetTexture(1u, io::IFileSystem::getFileBasename(TextureFileName));
-			}
+			// original name as absolute or mesh path, else try working directory
+            if (!loadAndSetTexture(1u, TextureFileName, _ctx.FilePath.c_str()))
+				loadAndSetTexture(1u, io::IFileSystem::getFileBasename(TextureFileName), nullptr);
 			if (textureLayer==1)
 				++textureLayer;
 		}
@@ -1816,7 +1797,7 @@ bool CXMeshFileLoader::parseDataObjectMaterial(SContext& _ctx, video::SCPUMateri
 }
 
 
-bool CXMeshFileLoader::parseDataObjectAnimationSet(SContext& _ctx)
+bool CXMeshFileLoader::parseDataObjectAnimationSet(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: Reading animation set", ELL_DEBUG);
@@ -1850,7 +1831,7 @@ bool CXMeshFileLoader::parseDataObjectAnimationSet(SContext& _ctx)
 		else
 		if (objectName == "Animation")
 		{
-			if (!parseDataObjectAnimation(_ctx))
+			if (!parseDataObjectAnimation(_ctx, _params))
 				return false;
 		}
 		else
@@ -1864,7 +1845,7 @@ bool CXMeshFileLoader::parseDataObjectAnimationSet(SContext& _ctx)
 }
 
 
-bool CXMeshFileLoader::parseDataObjectAnimation(SContext& _ctx)
+bool CXMeshFileLoader::parseDataObjectAnimation(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: reading animation", ELL_DEBUG);
@@ -1901,7 +1882,7 @@ bool CXMeshFileLoader::parseDataObjectAnimation(SContext& _ctx)
 		else
 		if (objectName == "AnimationKey")
 		{
-			if (!parseDataObjectAnimationKey(_ctx, &animationDump))
+			if (!parseDataObjectAnimationKey(_ctx, &animationDump, _params))
 				return false;
 		}
 		else
@@ -1983,7 +1964,7 @@ bool CXMeshFileLoader::parseDataObjectAnimation(SContext& _ctx)
 }
 
 
-bool CXMeshFileLoader::parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *joint)
+bool CXMeshFileLoader::parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *joint, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
 #ifdef _XREADER_DEBUG
 	os::Printer::log("CXFileReader: reading animation key", ELL_DEBUG);
@@ -2104,8 +2085,9 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSk
 				}
 
 				// read matrix
-				core::matrix4x3 mat4x3;
-				readMatrix(_ctx, mat4x3);
+
+				core::matrix3x4SIMD mat4x3;
+				readMatrix(_ctx, mat4x3, _params);
 				//mat=joint->LocalMatrix*mat;
 
 				if (!checkForOneFollowingSemicolons(_ctx))
@@ -2123,10 +2105,10 @@ bool CXMeshFileLoader::parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSk
 
                 asset::ICPUSkinnedMesh::SPositionKey *keyP=joint->addPositionKey();
 				keyP->frame=time;
-				keyP->position=mat4x3.getTranslation();
+				keyP->position = mat4x3.getTranslation().getAsVector3df();
 
 
-				core::vector3df scale=mat4x3.getScale();
+				core::vector3df scale = mat4x3.getScale().getAsVector3df();
 
 				if (scale.X==0)
 					scale.X=1;
@@ -2626,12 +2608,12 @@ bool CXMeshFileLoader::readRGBA(SContext& _ctx, video::SColor& color)
 
 
 // read matrix from list of floats
-bool CXMeshFileLoader::readMatrix(SContext& _ctx, core::matrix4x3& mat)
+bool CXMeshFileLoader::readMatrix(SContext& _ctx, core::matrix3x4SIMD& mat, const asset::IAssetLoader::SAssetLoadParams& _params)
 {
     for (uint32_t j=0u; j<4u; j++)
     {
-        for (uint32_t i=0u; i<3u; i++)
-            mat(i,j) = readFloat(_ctx);
+		for (uint32_t i = 0u; i < 3u; i++)
+			mat(i, j) = readFloat(_ctx);
         readFloat(_ctx);
     }
 	return checkForOneFollowingSemicolons(_ctx);
@@ -2642,4 +2624,3 @@ bool CXMeshFileLoader::readMatrix(SContext& _ctx, core::matrix4x3& mat)
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_X_LOADER_
-

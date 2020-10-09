@@ -1,7 +1,6 @@
 #define _IRR_STATIC_LIB_
 #include <irrlicht.h>
 
-#include "../ext/ScreenShot/ScreenShot.h"
 #include "../common/QToQuitEventReceiver.h"
 
 // TODO: remove dependency
@@ -122,8 +121,19 @@ int main()
     cpumesh = core::smart_refctd_ptr_static_cast<asset::ICPUMesh>(*am->getAsset("extrusionLogo_TEST_fixed.baw", lparams).getContents().first);
 	// end import
 
+	//!
+	auto setMaterialTypeOnAllMaterials = [](auto* node, auto newMaterialType)
+	{
+		auto* mesh = node->getMesh();
+		for (auto i = 0u; i < mesh->getMeshBufferCount(); i++)
+		{
+			auto& material = mesh->getMeshBuffer(i)->getMaterial();
+			material.MaterialType = newMaterialType;
+		}
+	};
+
     if (cpumesh)
-        smgr->addMeshSceneNode(std::move(driver->getGPUObjectsFromAssets(&cpumesh.get(), (&cpumesh.get())+1)->operator[](0)))->setMaterialType(newMaterialType);
+		setMaterialTypeOnAllMaterials(smgr->addMeshSceneNode(std::move(driver->getGPUObjectsFromAssets(&cpumesh.get(), (&cpumesh.get())+1)->operator[](0))),newMaterialType);
 
     cpumesh = core::smart_refctd_ptr_static_cast<asset::ICPUMesh>(*am->getAsset("../../media/cow.obj", lparams).getContents().first);
 	// export mesh
@@ -136,7 +146,7 @@ int main()
 	// end import
 
     if (cpumesh)
-        smgr->addMeshSceneNode(std::move(driver->getGPUObjectsFromAssets(&cpumesh.get(), (&cpumesh.get())+1)->operator[](0)),0,-1,core::vector3df(3.f,1.f,0.f))->setMaterialType(newMaterialType);
+		setMaterialTypeOnAllMaterials(smgr->addMeshSceneNode(std::move(driver->getGPUObjectsFromAssets(&cpumesh.get(), (&cpumesh.get())+1)->operator[](0)),0,-1,core::vector3df(3.f,1.f,0.f)),newMaterialType);
 
 
 	uint64_t lastFPSTime = 0;
@@ -162,13 +172,6 @@ int main()
 			device->setWindowCaption(sstr.str().c_str());
 			lastFPSTime = time;
 		}
-	}
-
-
-	//create a screenshot
-	{
-		core::rect<uint32_t> sourceRect(0, 0, params.WindowSize.Width, params.WindowSize.Height);
-		ext::ScreenShot::dirtyCPUStallingScreenshot(device, "screenshot.png", sourceRect, asset::EF_R8G8B8_SRGB);
 	}
 
     

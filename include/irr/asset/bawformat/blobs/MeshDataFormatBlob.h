@@ -46,13 +46,16 @@ static_assert(
     "MeshDataFormatDescBlobV1: Size of blob is not sum of its contents!"
 );
 
-template<>
-struct CorrespondingBlobTypeFor<IMeshDataFormatDesc<ICPUBuffer> > { typedef MeshDataFormatDescBlobV1 type; };
+using MeshDataFormatDescBlobV2 = MeshDataFormatDescBlobV1;
+using MeshDataFormatDescBlobV3 = MeshDataFormatDescBlobV2;
 
 template<>
-inline size_t SizedBlob<FixedSizeBlob, MeshDataFormatDescBlobV1, IMeshDataFormatDesc<ICPUBuffer> >::calcBlobSizeForObj(const IMeshDataFormatDesc<ICPUBuffer>* _obj)
+struct CorrespondingBlobTypeFor<IMeshDataFormatDesc<ICPUBuffer> > { typedef MeshDataFormatDescBlobV3 type; };
+
+template<>
+inline size_t SizedBlob<FixedSizeBlob, MeshDataFormatDescBlobV3, IMeshDataFormatDesc<ICPUBuffer> >::calcBlobSizeForObj(const IMeshDataFormatDesc<ICPUBuffer>* _obj)
 {
-    return sizeof(MeshDataFormatDescBlobV1);
+    return sizeof(MeshDataFormatDescBlobV3);
 }
 
 

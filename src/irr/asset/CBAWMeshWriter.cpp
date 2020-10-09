@@ -47,13 +47,16 @@ struct LzmaMemMngmnt
 	void CBAWMeshWriter::exportAsBlob<ICPUMesh>(ICPUMesh* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
 		uint8_t stackData[1u<<14];
-        MeshBlobV1* data = MeshBlobV1::createAndTryOnStack(_obj, stackData, sizeof(stackData));
+        auto data = MeshBlobV3::createAndTryOnStack(_obj, stackData, sizeof(stackData));
 
         const E_WRITER_FLAGS flags = _ctx.writerOverride->getAssetWritingFlags(_ctx.inner, _obj, 0u);
+		if (flags & E_WRITER_FLAGS::EWF_MESH_IS_RIGHT_HANDED)
+			data->meshFlags |= MeshBlobV3::EBMF_RIGHT_HANDED;
+
         const uint8_t* encrPwd = nullptr;
         _ctx.writerOverride->getEncryptionKey(encrPwd, _ctx.inner, _obj, 0u);
         const float comprLvl = _ctx.writerOverride->getAssetCompressionLevel(_ctx.inner, _obj, 0u);
-		tryWrite(data, _file, _ctx, MeshBlobV1::calcBlobSizeForObj(_obj), _headerIdx, flags, encrPwd, comprLvl);
+		tryWrite(data, _file, _ctx, MeshBlobV3::calcBlobSizeForObj(_obj), _headerIdx, flags, encrPwd, comprLvl);
 
 		if ((uint8_t*)data != stackData)
 			_IRR_ALIGNED_FREE(data);
@@ -62,13 +65,16 @@ struct LzmaMemMngmnt
 	void CBAWMeshWriter::exportAsBlob<ICPUSkinnedMesh>(ICPUSkinnedMesh* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
 		uint8_t stackData[1u << 14];
-        SkinnedMeshBlobV1* data = SkinnedMeshBlobV1::createAndTryOnStack(_obj,stackData,sizeof(stackData));
+        SkinnedMeshBlobV3* data = SkinnedMeshBlobV3::createAndTryOnStack(_obj,stackData,sizeof(stackData));
 
         const E_WRITER_FLAGS flags = _ctx.writerOverride->getAssetWritingFlags(_ctx.inner, _obj, 0u);
+		if (flags & E_WRITER_FLAGS::EWF_MESH_IS_RIGHT_HANDED)
+			data->meshFlags |= SkinnedMeshBlobV3::EBMF_RIGHT_HANDED;
+
         const uint8_t* encrPwd = nullptr;
         _ctx.writerOverride->getEncryptionKey(encrPwd, _ctx.inner, _obj, 0u);
         const float comprLvl = _ctx.writerOverride->getAssetCompressionLevel(_ctx.inner, _obj, 0u);
-		tryWrite(data, _file, _ctx, SkinnedMeshBlobV1::calcBlobSizeForObj(_obj), _headerIdx, flags, encrPwd, comprLvl);
+		tryWrite(data, _file, _ctx, SkinnedMeshBlobV3::calcBlobSizeForObj(_obj), _headerIdx, flags, encrPwd, comprLvl);
 
 		if ((uint8_t*)data != stackData)
 			_IRR_ALIGNED_FREE(data);
@@ -76,7 +82,7 @@ struct LzmaMemMngmnt
 	template<>
 	void CBAWMeshWriter::exportAsBlob<ICPUMeshBuffer>(ICPUMeshBuffer* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
-        MeshBufferBlobV1 data(_obj);
+        MeshBufferBlobV3 data(_obj);
 
         const E_WRITER_FLAGS flags = _ctx.writerOverride->getAssetWritingFlags(_ctx.inner, _obj, 1u);
         const uint8_t* encrPwd = nullptr;
@@ -87,7 +93,7 @@ struct LzmaMemMngmnt
 	template<>
 	void CBAWMeshWriter::exportAsBlob<ICPUSkinnedMeshBuffer>(ICPUSkinnedMeshBuffer* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
-        SkinnedMeshBufferBlobV1 data(_obj);
+        SkinnedMeshBufferBlobV3 data(_obj);
 
         const E_WRITER_FLAGS flags = _ctx.writerOverride->getAssetWritingFlags(_ctx.inner, _obj, 1u);
         const uint8_t* encrPwd = nullptr;
@@ -115,9 +121,9 @@ struct LzmaMemMngmnt
 	void CBAWMeshWriter::exportAsBlob<CFinalBoneHierarchy>(CFinalBoneHierarchy* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
 		uint8_t stackData[1u<<14]; // 16kB
-        FinalBoneHierarchyBlobV1* data = FinalBoneHierarchyBlobV1::createAndTryOnStack(_obj,stackData,sizeof(stackData));
+        auto data = FinalBoneHierarchyBlobV3::createAndTryOnStack(_obj,stackData,sizeof(stackData));
 
-		tryWrite(data, _file, _ctx, FinalBoneHierarchyBlobV1::calcBlobSizeForObj(_obj), _headerIdx, EWF_NONE);
+		tryWrite(data, _file, _ctx, FinalBoneHierarchyBlobV3::calcBlobSizeForObj(_obj), _headerIdx, EWF_NONE);
 
 		if ((uint8_t*)data != stackData)
 			_IRR_ALIGNED_FREE(data);
@@ -125,7 +131,7 @@ struct LzmaMemMngmnt
 	template<>
 	void CBAWMeshWriter::exportAsBlob<IMeshDataFormatDesc<ICPUBuffer> >(IMeshDataFormatDesc<ICPUBuffer>* _obj, uint32_t _headerIdx, io::IWriteFile* _file, SContext& _ctx)
 	{
-        MeshDataFormatDescBlobV1 data(_obj);
+        MeshDataFormatDescBlobV3 data(_obj);
 
 		tryWrite(&data, _file, _ctx, sizeof(data), _headerIdx, EWF_NONE);
 	}
@@ -154,7 +160,7 @@ struct LzmaMemMngmnt
         const ICPUMesh* mesh = static_cast<const ICPUMesh*>(_params.rootAsset);
 
 		constexpr uint32_t FILE_HEADER_SIZE = 32;
-        static_assert(FILE_HEADER_SIZE == sizeof(BAWFileV1::fileHeader), "BAW header is not 32 bytes long!");
+        static_assert(FILE_HEADER_SIZE == sizeof(BAWFileV3::fileHeader), "BAW header is not 32 bytes long!");
 
 		uint64_t header[4];
 		memcpy(header, BAW_FILE_HEADER, FILE_HEADER_SIZE);
@@ -165,7 +171,7 @@ struct LzmaMemMngmnt
         SContext ctx{ IAssetWriter::SAssetWriteContext{_params, _file}, _override }; // context of this call of `writeMesh`
 
 		const uint32_t numOfInternalBlobs = genHeaders(mesh, ctx);
-		const uint32_t OFFSETS_FILE_OFFSET = FILE_HEADER_SIZE + sizeof(uint32_t) + sizeof(BAWFileV1::iv);
+		const uint32_t OFFSETS_FILE_OFFSET = FILE_HEADER_SIZE + sizeof(uint32_t) + sizeof(BAWFileV3::iv);
 		const uint32_t HEADERS_FILE_OFFSET = OFFSETS_FILE_OFFSET + numOfInternalBlobs * sizeof(ctx.offsets[0]);
 
 		ctx.offsets.resize(numOfInternalBlobs);
@@ -178,7 +184,7 @@ struct LzmaMemMngmnt
 		_file->write(ctx.offsets.data(), ctx.offsets.size() * sizeof(ctx.offsets[0]));
 
 		// will be overwritten after calculating not known yet data (hash and size for texture paths)
-		_file->write(ctx.headers.data(), ctx.headers.size() * sizeof(BlobHeaderV1));
+		_file->write(ctx.headers.data(), ctx.headers.size() * sizeof(BlobHeaderLatest));
 
 		ctx.offsets.resize(0); // set `used` to 0, to allow push starting from 0 index
 		for (int i = 0; i < ctx.headers.size(); ++i)
@@ -219,7 +225,7 @@ struct LzmaMemMngmnt
 		_file->write(ctx.offsets.data(), ctx.offsets.size() * sizeof(ctx.offsets[0]));
 		// overwrite headers
 		_file->seek(HEADERS_FILE_OFFSET);
-		_file->write(ctx.headers.data(), ctx.headers.size() * sizeof(BlobHeaderV1));
+		_file->write(ctx.headers.data(), ctx.headers.size() * sizeof(BlobHeaderLatest));
 
 		_file->seek(prevPos);
 
@@ -230,6 +236,12 @@ struct LzmaMemMngmnt
 	{
 		_ctx.headers.clear();
 
+		//! @Anastazluk this will all need to change to robustly support arbitrary serialization
+		// the function signature must be a (const IAsset** _begin, const IAsset** _end, SContext& _ctx)
+		// needs to have a static_assert that all of the objects in _begin to _end have the same type
+		// the loop that gathers [referece] counted objects needs to be far more robust and flexible
+		// possibly add a method to `BlobSerializable::genHeadersRecursively(BlobHeaderLatest& , core::unordered_set<const IReferenceCounted*>&)`
+
 		bool isMeshAnimated = true;
 		const ICPUSkinnedMesh* skinnedMesh = nullptr;
 
@@ -239,9 +251,9 @@ struct LzmaMemMngmnt
 			if (!skinnedMesh || (skinnedMesh && skinnedMesh->isStatic()))
 				isMeshAnimated = false;
 
-            BlobHeaderV1 bh;
+            BlobHeaderLatest bh;
 			bh.handle = reinterpret_cast<uint64_t>(_mesh);
-			bh.compressionType = Blob::EBCT_RAW;
+			bh.compressionType = Blob::EBCT_RAW; // will get changed by the system automatically
 			bh.blobType = isMeshAnimated ? Blob::EBT_SKINNED_MESH : Blob::EBT_MESH;
 			_ctx.headers.push_back(bh);
 			// no need to add to `countedObjects` set since there's only one mesh
@@ -250,14 +262,15 @@ struct LzmaMemMngmnt
 
 		if (isMeshAnimated)
 		{
-            BlobHeaderV1 bh;
+            BlobHeaderLatest bh;
 			bh.handle = reinterpret_cast<uint64_t>(skinnedMesh->getBoneReferenceHierarchy());
-			bh.compressionType = Blob::EBCT_RAW;
+			bh.compressionType = Blob::EBCT_RAW; // will get changed by the system automatically
 			bh.blobType = Blob::EBT_FINAL_BONE_HIERARCHY;
 			_ctx.headers.push_back(bh);
 			// no need to add to `countedObjects` set since there's only one bone hierarchy
 		}
 
+		// make sure we dont serialize an object twice just because its referenced multiple times
 		core::unordered_set<const IReferenceCounted*> countedObjects;
 		for (uint32_t i = 0; i < _mesh->getMeshBufferCount(); ++i)
 		{
@@ -269,7 +282,7 @@ struct LzmaMemMngmnt
 
 			if (countedObjects.find(meshBuffer) == countedObjects.end())
 			{
-                BlobHeaderV1 bh;
+                BlobHeaderLatest bh;
 				bh.handle = reinterpret_cast<uint64_t>(meshBuffer);
 				bh.compressionType = Blob::EBCT_RAW;
 				bh.blobType = isMeshAnimated ? Blob::EBT_SKINNED_MESH_BUFFER : Blob::EBT_MESH_BUFFER;
@@ -294,7 +307,7 @@ struct LzmaMemMngmnt
 
 			if (countedObjects.find(desc) == countedObjects.end())
 			{
-                BlobHeaderV1 bh;
+                BlobHeaderLatest bh;
 				bh.handle = reinterpret_cast<uint64_t>(desc);
 				bh.compressionType = Blob::EBCT_RAW;
 				bh.blobType = Blob::EBT_DATA_FORMAT_DESC;
@@ -305,7 +318,7 @@ struct LzmaMemMngmnt
 			const ICPUBuffer* idxBuffer = desc->getIndexBuffer();
 			if (idxBuffer && countedObjects.find(idxBuffer) == countedObjects.end())
 			{
-                BlobHeaderV1 bh;
+                BlobHeaderLatest bh;
 				bh.handle = reinterpret_cast<uint64_t>(idxBuffer);
 				bh.compressionType = Blob::EBCT_RAW;
 				bh.blobType = Blob::EBT_RAW_DATA_BUFFER;
@@ -318,7 +331,7 @@ struct LzmaMemMngmnt
 				const ICPUBuffer* attBuffer = desc->getMappedBuffer((E_VERTEX_ATTRIBUTE_ID)attId);
 				if (attBuffer && countedObjects.find(attBuffer) == countedObjects.end())
 				{
-                    BlobHeaderV1 bh;
+                    BlobHeaderLatest bh;
 					bh.handle = reinterpret_cast<uint64_t>(attBuffer);
 					bh.compressionType = Blob::EBCT_RAW;
 					bh.blobType = Blob::EBT_RAW_DATA_BUFFER;
@@ -369,7 +382,7 @@ struct LzmaMemMngmnt
 
 		if (_flags & EWF_ENCRYPTED)
 		{
-			const size_t encrSize = BlobHeaderV1::calcEncSize(compressedSize);
+			const size_t encrSize = BlobHeaderLatest::calcEncSize(compressedSize);
 			void* in = _IRR_ALIGNED_MALLOC(encrSize,_IRR_SIMD_ALIGNMENT);
 			memset(((uint8_t*)in) + (compressedSize-16), 0, 16);
 			memcpy(in, data, compressedSize);
@@ -396,7 +409,7 @@ struct LzmaMemMngmnt
 		}
 
 		_ctx.headers[_headerIdx].finalize(data, _size, compressedSize, comprType);
-		const size_t writeSize = (comprType & Blob::EBCT_AES128_GCM) ? BlobHeaderV1::calcEncSize(compressedSize) : compressedSize;
+		const size_t writeSize = (comprType & Blob::EBCT_AES128_GCM) ? BlobHeaderLatest::calcEncSize(compressedSize) : compressedSize;
 		_file->write(data, writeSize);
 		calcAndPushNextOffset(!_headerIdx ? 0 : _ctx.headers[_headerIdx - 1].effectiveSize(), _ctx);
 
@@ -415,7 +428,7 @@ struct LzmaMemMngmnt
 		{
 			if (lz4CompressBound > _stackSize)
 			{
-				dstSize = BlobHeaderV1::calcEncSize(lz4CompressBound);
+				dstSize = BlobHeaderLatest::calcEncSize(lz4CompressBound);
 				data = _IRR_ALIGNED_MALLOC(dstSize,_IRR_SIMD_ALIGNMENT);
 			}
 			compressedSize = LZ4_compress_default((const char*)_input, (char*)data, _inputSize, dstSize);

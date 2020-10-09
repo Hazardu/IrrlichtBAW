@@ -73,6 +73,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
             _params,
             _file
         },
+		_hierarchyLevel,
         _override
     );
 
@@ -103,6 +104,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 	std::string grpName, mtlName;
 	bool mtlChanged=false;
     bool submeshLoadedFromCache = false;
+
 	while(bufPtr != bufEnd)
 	{
 		switch(bufPtr[0])
@@ -130,6 +132,8 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 				{
 					core::vector3df vec;
 					bufPtr = readVec3(bufPtr, vec, bufEnd);
+					if (_params.loaderFlags & E_LOADER_PARAMETER_FLAGS::ELPF_RIGHT_HANDED_MESHES)
+						performActionBasedOnOrientationSystem<float>(vec.X, [](float& varToFlip) {varToFlip = -varToFlip;});
 					vertexBuffer.push_back(vec);
 				}
 				break;
@@ -138,6 +142,8 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 				{
 					core::vector3df vec;
 					bufPtr = readVec3(bufPtr, vec, bufEnd);
+					if (_params.loaderFlags & E_LOADER_PARAMETER_FLAGS::ELPF_RIGHT_HANDED_MESHES)
+						performActionBasedOnOrientationSystem<float>(vec.X, [](float& varToFlip) {varToFlip = -varToFlip;});
 					normalsBuffer.push_back(vec);
 				}
 				break;
@@ -313,9 +319,9 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 			for ( uint32_t i = 1; i < faceCorners.size() - 1; ++i )
 			{
 				// Add a triangle
-				currMtl->Indices.push_back( faceCorners[i+1] );
-				currMtl->Indices.push_back( faceCorners[i] );
-				currMtl->Indices.push_back( faceCorners[0] );
+				currMtl->Indices.push_back(faceCorners[i + 1]);
+				currMtl->Indices.push_back(faceCorners[i]);
+				currMtl->Indices.push_back(faceCorners[0]);
 			}
 			faceCorners.resize(0); // fast clear
 			faceCorners.reserve(32);
@@ -389,6 +395,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
         else*/
 
         auto meshbuffer = core::make_smart_refctd_ptr<asset::ICPUMeshBuffer>();
+		meshbuffer->setNormalnAttributeIx(EVAI_ATTR3);
         mesh->addMeshBuffer(core::smart_refctd_ptr(meshbuffer));
 
         meshbuffer->getMaterial() = ctx.Materials[m]->Material;
@@ -436,7 +443,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
 		}
 		meshbuffer->setMeshDataAndFormat(std::move(desc));
 
-        SAssetBundle bundle{std::move(meshbuffer)};
+        SAssetBundle bundle({std::move(meshbuffer)});
         _override->insertAssetIntoCache(bundle, genKeyForMeshBuf(ctx, _file->getFileName().c_str(), ctx.Materials[m]->Name, ctx.Materials[m]->Group), ctx.inner, 1u);
         //transfer ownership to smart_refctd_ptr, so instead of grab() in smart_refctd_ptr and drop() here, just do nothing (thus dont_grab goes as smart ptr ctor arg)
 	}
@@ -452,7 +459,7 @@ asset::SAssetBundle COBJMeshFileLoader::loadAsset(io::IReadFile* _file, const as
         return {};
     }
 
-	return {core::smart_refctd_ptr<IAsset>(mesh,core::dont_grab)};
+	return SAssetBundle({core::smart_refctd_ptr<IAsset>(mesh,core::dont_grab)});
 }
 
 
@@ -573,17 +580,10 @@ const char* COBJMeshFileLoader::readTextures(const SContext& _ctx, const char* b
 	core::smart_refctd_ptr<asset::ICPUTexture> texture;
 	if (texname.size())
 	{
-        if (FileSystem->existFile(texname))
-		{
-            auto bundle = interm_getAssetInHierarchy(AssetManager, texname.c_str(), _ctx.inner.params, 2u, _ctx.loaderOverride).getContents();
-            if (bundle.first!=bundle.second) texture = core::smart_refctd_ptr_static_cast<asset::ICPUTexture>(*bundle.first);
-		}
-		else
-		{
-			// try to read in the relative path, the .obj is loaded from
-            auto bundle = interm_getAssetInHierarchy(AssetManager, (relPath + texname).c_str(), _ctx.inner.params, 2u, _ctx.loaderOverride).getContents();
-			if (bundle.first != bundle.second) texture = core::smart_refctd_ptr_static_cast<asset::ICPUTexture>(*bundle.first);
-		}
+		auto params = _ctx.inner.params;
+		params.relativeDir = relPath.c_str();
+		auto bundle = interm_getAssetInHierarchy(AssetManager, texname.c_str(), params, _ctx.topHierarchyLevel+ICPUMesh::IMAGEVIEW_HIERARCHYLEVELS_BELOW, _ctx.loaderOverride).getContents();
+        if (bundle.first!=bundle.second) texture = core::smart_refctd_ptr_static_cast<asset::ICPUTexture>(*bundle.first);
 	}
 	if ( texture )
 	{
@@ -961,7 +961,7 @@ uint32_t COBJMeshFileLoader::copyWord(char* outBuf, const char* const inBuf, uin
 		++i;
 	}
 
-	uint32_t length = core::min_(i, outBufLength-1);
+	uint32_t length = core::min(i, outBufLength-1);
 	for (uint32_t j=0; j<length; ++j)
 		outBuf[j] = inBuf[j];
 

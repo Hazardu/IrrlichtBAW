@@ -103,9 +103,11 @@ namespace asset
 	// ===============
 	// .baw VERSION 
 	// ===============
-	constexpr uint32_t CurrentBAWFormatVersion = 1u;
-	using BlobHeaderV1 = BlobHeaderVn<CurrentBAWFormatVersion>;
-	using BAWFileV1 = BAWFileVn<CurrentBAWFormatVersion>;
+	constexpr uint32_t CurrentBAWFormatVersion = 3u;
+	using BlobHeaderV3 = BlobHeaderVn<CurrentBAWFormatVersion>;
+	using BAWFileV3 = BAWFileVn<CurrentBAWFormatVersion>;
+
+	using BlobHeaderLatest = BlobHeaderV3;
 
 	bool encAes128gcm(const void* _input, size_t _inSize, void* _output, size_t _outSize, const unsigned char* _key, const unsigned char* _iv, void* _tag);
 	bool decAes128gcm(const void* _input, size_t _inSize, void* _output, size_t _outSize, const unsigned char* _key, const unsigned char* _iv, void* _tag);

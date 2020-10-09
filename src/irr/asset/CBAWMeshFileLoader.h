@@ -26,7 +26,7 @@ class IAssetManager;
 
 class CBAWMeshFileLoader : public asset::IAssetLoader
 {
-    friend struct TypedBlob<TexturePathBlobV1, asset::ICPUTexture>; // needed for loading textures
+    friend struct TypedBlob<TexturePathBlobV3, asset::ICPUTexture>; // needed for loading textures
 
 private:
     template<typename HeaderT>
@@ -142,9 +142,11 @@ private:
     {
         switch (_expectedVer)
         {
-        case 0ull: return verifyFile<asset::legacyv0::BAWFileV0>(_ctx);
-        case 1ull: return verifyFile<asset::BAWFileV1>(_ctx);
-        default: return false;
+			case 0ull: return verifyFile<BAWFileVn<0>>(_ctx);
+			case 1ull: return verifyFile<BAWFileVn<1>>(_ctx);
+			case 2ull: return verifyFile<BAWFileVn<2>>(_ctx);
+            case 3ull: return verifyFile<asset::BAWFileV3>(_ctx);
+			default: return false;
         }
     }
 	//! Loads and checks correctness of offsets and headers. Also let us know blob count.
@@ -171,23 +173,23 @@ private:
         // add here when more asset types will be available
         switch (_blobType)
         {
-        case asset::Blob::EBT_MESH:
-        case asset::Blob::EBT_SKINNED_MESH:
-            assert(_assetAddr->getAssetType()==asset::IAsset::ET_MESH);
-            return static_cast<asset::ICPUMesh*>(_assetAddr);
-        case asset::Blob::EBT_MESH_BUFFER:
-            assert(_assetAddr->getAssetType()==asset::IAsset::ET_SUB_MESH);
-            return static_cast<asset::ICPUMeshBuffer*>(_assetAddr);
-        case asset::Blob::EBT_SKINNED_MESH_BUFFER:
-            assert(_assetAddr->getAssetType()==asset::IAsset::ET_SUB_MESH);
-            return static_cast<asset::ICPUSkinnedMeshBuffer*>(_assetAddr);
-        case asset::Blob::EBT_RAW_DATA_BUFFER:
-            assert(_assetAddr->getAssetType()==asset::IAsset::ET_BUFFER);
-            return static_cast<asset::ICPUBuffer*>(_assetAddr);
-        case asset::Blob::EBT_TEXTURE_PATH:
-            assert(_assetAddr->getAssetType()==asset::IAsset::ET_IMAGE);
-            return static_cast<asset::ICPUTexture*>(_assetAddr);
-        default: return nullptr;
+			case asset::Blob::EBT_MESH:
+			case asset::Blob::EBT_SKINNED_MESH:
+				assert(_assetAddr->getAssetType()==asset::IAsset::ET_MESH);
+				return static_cast<asset::ICPUMesh*>(_assetAddr);
+			case asset::Blob::EBT_MESH_BUFFER:
+				assert(_assetAddr->getAssetType()==asset::IAsset::ET_SUB_MESH);
+				return static_cast<asset::ICPUMeshBuffer*>(_assetAddr);
+			case asset::Blob::EBT_SKINNED_MESH_BUFFER:
+				assert(_assetAddr->getAssetType()==asset::IAsset::ET_SUB_MESH);
+				return static_cast<asset::ICPUSkinnedMeshBuffer*>(_assetAddr);
+			case asset::Blob::EBT_RAW_DATA_BUFFER:
+				assert(_assetAddr->getAssetType()==asset::IAsset::ET_BUFFER);
+				return static_cast<asset::ICPUBuffer*>(_assetAddr);
+			case asset::Blob::EBT_TEXTURE_PATH:
+				assert(_assetAddr->getAssetType()==asset::IAsset::ET_IMAGE);
+				return static_cast<asset::ICPUTexture*>(_assetAddr);
+			default: return nullptr;
         }
     }
     static inline void insertAssetIntoCache(const SContext& _ctx, asset::IAssetLoader::IAssetLoaderOverride* _override, void* _asset, uint32_t _blobType, uint32_t _hierLvl, const std::string& _cacheKey)
@@ -196,28 +198,28 @@ private:
         asset::IAsset* asset = nullptr;
         switch (_blobType)
         {
-        case asset::Blob::EBT_MESH:
-        case asset::Blob::EBT_SKINNED_MESH:
-            asset = reinterpret_cast<asset::ICPUMesh*>(_asset);
-            break;
-        case asset::Blob::EBT_MESH_BUFFER:
-            asset = reinterpret_cast<asset::ICPUMeshBuffer*>(_asset);
-            break;
-        case asset::Blob::EBT_SKINNED_MESH_BUFFER:
-            asset = reinterpret_cast<asset::ICPUSkinnedMeshBuffer*>(_asset);
-            break;
-        case asset::Blob::EBT_RAW_DATA_BUFFER:
-            asset = reinterpret_cast<asset::ICPUBuffer*>(_asset);
-            break;
-        case asset::Blob::EBT_TEXTURE_PATH:
-            asset = reinterpret_cast<asset::ICPUTexture*>(_asset);
-            break;
+			case asset::Blob::EBT_MESH:
+			case asset::Blob::EBT_SKINNED_MESH:
+				asset = reinterpret_cast<asset::ICPUMesh*>(_asset);
+				break;
+			case asset::Blob::EBT_MESH_BUFFER:
+				asset = reinterpret_cast<asset::ICPUMeshBuffer*>(_asset);
+				break;
+			case asset::Blob::EBT_SKINNED_MESH_BUFFER:
+				asset = reinterpret_cast<asset::ICPUSkinnedMeshBuffer*>(_asset);
+				break;
+			case asset::Blob::EBT_RAW_DATA_BUFFER:
+				asset = reinterpret_cast<asset::ICPUBuffer*>(_asset);
+				break;
+			case asset::Blob::EBT_TEXTURE_PATH:
+				asset = reinterpret_cast<asset::ICPUTexture*>(_asset);
+				break;
         }
         if (asset)
         {
 			// drop shouldn't be performed here at all; it's done in main loading function by ctx.releaseAllButThisOne(meshBlobDataIter);
 			// this is quite different from other loaders so explenation is probably wellcome
-            SAssetBundle bundle{core::smart_refctd_ptr<asset::IAsset>(asset)}; // yes we want the extra grab
+            SAssetBundle bundle({core::smart_refctd_ptr<asset::IAsset>(asset)}); // yes we want the extra grab
             _override->insertAssetIntoCache(bundle, _cacheKey, _ctx.inner, _hierLvl);
         }
     }
@@ -275,12 +277,12 @@ private:
         uint32_t blobCnt{};
         BlobHeaderVn<FromVersion>* headers = nullptr;
         uint32_t* offsets = nullptr;
-        uint32_t baseOffsetv0{};
-        uint32_t baseOffsetv1{};
-        if (!formatConversionProlog<IntoVersion>(ctx, blobCnt, headers, offsets, baseOffsetv0, baseOffsetv1))
+        uint32_t baseOffsetv_from{};
+        uint32_t baseOffsetv_to{};
+        if (!formatConversionProlog<IntoVersion>(ctx, blobCnt, headers, offsets, baseOffsetv_from, baseOffsetv_to))
             return nullptr;
 
-        return createConvertIntoVer_spec<IntoVersion>(ctx, _original, _override, std::make_tuple(blobCnt, headers, offsets, baseOffsetv0, baseOffsetv1));
+        return createConvertIntoVer_spec<IntoVersion>(ctx, _original, _override, std::make_tuple(blobCnt, headers, offsets, baseOffsetv_from, baseOffsetv_to));
     }
 
     template<uint64_t ...Versions>
@@ -483,6 +485,7 @@ void* CBAWMeshFileLoader::tryReadBlobOnStack(const SBlobData_t<HeaderT> & _data,
     return dst;
 }
 
-}} // irr::scene
+}
+}
 
 #endif

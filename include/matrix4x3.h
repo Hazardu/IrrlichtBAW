@@ -163,7 +163,7 @@ namespace core
 			//! Make a rotation matrix from Euler angles. The 4th row and column are unmodified.
 			inline matrix4x3& setRotationDegrees( const vector3df& rotation )
             {
-                return setRotationRadians( rotation * core::DEGTORAD );
+                return setRotationRadians( radians<vector3df>(rotation) );
             }
 
 			//! Returns the rotation, as set by setRotation().
@@ -195,38 +195,6 @@ namespace core
 			    vect -= column[3];
 			}
 
-			inline void transformVect(float *in_out) const
-			{
-			    reinterpret_cast<vector3df*>(in_out)[0] = column[0]*in_out[0]+column[1]*in_out[1]+column[2]*in_out[2]+column[3];
-			}
-
-			inline void transformVect(float *out, const float * in) const
-			{
-			    reinterpret_cast<vector3df*>(out)[0] = column[0]*in[0]+column[1]*in[1]+column[2]*in[2]+column[3];
-			}
-
-			inline void pseudoMulWith4x1(float *in_out) const
-			{
-			    reinterpret_cast<vector3df*>(in_out)[0] = column[0]*in_out[0]+column[1]*in_out[1]+column[2]*in_out[2]+column[3];
-			    in_out[3] = 1.f;
-			}
-
-			inline void pseudoMulWith4x1(float *out, const float * in) const
-			{
-			    reinterpret_cast<vector3df*>(out)[0] = column[0]*in[0]+column[1]*in[1]+column[2]*in[2]+column[3];
-			    out[3] = 1.f;
-			}
-
-			inline void mulSub3x3With3x1(float *in_out) const
-			{
-			    reinterpret_cast<vector3df*>(in_out)[0] = column[0]*in_out[0]+column[1]*in_out[1]+column[2]*in_out[2];
-			}
-
-			inline void mulSub3x3With3x1(float *out, const float * in) const
-			{
-			    reinterpret_cast<vector3df*>(out)[0] = column[0]*in[0]+column[1]*in[1]+column[2]*in[2];
-			}
-
 			//! Transforms a axis aligned bounding box
 			inline void transformBoxEx(core::aabbox3d<float>& box) const
 			{
@@ -242,100 +210,6 @@ namespace core
 
                 box = tmpBox;
 			}
-
-			//! Calculates inverse of matrix. Slow.
-			/** \return Returns false if there is no inverse matrix.*/
-			inline bool makeInverse()
-			{
-                matrix4x3 temp;
-                for (auto i=0u; i<4u; i++)
-                    temp.column[i].set(0.f,0.f,0.f);
-
-                if (getInverse(temp))
-                {
-                    *this = temp;
-                    return true;
-                }
-
-                return false;
-			}
-
-			//! For internal use, it calculates the 3x3 inverse transpose columns with padding
-			/** \param out: the padded columns of a 3x3 inverse transpose
-			\return Returns false if there is no inverse matrix. */
-            inline bool getSub3x3InverseTransposePaddedSIMDColumns(vectorSIMDf outCols[3]) const
-            {
-                /// Calculates the inverse of this Matrix
-                /// The inverse is calculated using Cramers rule.
-                /// If no inverse exists then 'false' is returned.
-                float d = column[0].dotProduct(column[1].crossProduct(column[2]));
-
-                if( core::iszero ( d, FLT_MIN ) )
-                    return false;
-
-                outCols[0].set(column[1].crossProduct(column[2]));
-                outCols[1].set(column[2].crossProduct(column[0]));
-                outCols[2].set(column[0].crossProduct(column[1]));
-
-                outCols[0] /= d;
-                outCols[1] /= d;
-                outCols[2] /= d;
-                return true;
-            }
-
-
-			//! Gets the inversed matrix of this one
-			/** \param out: where result matrix is written to.
-			\return Returns false if there is no inverse matrix. */
-			inline bool getInverse(matrix4x3& out) const
-			{
-                vectorSIMDf tcols[3];
-                if (!getSub3x3InverseTransposePaddedSIMDColumns(tcols))
-                    return false;
-
-                //transpose
-                out.column[0].set(tcols[0].X,tcols[1].X,tcols[2].X);
-                out.column[1].set(tcols[0].Y,tcols[1].Y,tcols[2].Y);
-                out.column[2].set(tcols[0].Z,tcols[1].Z,tcols[2].Z);
-
-                //out.column[3] = out.column[0]*m.column[3].X+out.column[1]*m.column[3].Y+out.column[2]*m.column[3].Z;
-                out.mulSub3x3With3x1(reinterpret_cast<float*>(out.column+3),reinterpret_cast<const float*>(column+3));
-                out.column[3]  = -out.column[3];
-
-                return true;
-			}
-
-			inline bool getSub3x3InverseTranspose(float* out) const
-			{
-                vectorSIMDf cols[3];
-                if (!getSub3x3InverseTransposePaddedSIMDColumns(cols))
-                    return false;
-
-                out[0] = cols[0].pointer[0];
-                out[1] = cols[0].pointer[1];
-                out[2] = cols[0].pointer[2];
-                out[3] = cols[1].pointer[0];
-                out[4] = cols[1].pointer[1];
-                out[5] = cols[1].pointer[2];
-                out[6] = cols[2].pointer[0];
-                out[7] = cols[2].pointer[1];
-                out[8] = cols[2].pointer[2];
-
-                return true;
-			}
-
-
-			//! Builds a left-handed look-at matrix.
-			inline matrix4x3& buildCameraLookAtMatrixLH(
-					const vector3df& position,
-					const vector3df& target,
-					const vector3df& upVector);
-
-			//! Builds a right-handed look-at matrix.
-			inline matrix4x3& buildCameraLookAtMatrixRH(
-					const vector3df& position,
-					const vector3df& target,
-					const vector3df& upVector);
 
 
 			//! Sets all matrix data members at once
@@ -379,9 +253,9 @@ namespace core
 
         for (size_t i=0; i<4; i++)
         {
-            ret(0,i) = outColumn[i].X;
-            ret(1,i) = outColumn[i].Y;
-            ret(2,i) = outColumn[i].Z;
+            ret(0,i) = static_cast<float>(outColumn[i].X);
+            ret(1,i) = static_cast<float>(outColumn[i].Y);
+            ret(2,i) = static_cast<float>(outColumn[i].Z);
         }
 
         return ret;
@@ -426,7 +300,7 @@ namespace core
 		const matrix4x3 &mat = *this;
 		core::vector3df scale = getScale();
 
-		const core::vector3d<float> invScale(core::reciprocal(scale.X),core::reciprocal(scale.Y),core::reciprocal(scale.Z));
+		const core::vector3d<float> invScale = core::reciprocal(scale);
 
 		float nzd00 = mat(0,0)*invScale.X;
 		float nzd11 = mat(1,1)*invScale.Y;
@@ -435,25 +309,25 @@ namespace core
 
 		float Y = -asinf(core::clamp(mat(2,0)*invScale.X, -1.f, 1.f));
 		const float C = cosf(Y);
-		Y *= RADTODEG64;
+		Y = core::degrees(Y);
 
 		float rotx, roty, X, Z;
 
 		if (!core::iszero(C))
 		{
-			const float invC = core::reciprocal(C);
+			const float invC = core::reciprocal_approxim(C);
 			rotx = nzd22 * invC;
 			roty = mat(2,1) * invC * invScale.Y;
-			X = atan2f( roty, rotx ) * RADTODEG64;
+			X = core::degrees(atan2f( roty, rotx ));
 			rotx = nzd00 * invC;
 			roty = mat(1,0) * invC * invScale.X;
-			Z = atan2f( roty, rotx ) * RADTODEG64;
+			Z = core::degrees(atan2f( roty, rotx ));
 		}
 		else
 		{
 			X = 0.0;
 			roty = -mat(0,1) * invScale.Y;
-			Z = atan2f( roty, nzd11 ) * RADTODEG64;
+			Z = core::degrees(atan2f( roty, nzd11 ));
 		}
 
 		// fix values that get below zero
@@ -470,7 +344,7 @@ namespace core
 	{
  		const float c = cosf(angle);
 		const float s = sinf(angle);
-		const float t = 1.0 - c;
+		const float t = 1.f - c;
 
 		const float tx  = t * axis.X;
 		const float ty  = t * axis.Y;
@@ -514,94 +388,6 @@ namespace core
 		if (column[0].dotProduct(column[1].crossProduct(column[2]))<0.f)
             tmpScale.Z = -tmpScale.Z;
         return tmpScale;
-	}
-
-
-	// Builds a left-handed look-at matrix.
-
-	inline matrix4x3& matrix4x3::buildCameraLookAtMatrixLH(
-				const vector3df& position,
-				const vector3df& target,
-				const vector3df& upVector)
-	{
-		vector3df zaxis = target - position;
-		vector3df xaxis = upVector.crossProduct(zaxis);
-
-		float len = xaxis.X*xaxis.X+xaxis.Y*xaxis.Y+xaxis.Z*xaxis.Z;
-		xaxis /= sqrtf(len);
-		len = zaxis.X*zaxis.X+zaxis.Y*zaxis.Y+zaxis.Z*zaxis.Z;
-		zaxis /= sqrtf(len);
-
-		vector3df yaxis = zaxis.crossProduct(xaxis);
-
-		column[0].X = (float)xaxis.X;
-		column[0].Y = (float)yaxis.X;
-		column[0].Z = (float)zaxis.X;
-
-		column[1].X = (float)xaxis.Y;
-		column[1].Y = (float)yaxis.Y;
-		column[1].Z = (float)zaxis.Y;
-
-		column[2].X = (float)xaxis.Z;
-		column[2].Y = (float)yaxis.Z;
-		column[2].Z = (float)zaxis.Z;
-
-		column[3].X = (float)-xaxis.dotProduct(position);
-		column[3].Y = (float)-yaxis.dotProduct(position);
-		column[3].Z = (float)-zaxis.dotProduct(position);
-
-		return *this;
-	}
-
-
-	// Builds a right-handed look-at matrix.
-
-	inline matrix4x3& matrix4x3::buildCameraLookAtMatrixRH(
-				const vector3df& position,
-				const vector3df& target,
-				const vector3df& upVector)
-	{
-		vector3df zaxis = position - target;
-		vector3df xaxis = upVector.crossProduct(zaxis);
-
-		float len = xaxis.X*xaxis.X+xaxis.Y*xaxis.Y+xaxis.Z*xaxis.Z;
-		xaxis /= sqrtf(len);
-		len = zaxis.X*zaxis.X+zaxis.Y*zaxis.Y+zaxis.Z*zaxis.Z;
-		zaxis /= sqrtf(len);
-
-		vector3df yaxis = zaxis.crossProduct(xaxis);
-
-		column[0].X = (float)xaxis.X;
-		column[0].Y = (float)yaxis.X;
-		column[0].Z = (float)zaxis.X;
-
-		column[1].X = (float)xaxis.Y;
-		column[1].Y = (float)yaxis.Y;
-		column[1].Z = (float)zaxis.Y;
-
-		column[2].X = (float)xaxis.Z;
-		column[2].Y = (float)yaxis.Z;
-		column[2].Z = (float)zaxis.Z;
-
-		column[3].X = (float)-xaxis.dotProduct(position);
-		column[3].Y = (float)-yaxis.dotProduct(position);
-		column[3].Z = (float)-zaxis.dotProduct(position);
-
-		return *this;
-	}
-
-
-	// creates a new matrix as interpolated matrix from this and the passed one.
-	inline matrix4x3 mix(const core::matrix4x3& a, const core::matrix4x3& b, const float& x)
-	{
-		matrix4x3 mat;
-
-		mat.getColumn(0) = a.getColumn(0)+(b.getColumn(0)-a.getColumn(0))*x;
-		mat.getColumn(1) = a.getColumn(1)+(b.getColumn(1)-a.getColumn(1))*x;
-		mat.getColumn(2) = a.getColumn(2)+(b.getColumn(2)-a.getColumn(2))*x;
-		mat.getColumn(3) = a.getColumn(3)+(b.getColumn(3)-a.getColumn(3))*x;
-
-		return mat;
 	}
 
 } // end namespace core

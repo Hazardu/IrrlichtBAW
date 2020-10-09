@@ -242,7 +242,10 @@ namespace scene
                         const core::matrix4x3& parentTform = getGlobalMatrices(currentInstance)[referenceHierarchy->getBoneData()[j].parentOffsetFromTop];
                         getGlobalMatrices(currentInstance)[j] = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(parentTform), interpolatedLocalTform).getAsRetardedIrrlichtMatrix();
                     }
-					boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(getGlobalMatrices(currentInstance)[j]), core::matrix3x4SIMD().set(referenceHierarchy->getBoneData()[j].PoseBindMatrix)).getAsRetardedIrrlichtMatrix();
+					boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(getGlobalMatrices(currentInstance)[j]), referenceHierarchy->getBoneData()[j].PoseBindMatrix).getAsRetardedIrrlichtMatrix();
+					if (referenceHierarchy->flipsXOnOutput())
+					for (auto n=0; n<4; n++)
+						boneDataForInstance[j].SkinningTransform.pointer()[3*n] = -boneDataForInstance[j].SkinningTransform.pointer()[3*n];
 
 
                     core::aabbox3df bbox;
@@ -273,7 +276,7 @@ namespace scene
                     boneDataForInstance[j].MaxBBoxEdge[0] = bbox.MaxEdge.X;
                     boneDataForInstance[j].MaxBBoxEdge[1] = bbox.MaxEdge.Y;
                     boneDataForInstance[j].MaxBBoxEdge[2] = bbox.MaxEdge.Z;
-                    boneDataForInstance[j].SkinningTransform.getSub3x3InverseTranspose(boneDataForInstance[j].SkinningNormalMatrix);
+                    core::matrix3x4SIMD().set(boneDataForInstance[j].SkinningTransform).getSub3x3InverseTransposePacked(boneDataForInstance[j].SkinningNormalMatrix);
 
                     boneDataForInstance[j].lastAnimatedFrame = currentInstance->frame;
                 }
@@ -357,8 +360,10 @@ namespace scene
                                             const core::matrix4x3& parentTform = getGlobalMatrices(currentInstance)[referenceHierarchy->getBoneData()[j].parentOffsetFromTop];
                                             getGlobalMatrices(currentInstance)[j] = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(parentTform), interpolatedLocalTform).getAsRetardedIrrlichtMatrix();
                                         }
-                                        boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(getGlobalMatrices(currentInstance)[j]), core::matrix3x4SIMD().set(referenceHierarchy->getBoneData()[j].PoseBindMatrix)).getAsRetardedIrrlichtMatrix();
-
+                                        boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(getGlobalMatrices(currentInstance)[j]), referenceHierarchy->getBoneData()[j].PoseBindMatrix).getAsRetardedIrrlichtMatrix();
+										if (referenceHierarchy->flipsXOnOutput())
+										for (auto n=0; n<4; n++)
+											boneDataForInstance[j].SkinningTransform.pointer()[3*n] = -boneDataForInstance[j].SkinningTransform.pointer()[3*n];
 
                                         core::aabbox3df bbox;
                                         bbox.MinEdge.X = referenceHierarchy->getBoneData()[j].MinBBoxEdge[0];
@@ -391,7 +396,7 @@ namespace scene
                                         boneDataForInstance[j].MaxBBoxEdge[0] = bbox.MaxEdge.X;
                                         boneDataForInstance[j].MaxBBoxEdge[1] = bbox.MaxEdge.Y;
                                         boneDataForInstance[j].MaxBBoxEdge[2] = bbox.MaxEdge.Z;
-                                        boneDataForInstance[j].SkinningTransform.getSub3x3InverseTranspose(boneDataForInstance[j].SkinningNormalMatrix);
+										core::matrix3x4SIMD().set(boneDataForInstance[j].SkinningTransform).getSub3x3InverseTransposePacked(boneDataForInstance[j].SkinningNormalMatrix);
                                     }
                                 }
 
@@ -474,9 +479,9 @@ namespace scene
                                         bone->setTransformChangedBoningHint();
 
 
-										boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(attachedNodeInverse, core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(bone->getAbsoluteTransformation()), core::matrix3x4SIMD().set(referenceHierarchy->getBoneData()[j].PoseBindMatrix))).getAsRetardedIrrlichtMatrix();
+										boneDataForInstance[j].SkinningTransform = core::matrix3x4SIMD::concatenateBFollowedByA(attachedNodeInverse, core::matrix3x4SIMD::concatenateBFollowedByA(core::matrix3x4SIMD().set(bone->getAbsoluteTransformation()), referenceHierarchy->getBoneData()[j].PoseBindMatrix)).getAsRetardedIrrlichtMatrix();
 
-                                        boneDataForInstance[j].SkinningTransform.getSub3x3InverseTranspose(boneDataForInstance[j].SkinningNormalMatrix);
+										core::matrix3x4SIMD().set(boneDataForInstance[j].SkinningTransform).getSub3x3InverseTransposePacked(boneDataForInstance[j].SkinningNormalMatrix);
 
                                         core::aabbox3df bbox;
                                         bbox.MinEdge.X = referenceHierarchy->getBoneData()[j].MinBBoxEdge[0];

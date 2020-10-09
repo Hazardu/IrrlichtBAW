@@ -16,8 +16,25 @@
 cmake_minimum_required(VERSION 3.14)
 #policies
 #cmake_policy(SET CMP0072 NEW) #not yet, would need to get pointers to all OpenGL functions
+#cmake_policy(SET CMP )
 
 project(Irrlicht LANGUAGES CXX C)
+
+# CUDA test
+include(CheckLanguage)
+check_language(CUDA)
+enable_language(CUDA)
+if(${CMAKE_CUDA_COMPILER_VERSION} VERSION_LESS 9.0)
+	message(STATUS "CUDA not found or version lower than 9.0 found, version 9.0+ needed for C++14 support.")
+else()
+	message(STATUS "CUDA version 9.0+ found, you can enable the IRR_COMPILE_WITH_CUDA option.")
+endif()
+
+option(IRR_COMPILE_WITH_CUDA "Compile with CUDA interop?" OFF)
+if (IRR_COMPILE_WITH_CUDA)
+	enable_language(CUDA)
+endif()
+
 
 #
 get_filename_component(IRR_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
@@ -32,6 +49,9 @@ else(CCACHE_FOUND)
   option(USE_CCACHE "Some dependency is using it, but I just don't know which!" OFF)
 endif(CCACHE_FOUND)
 
+# global IDE stuff for examples
+set(CMAKE_CODELITE_USE_TARGETS ON CACHE BOOL "")
+
 if((MSVC_VERSION AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 19.11) OR
   (CMAKE_COMPILER_IS_GNUCXX AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 7.0) OR
   (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 3.9))
@@ -40,6 +60,11 @@ else()
     set(CMAKE_CXX_STANDARD 14)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Cause CUDA is a special snowflake
+if (IRR_COMPILE_WITH_CUDA)
+	set(CMAKE_CUDA_STANDARD 14)
+	set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11, but is it really needed?
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
@@ -163,8 +188,7 @@ endif()
 #option(IRR_TARGET_ARCH_ARM "Build for ARM?" OFF)
 
 option(IRR_COMPILE_WITH_OPENGL "Compile with OpenGL backend?" ON)
-
-option(IRR_COMPILE_WITH_BURNINGSVIDEO "Compile with software backend?" ON)
+option(IRR_COMPILE_WITH_OPENCL "Compile with OpenCL interop?" ON)
 
 option(IRR_PCH "Enable pre-compiled header" ON)
 
@@ -176,11 +200,28 @@ option(IRR_BUILD_TOOLS "Enable building tools (just convert2BAW as for now)" ON)
 
 option(IRR_BUILD_MITSUBA_LOADER "Enable irr::ext::MitsubaLoader?" ON)
 
+option(IRR_BUILD_RADEON_RAYS "Enable irr::ext::RadeonRays?" OFF)
+
+if (IRR_COMPILE_WITH_CUDA)
+	find_package(OPTIX)
+	if (OPTIX_FOUND)
+		message(STATUS "CUDA and OptiX found, you can enable IRR_BUILD_OPTIX")
+	else()
+		message(STATUS "OptiX not found")
+	endif()
+	option(IRR_BUILD_OPTIX "Enable irr::ext::OptiX?" OFF)
+else()
+	message(STATUS "Because IRR_COMPILE_WITH_CUDA is not enabled, the IRR_BUILD_OPTIX option will be hidden.")
+endif()
+
 option(IRR_BUILD_CEGUI "Enable CEGUI building and integration?" OFF)
 
 option(IRR_BUILD_BULLET "Enable Bullet Physics building and integration?" OFF)
 
+option(IRR_BUILD_DOCS "Enable building documentation?" ON)
+
 set(THIRD_PARTY_SOURCE_DIR "${PROJECT_SOURCE_DIR}/3rdparty")
+set(THIRD_PARTY_BINARY_DIR "${PROJECT_BINARY_DIR}/3rdparty")
 
 execute_process(COMMAND git submodule init
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -198,4 +239,8 @@ add_subdirectory(ext)
 
 if(IRR_BUILD_EXAMPLES)
 	add_subdirectory(examples_tests)
+endif()
+
+if(IRR_BUILD_DOCS)
+	add_subdirectory(docs)
 endif()

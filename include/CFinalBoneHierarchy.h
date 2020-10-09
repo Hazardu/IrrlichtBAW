@@ -16,28 +16,11 @@ namespace asset
     //! If it has no animation, make 1 frame of animation with LocalMatrix
     class CFinalBoneHierarchy : public core::IReferenceCounted, public asset::BlobSerializable
     {
-        protected:
-            virtual ~CFinalBoneHierarchy()
-            {
-                if (boneNames)
-                    _IRR_DELETE_ARRAY(boneNames,boneCount);
-                if (boneFlatArray)
-                    free(boneFlatArray);
-                if (boneTreeLevelEnd)
-                    free(boneTreeLevelEnd);
-
-                if (keyframes)
-                    free(keyframes);
-                if (interpolatedAnimations)
-                    free(interpolatedAnimations);
-                if (nonInterpolatedAnimations)
-                    free(nonInterpolatedAnimations);
-            }
         public:
             #include "irr/irrpack.h"
             struct BoneReferenceData
             {
-                core::matrix4x3 PoseBindMatrix;
+                core::matrix3x4SIMD PoseBindMatrix;
                 float MinBBoxEdge[3];
                 float MaxBBoxEdge[3];
                 uint32_t parentOffsetRelative;
@@ -55,7 +38,7 @@ namespace asset
 
             CFinalBoneHierarchy(const core::vector<asset::ICPUSkinnedMesh::SJoint*>& inLevelFixedJoints, const core::vector<size_t>& inJointsLevelEnd)
                     : boneCount(inLevelFixedJoints.size()), NumLevelsInHierarchy(inJointsLevelEnd.size()),
-                    keyframeCount(0), keyframes(NULL), interpolatedAnimations(NULL), nonInterpolatedAnimations(NULL)
+                    keyframeCount(0), keyframes(NULL), interpolatedAnimations(NULL), nonInterpolatedAnimations(NULL), flipXonOutput(false)
             {
                 boneFlatArray = (BoneReferenceData*)malloc(sizeof(BoneReferenceData)*boneCount);
                 boneNames = _IRR_NEW_ARRAY(core::stringc,boneCount);
@@ -99,8 +82,8 @@ namespace asset
 				const std::size_t* _levelsBegin, const std::size_t* _levelsEnd,
 				const float* _keyframesBegin, const float* _keyframesEnd,
 				const void* _interpAnimsBegin, const void* _interpAnimsEnd,
-				const void* _nonInterpAnimsBegin, const void* _nonInterpAnimsEnd)
-			: boneCount((BoneReferenceData*)_bonesEnd - (BoneReferenceData*)_bonesBegin), NumLevelsInHierarchy(_levelsEnd - _levelsBegin), keyframeCount(_keyframesEnd - _keyframesBegin)
+				const void* _nonInterpAnimsBegin, const void* _nonInterpAnimsEnd, bool _flipXonOutput)
+			: boneCount((BoneReferenceData*)_bonesEnd - (BoneReferenceData*)_bonesBegin), NumLevelsInHierarchy(_levelsEnd - _levelsBegin), keyframeCount(_keyframesEnd - _keyframesBegin), flipXonOutput(_flipXonOutput)
 			{
 				_IRR_DEBUG_BREAK_IF(_bonesBegin > _bonesEnd ||
 					_boneNamesBegin > _boneNamesEnd ||
@@ -132,6 +115,11 @@ namespace asset
 			virtual void* serializeToBlob(void* _stackPtr = NULL, const size_t& _stackSize = 0) const
 			{
 				return asset::CorrespondingBlobTypeFor<CFinalBoneHierarchy>::type::createAndTryOnStack(static_cast<const CFinalBoneHierarchy*>(this), _stackPtr, _stackSize);
+			}
+
+			inline bool flipsXOnOutput() const
+			{
+				return flipXonOutput;
 			}
 
 			inline size_t getSizeOfAllBoneNames() const
@@ -202,32 +190,6 @@ namespace asset
             inline const float* getKeys() const {return keyframes;}
 
 			inline size_t getAnimationCount() const { return getKeyFrameCount()*getBoneCount(); }
-/**
-            //! ready but untested
-            inline void putInGPUBuffer(video::IGPUBuffer* buffer, const size_t& byteOffset=0)
-            {
-                size_t boneDataSize = sizeof(BoneReferenceData)*boneCount;
-                if (!buffer||byteOffset+boneDataSize>buffer->getSize())
-                    return;
-                else if (buffer->isMappedBuffer())
-                {
-                    if (!static_cast<video::IGPUMappedBuffer*>(buffer)->getPointer())
-                        return;
-                }
-                else if (!buffer->canUpdateSubRange())
-                    return;
-
-                buffer->grab();
-                if (boundBuffer)
-                    boundBuffer->drop();
-                boundBuffer = buffer;
-
-                if (buffer->isMappedBuffer())
-                    memcpy(reinterpret_cast<uint8_t*>(static_cast<video::IGPUMappedBuffer*>(buffer)->getPointer())+byteOffset,boneFlatArray,boneDataSize);
-                else
-                    buffer->updateSubRange(byteOffset,boneDataSize,boneFlatArray);
-            }
-**/
 
 
             inline size_t getLowerBoundBoneKeyframes(float& interpolationFactor, const float& frame, const float* found) const
@@ -278,7 +240,7 @@ namespace asset
 
                 core::quaternion tmpRotA(keyframeA.Rotation);
                 core::quaternion tmpRotB(keyframeB.Rotation);
-                const float angle = tmpRotA.dotProduct(tmpRotB).X;
+                const float angle = dot(core::vectorSIMDf(keyframeA.Rotation),core::vectorSIMDf(keyframeB.Rotation))[0];
                 outQuat = core::quaternion::normalize(core::quaternion::lerp(tmpRotA,tmpRotB,core::quaternion::flerp_adjustedinterpolant(fabsf(angle),interpolant,interpolantPrecalcTerm2,interpolantPrecalcTerm3),angle<0.f));
 
 
@@ -485,6 +447,30 @@ namespace asset
                 }
             }
 
+		protected:
+			virtual ~CFinalBoneHierarchy()
+			{
+				if (boneNames)
+					_IRR_DELETE_ARRAY(boneNames, boneCount);
+				if (boneFlatArray)
+					free(boneFlatArray);
+				if (boneTreeLevelEnd)
+					free(boneTreeLevelEnd);
+
+				if (keyframes)
+					free(keyframes);
+				if (interpolatedAnimations)
+					free(interpolatedAnimations);
+				if (nonInterpolatedAnimations)
+					free(nonInterpolatedAnimations);
+			}
+
+			friend class TypedBlob<FinalBoneHierarchyBlobV3, CFinalBoneHierarchy>;
+			inline BoneReferenceData* getBoneData()
+			{
+				return boneFlatArray;
+			}
+
         private:
             inline void createAnimationKeys(const core::vector<asset::ICPUSkinnedMesh::SJoint*>& inLevelFixedJoints)
             {
@@ -523,10 +509,9 @@ namespace asset
                     {
                         case 0:
                             {
-                                core::vector3df rotationDegs = joint->LocalMatrix.getRotationDegrees();
                                 core::quaternion rotationQuat;
                                 if (!HasAnyKeys)
-                                    rotationQuat = core::quaternion::fromEuler(rotationDegs*core::DEGTORAD);
+                                    rotationQuat = core::quaternion(joint->LocalMatrix);
                                 for (size_t m=0; m<keyframeCount; m++)
                                 {
                                     memcpy(tmpAnimationNonInterpol[m].Rotation,rotationQuat.getPointer(),16);
@@ -582,7 +567,7 @@ namespace asset
                             {
                                 core::vector3df translation;
                                 if (!HasAnyKeys)
-                                    translation = joint->LocalMatrix.getTranslation();
+                                    translation = joint->LocalMatrix.getTranslation().getAsVector3df();
                                 for (size_t m=0; m<keyframeCount; m++)
                                 {
                                     *reinterpret_cast<core::vector3df*>(tmpAnimationNonInterpol[m].Position) = translation;
@@ -637,7 +622,7 @@ namespace asset
                             {
                                 core::vector3df scale(1.f);
                                 if (!HasAnyKeys)
-                                    scale = joint->LocalMatrix.getScale();
+                                    scale = joint->LocalMatrix.getScale().getAsVector3df();
                                 for (size_t m=0; m<keyframeCount; m++)
                                 {
                                     *reinterpret_cast<core::vector3df*>(tmpAnimationNonInterpol[m].Scale) = scale;
@@ -708,6 +693,7 @@ namespace asset
             const size_t NumLevelsInHierarchy;
             size_t* boneTreeLevelEnd;
 
+			uint32_t flipXonOutput;
             
             // animation data, independent of bone hierarchy to a degree
             size_t keyframeCount;

@@ -30,8 +30,11 @@ class STriangleCollider// : public AllocationOverrideDefault EBO inheritance pro
             validTriangle = true;
         }
 
-        inline bool CollideWithRay(float& collisionDistance, const vectorSIMDf& origin, const vectorSIMDf& direction, const float& dirMaxMultiplier) const
+        inline bool CollideWithRay(float& collisionDistance, vectorSIMDf origin, vectorSIMDf direction, const float& dirMaxMultiplier) const
         {
+			direction.makeSafe3D();
+			origin.makeSafe3D();
+
             float NdotD = dot(direction,planeEq).X;
             if (NdotD!=0.f)
                 return false;
@@ -137,7 +140,7 @@ class STriangleMeshCollider : public IReferenceCounted
 
         inline bool CollideWithRay(float& collisionDistance, const vectorSIMDf& origin, const vectorSIMDf& direction, const float& dirMaxMultiplier) const
         {
-            return CollideWithRay(collisionDistance,origin,direction,dirMaxMultiplier,reciprocal(direction));
+            return CollideWithRay(collisionDistance,origin,direction,dirMaxMultiplier,reciprocal_approxim(direction));
         }
 
         inline bool CollideWithRay(float& collisionDistance, const vectorSIMDf& origin, const vectorSIMDf& direction, const float& dirMaxMultiplier, const vectorSIMDf& direction_reciprocal) const

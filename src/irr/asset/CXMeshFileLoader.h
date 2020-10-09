@@ -123,8 +123,9 @@ public:
 private:
     struct SContext
     {
-        SContext(const asset::IAssetLoader::SAssetLoadContext& _inner, asset::IAssetLoader::IAssetLoaderOverride* _ovrr) :
+        SContext(const asset::IAssetLoader::SAssetLoadContext& _inner, uint32_t _topHierarchyLevel, asset::IAssetLoader::IAssetLoaderOverride* _ovrr) :
             Inner(_inner),
+			topHierarchyLevel(_topHierarchyLevel),
             loaderOverride(_ovrr),
             AllJoints(0), AnimatedMesh(0),
             BinaryNumCount(0),
@@ -158,30 +159,31 @@ private:
         int8_t FloatSize;
 
         asset::IAssetLoader::SAssetLoadContext Inner;
+		uint32_t topHierarchyLevel;
         asset::IAssetLoader::IAssetLoaderOverride* loaderOverride;
     };
 
-	bool load(SContext& _ctx, io::IReadFile* file);
+	bool load(SContext& _ctx, io::IReadFile* file, const asset::IAssetLoader::SAssetLoadParams& _params);
 
 	bool readFileIntoMemory(SContext& _ctx, io::IReadFile* file);
 
-	bool parseFile(SContext& _ctx);
+	bool parseFile(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObject(SContext& _ctx);
+	bool parseDataObject(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params);
 
 	bool parseDataObjectTemplate(SContext& _ctx);
 
-	bool parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *parent);
+	bool parseDataObjectFrame(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *parent, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObjectTransformationMatrix(SContext& _ctx, core::matrix4x3 &mat);
+	bool parseDataObjectTransformationMatrix(SContext& _ctx, core::matrix3x4SIMD&mat, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObjectMesh(SContext& _ctx, SXMesh &mesh);
+	bool parseDataObjectMesh(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObjectSkinWeights(SContext& _ctx, SXMesh &mesh);
+	bool parseDataObjectSkinWeights(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params);
 
 	bool parseDataObjectSkinMeshHeader(SContext& _ctx, SXMesh &mesh);
 
-	bool parseDataObjectMeshNormals(SContext& _ctx, SXMesh &mesh);
+	bool parseDataObjectMeshNormals(SContext& _ctx, SXMesh &mesh, const asset::IAssetLoader::SAssetLoadParams& _params);
 
 	bool parseDataObjectMeshTextureCoords(SContext& _ctx, SXMesh &mesh);
 
@@ -191,11 +193,11 @@ private:
 
 	bool parseDataObjectMaterial(SContext& _ctx, video::SCPUMaterial& material);
 
-	bool parseDataObjectAnimationSet(SContext& _ctx);
+	bool parseDataObjectAnimationSet(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObjectAnimation(SContext& _ctx);
+	bool parseDataObjectAnimation(SContext& _ctx, const asset::IAssetLoader::SAssetLoadParams& _params);
 
-	bool parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *joint);
+	bool parseDataObjectAnimationKey(SContext& _ctx, asset::ICPUSkinnedMesh::SJoint *joint, const asset::IAssetLoader::SAssetLoadParams& _params);
 
 	bool parseDataObjectTextureFilename(SContext& _ctx, std::string& texturename);
 
@@ -234,12 +236,18 @@ private:
 	float readFloat(SContext& _ctx);
 	bool readVector2(SContext& _ctx, core::vector2df& vec);
 	bool readVector3(SContext& _ctx, core::vector3df& vec);
-	bool readMatrix(SContext& _ctx, core::matrix4x3& mat);
+	bool readMatrix(SContext& _ctx, core::matrix3x4SIMD& mat, const asset::IAssetLoader::SAssetLoadParams& _params);
 	bool readRGB(SContext& _ctx, video::SColor& color);
 	bool readRGBA(SContext& _ctx, video::SColor& color);
 
 	IAssetManager* AssetManager;
 	io::IFileSystem* FileSystem;
+
+	template<typename aType>
+	static inline void performActionBasedOnOrientationSystem(aType& varToHandle, void (*performOnCertainOrientation)(aType& varToHandle))
+	{
+		performOnCertainOrientation(varToHandle);
+	}
 };
 
 } // end namespace asset

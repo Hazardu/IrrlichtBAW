@@ -45,26 +45,6 @@ class CMeshSceneNodeInstanced : public IMeshSceneNodeInstanced
         //!
         virtual bool supportsDriverFence() const {return true;}
 
-        //! returns the material based on the zero based index i. To get the amount
-        //! of materials used by this scene node, use getMaterialCount().
-        //! This function is needed for inserting the node into the scene hirachy on a
-        //! optimal position for minimizing renderstate changes, but can also be used
-        //! to directly modify the material of a scene node.
-        virtual video::SGPUMaterial& getMaterial(uint32_t i)
-        {
-            uint32_t cumMaterialCnt = 0;
-            for (size_t j=0; j<LoD.size(); j++)
-            {
-                if (i-cumMaterialCnt<LoD[j].mesh->getMeshBufferCount())
-                    return LoD[j].mesh->getMeshBuffer(i-cumMaterialCnt)->getMaterial();
-                else
-                    cumMaterialCnt += LoD[j].mesh->getMeshBufferCount();
-            }
-            return ISceneNode::getMaterial(i);
-        }
-        //! returns amount of materials used by this scene node.
-        virtual uint32_t getMaterialCount() const {return cachedMaterialCount;}
-
         //! Sets a new mesh to display
         /** \param mesh Mesh to display. */
         virtual bool setLoDMeshes(	const core::vector<MeshLoD>& levelsOfDetail, const size_t& dataSizePerInstanceOutput,
@@ -82,21 +62,21 @@ class CMeshSceneNodeInstanced : public IMeshSceneNodeInstanced
         virtual size_t getInstanceCount() const { return core::address_allocator_traits<InstanceDataAddressAllocator>::get_allocated_size(instanceDataAllocator->getAddressAllocator())/dataPerInstanceInputSize; }
 
 
-        virtual uint32_t addInstance(const core::matrix4x3& relativeTransform, const void* extraData=NULL);
+        virtual uint32_t addInstance(const core::matrix3x4SIMD& relativeTransform, const void* extraData=NULL) override;
 
-        virtual bool addInstances(uint32_t* instanceIDs, const size_t& instanceCount, const core::matrix4x3* relativeTransforms, const void* extraData);
+        virtual bool addInstances(uint32_t* instanceIDs, const size_t& instanceCount, const core::matrix3x4SIMD* relativeTransforms, const void* extraData) override;
 
-        virtual void setInstanceTransform(const uint32_t& instanceID, const core::matrix4x3& relativeTransform);
+        virtual void setInstanceTransform(const uint32_t& instanceID, const core::matrix3x4SIMD& relativeTransform) override;
 
-        virtual core::matrix4x3 getInstanceTransform(const uint32_t& instanceID);
+        virtual core::matrix3x4SIMD getInstanceTransform(const uint32_t& instanceID) override;
 
-        virtual void setInstanceVisible(const uint32_t& instanceID, const bool& visible);
+        virtual void setInstanceVisible(const uint32_t& instanceID, const bool& visible) override;
 
-        virtual void setInstanceData(const uint32_t& instanceID, const void* data);
+        virtual void setInstanceData(const uint32_t& instanceID, const void* data) override;
 
-        virtual void removeInstance(const uint32_t& instanceID);
+        virtual void removeInstance(const uint32_t& instanceID) override;
 
-        virtual void removeInstances(const size_t& instanceCount, const uint32_t* instanceIDs);
+        virtual void removeInstances(const size_t& instanceCount, const uint32_t* instanceIDs) override;
 
 
         //! frame
@@ -152,7 +132,6 @@ class CMeshSceneNodeInstanced : public IMeshSceneNodeInstanced
         void RecullInstances();
         core::aabbox3d<float> Box;
         core::aabbox3d<float> LoDInvariantBox;
-        uint32_t cachedMaterialCount;
 
         struct LoDData
         {

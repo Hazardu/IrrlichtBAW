@@ -12,11 +12,15 @@ namespace asset
 {
 
 #include "irr/irrpack.h"
-struct IRR_FORCE_EBO FinalBoneHierarchyBlobV0 : VariableSizeBlob<FinalBoneHierarchyBlobV0,CFinalBoneHierarchy>, TypedBlob<FinalBoneHierarchyBlobV0, CFinalBoneHierarchy>
+struct IRR_FORCE_EBO FinalBoneHierarchyBlobV3 : VariableSizeBlob<FinalBoneHierarchyBlobV3,CFinalBoneHierarchy>, TypedBlob<FinalBoneHierarchyBlobV3, CFinalBoneHierarchy>
 {
-	//friend struct SizedBlob<VariableSizeBlob, FinalBoneHierarchyBlobV0, CFinalBoneHierarchy>;
 public:
-	FinalBoneHierarchyBlobV0(const CFinalBoneHierarchy* _fbh);
+	enum E_BLOB_FINAL_BONE_HIERARCHY_FLAG : uint32_t
+	{
+		EBFBHF_RIGHT_HANDED = 0x1u
+	};
+
+	FinalBoneHierarchyBlobV3(const CFinalBoneHierarchy* _fbh);
 
 public:
 	//! Used for creating a blob. Calculates offset of the block of blob resulting from exporting `*_fbh` object.
@@ -80,21 +84,20 @@ public:
 	size_t calcNonInterpolatedAnimsByteSize() const;
 	// size of bone names is not dependent of any of 'count variables'. Since it's the last block its size can be calculated by {blobSize - boneNamesOffset}.
 
+	uint32_t finalBoneHierarchyFlags;
     size_t boneCount;
     size_t numLevelsInHierarchy;
     size_t keyframeCount;
 } PACK_STRUCT;
 #include "irr/irrunpack.h"
 static_assert(
-    sizeof(FinalBoneHierarchyBlobV0) ==
-    sizeof(FinalBoneHierarchyBlobV0::boneCount) + sizeof(FinalBoneHierarchyBlobV0::numLevelsInHierarchy) + sizeof(FinalBoneHierarchyBlobV0::keyframeCount),
-    "FinalBoneHierarchyBlobV0: Size of blob is not sum of its contents!"
+    sizeof(FinalBoneHierarchyBlobV3) ==
+    sizeof(FinalBoneHierarchyBlobV3::boneCount) + sizeof(FinalBoneHierarchyBlobV3::numLevelsInHierarchy) + sizeof(FinalBoneHierarchyBlobV3::keyframeCount) + sizeof(FinalBoneHierarchyBlobV3::finalBoneHierarchyFlags),
+    "FinalBoneHierarchyBlobV3: Size of blob is not sum of its contents!"
 );
 
-using FinalBoneHierarchyBlobV1 = FinalBoneHierarchyBlobV0;
-
 template<>
-struct CorrespondingBlobTypeFor<CFinalBoneHierarchy> { typedef FinalBoneHierarchyBlobV1 type; };
+struct CorrespondingBlobTypeFor<CFinalBoneHierarchy> { typedef FinalBoneHierarchyBlobV3 type; };
 
 }
 } // irr::asset

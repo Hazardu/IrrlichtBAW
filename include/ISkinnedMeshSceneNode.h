@@ -62,16 +62,6 @@ namespace scene
 
 		virtual float getDesiredUpdateFrequency() const =0;
 
-		//! returns the material based on the zero based index i. To get the amount
-		//! of materials used by this scene node, use getMaterialCount().
-		//! This function is needed for inserting the node into the scene hirachy on a
-		//! optimal position for minimizing renderstate changes, but can also be used
-		//! to directly modify the material of a scene node.
-		virtual video::SGPUMaterial& getMaterial(uint32_t i) = 0;
-
-		//! returns amount of materials used by this scene node.
-		virtual uint32_t getMaterialCount() const = 0;
-
         virtual size_t getBoneCount() const = 0;
 
 		//! frame
@@ -130,6 +120,7 @@ namespace scene
 
 		//! Returns the current mesh
 		virtual video::IGPUSkinnedMesh* getMesh(void) = 0;
+		virtual const video::IGPUMesh* getMesh(void) const = 0;
 
 		//! animates the joints in the mesh based on the current frame.
 		/** Also takes in to account transitions. */

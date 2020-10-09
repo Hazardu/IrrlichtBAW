@@ -1,6 +1,9 @@
 #ifndef __IRR_I_ASSET_LOADER_H_INCLUDED__
 #define __IRR_I_ASSET_LOADER_H_INCLUDED__
 
+#include "irr/core/core.h"
+#include "IFileSystem.h"
+
 #include "IAsset.h"
 #include "IReadFile.h"
 
@@ -23,20 +26,45 @@ public:
         ECF_DUPLICATE_REFERENCES = 0xffffffffffffffffull
     };
 
+	//! Parameter flags for a loader
+	/**
+		These are extra flags that have an impact on extraordinary tasks while loading.
+		E_LOADER_PARAMETER_FLAGS::ELPF_NONE is default and means that there is nothing to perform.
+		E_LOADER_PARAMETER_FLAGS::ELPF_RIGHT_HANDED_MESHES specifies that a mesh will be flipped in such
+		a way that it'll look correctly in right-handed camera system. If it isn't set, compatibility with 
+		left-handed coordinate camera is assumed.
+		E_LOADER_PARAMETER_FLAGS::ELPF_DONT_COMPILE_GLSL means that GLSL won't be compiled to SPIR-V if it is loaded or generated.
+	*/
+
+	enum E_LOADER_PARAMETER_FLAGS : uint64_t
+	{
+		ELPF_NONE = 0,											//!< default value, it doesn't do anything
+		ELPF_RIGHT_HANDED_MESHES = 0x1,							//!< specifies that a mesh will be flipped in such a way that it'll look correctly in right-handed camera system
+		ELPF_DONT_COMPILE_GLSL = 0x2							//!< it states that GLSL won't be compiled to SPIR-V if it is loaded or generated						
+	};
+
     struct SAssetLoadParams
     {
-        SAssetLoadParams(const size_t& _decryptionKeyLen = 0u, const uint8_t* _decryptionKey = nullptr, const E_CACHING_FLAGS& _cacheFlags = ECF_CACHE_EVERYTHING)
-            : decryptionKeyLen(_decryptionKeyLen), decryptionKey(_decryptionKey), cacheFlags(_cacheFlags)
+        SAssetLoadParams(	size_t _decryptionKeyLen = 0u, const uint8_t* _decryptionKey = nullptr,
+							E_CACHING_FLAGS _cacheFlags = ECF_CACHE_EVERYTHING,
+							const char* _relativeDir = nullptr, const E_LOADER_PARAMETER_FLAGS& _loaderFlags = ELPF_NONE) :
+				decryptionKeyLen(_decryptionKeyLen), decryptionKey(_decryptionKey),
+				cacheFlags(_cacheFlags), relativeDir(_relativeDir), loaderFlags(_loaderFlags)
         {
         }
+
         size_t decryptionKeyLen;
         const uint8_t* decryptionKey;
         const E_CACHING_FLAGS cacheFlags;
+        const char* relativeDir;
+        const E_LOADER_PARAMETER_FLAGS loaderFlags;				//!< Flags having an impact on extraordinary tasks during loading process
     };
 
     //! Struct for keeping the state of the current loadoperation for safe threading
     struct SAssetLoadContext
     {
+		SAssetLoadContext(const SAssetLoadParams& _params, io::IReadFile* _mainFile) : params(_params), mainFile(_mainFile) {}
+
         const SAssetLoadParams params;
         io::IReadFile* mainFile;
     };
@@ -80,8 +108,9 @@ public:
     {
     protected:
         IAssetManager* m_manager;
+		io::IFileSystem* m_filesystem;
     public:
-        IAssetLoaderOverride(IAssetManager* _manager) : m_manager(_manager) {}
+		IAssetLoaderOverride(IAssetManager* _manager);
 
         // The only reason these functions are not declared static is to allow stateful overrides
 
@@ -97,15 +126,26 @@ public:
 
         //! Only called when the asset was searched for, no correct asset was found
         /** Any non-nullptr asset returned here will not be added to cache,
-        since the overload operates ìas ifî the asset was found. */
+        since the overload operates ‚Äúas if‚Äù the asset was found. */
         inline virtual SAssetBundle handleSearchFail(const std::string& keyUsed, const SAssetLoadContext& ctx, const uint32_t& hierarchyLevel)
         {
             return {};
         }
 
-        //! Called before loading a file
-        // (Criss) Whats does this one?
-        inline virtual void getLoadFilename(std::string& inOutFilename, const SAssetLoadContext& ctx, const uint32_t& hierarchyLevel) {} //default do nothing
+        //! Called before loading a file to determine the correct path (could be relative or absolute)
+        inline virtual void getLoadFilename(std::string& inOutFilename, const SAssetLoadContext& ctx, const uint32_t& hierarchyLevel)
+		{
+			if (!ctx.params.relativeDir)
+				return;
+			// try compute absolute path
+			std::string relative = ctx.params.relativeDir+inOutFilename;
+			if (m_filesystem->existFile(relative.c_str()))
+			{
+				inOutFilename = relative;
+				return;
+			}
+			// otherwise it was already absolute
+		}
 
         // (Criss) Also what does this one?
         inline virtual io::IReadFile* getLoadFile(io::IReadFile* inFile, const std::string& supposedFilename, const SAssetLoadContext& ctx, const uint32_t& hierarchyLevel)
@@ -130,8 +170,8 @@ public:
         //! Only called when the was unable to be loaded
         inline virtual SAssetBundle handleLoadFail(bool& outAddToCache, const io::IReadFile* assetsFile, const std::string& supposedFilename, const std::string& cacheKey, const SAssetLoadContext& ctx, const uint32_t& hierarchyLevel)
         {
-            outAddToCache = false; // if you want to return a ìdefault error assetî
-            return {};
+            outAddToCache = false; // if you want to return a ‚Äúdefault error asset‚Äù
+            return SAssetBundle();
         }
 
         //! After a successful load of an asset or sub-asset

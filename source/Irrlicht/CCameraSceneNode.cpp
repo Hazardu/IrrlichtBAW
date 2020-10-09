@@ -2,6 +2,8 @@
 // This file is part of the "Irrlicht Engine".
 // For conditions of distribution and use, see copyright notice in irrlicht.h
 
+#include "irr/core/core.h"
+
 #include "CCameraSceneNode.h"
 #include "ISceneManager.h"
 #include "IVideoDriver.h"
@@ -15,26 +17,21 @@ namespace scene
 
 //! constructor
 CCameraSceneNode::CCameraSceneNode(IDummyTransformationSceneNode* parent, ISceneManager* mgr, int32_t id,
-	const core::vector3df& position, const core::vector3df& lookat)
+	const core::vector3df& position, const core::vectorSIMDf& lookat)
 	: ICameraSceneNode(parent, mgr, id, position),
-	Target(lookat), UpVector(0.0f, 1.0f, 0.0f), ZNear(1.0f), ZFar(3000.0f),
+	Target(lookat), UpVector(0.0f, 1.0f, 0.0f),
 	InputReceiverEnabled(true), TargetAndRotationAreBound(false)
 {
 	#ifdef _IRR_DEBUG
 	setDebugName("CCameraSceneNode");
 	#endif
 
-	// set default projection
-	Fovy = core::PI / 2.5f;	// Field of view, in radians.
-
 	const video::IVideoDriver* const d = mgr?mgr->getVideoDriver():0;
 	if (d)
 		Aspect = (float)d->getCurrentRenderTargetSize().Width /
 			(float)d->getCurrentRenderTargetSize().Height;
-	else
-		Aspect = 4.0f / 3.0f;	// Aspect ratio.
 
-	recalculateProjectionMatrix();
+	recomputeProjectionMatrix();
 	recalculateViewArea();
 }
 
@@ -57,21 +54,14 @@ bool CCameraSceneNode::isInputReceiverEnabled() const
 void CCameraSceneNode::setProjectionMatrix(const core::matrix4SIMD& projection)
 {
 	projMatrix = projection;
-	concatMatrix = concatenateBFollowedByA(projMatrix,viewMatrix);
-}
-
-
-//! Gets the current projection matrix of the camera
-//! \return Returns the current projection matrix of the camera.
-const core::matrix4SIMD& CCameraSceneNode::getProjectionMatrix() const
-{
-	return projMatrix;
+	leftHanded = core::determinant(projMatrix) < 0.f;
+	concatMatrix = core::matrix4SIMD::concatenateBFollowedByAPrecisely(projMatrix,core::matrix4SIMD(viewMatrix));
 }
 
 
 //! Gets the current view matrix of the camera
 //! \return Returns the current view matrix of the camera.
-const core::matrix4x3& CCameraSceneNode::getViewMatrix() const
+const core::matrix3x4SIMD& CCameraSceneNode::getViewMatrix() const
 {
 	return viewMatrix;
 }
@@ -105,11 +95,11 @@ bool CCameraSceneNode::OnEvent(const SEvent& event)
 //! \param pos: Look at target of the camera.
 void CCameraSceneNode::setTarget(const core::vector3df& pos)
 {
-	Target = pos;
+	Target.set(pos);
 
 	if(TargetAndRotationAreBound)
 	{
-		const core::vector3df toTarget = Target - getAbsolutePosition();
+		const core::vector3df toTarget = Target.getAsVector3df() - getAbsolutePosition();
 		ISceneNode::setRotation(toTarget.getHorizontalAngle());
 	}
 }
@@ -123,7 +113,7 @@ then calling this will also change the camera's target to match the rotation.
 void CCameraSceneNode::setRotation(const core::vector3df& rotation)
 {
 	if(TargetAndRotationAreBound)
-		Target = getAbsolutePosition() + rotation.rotationToDirection();
+		Target.set(getAbsolutePosition() + rotation.rotationToDirection());
 
 	ISceneNode::setRotation(rotation);
 }
@@ -131,7 +121,7 @@ void CCameraSceneNode::setRotation(const core::vector3df& rotation)
 
 //! Gets the current look at target of the camera
 //! \return Returns the current look at target of the camera
-const core::vector3df& CCameraSceneNode::getTarget() const
+const core::vectorSIMDf& CCameraSceneNode::getTarget() const
 {
 	return Target;
 }
@@ -141,74 +131,25 @@ const core::vector3df& CCameraSceneNode::getTarget() const
 //! \param pos: New upvector of the camera.
 void CCameraSceneNode::setUpVector(const core::vector3df& pos)
 {
-	UpVector = pos;
+	UpVector.set(pos);
 }
 
 
 //! Gets the up vector of the camera.
 //! \return Returns the up vector of the camera.
-const core::vector3df& CCameraSceneNode::getUpVector() const
+const core::vectorSIMDf& CCameraSceneNode::getUpVector() const
 {
 	return UpVector;
 }
 
 
-float CCameraSceneNode::getNearValue() const
+void CCameraSceneNode::recomputeProjectionMatrix()
 {
-	return ZNear;
-}
-
-
-float CCameraSceneNode::getFarValue() const
-{
-	return ZFar;
-}
-
-
-float CCameraSceneNode::getAspectRatio() const
-{
-	return Aspect;
-}
-
-
-float CCameraSceneNode::getFOV() const
-{
-	return Fovy;
-}
-
-
-void CCameraSceneNode::setNearValue(float f)
-{
-	ZNear = f;
-	recalculateProjectionMatrix();
-}
-
-
-void CCameraSceneNode::setFarValue(float f)
-{
-	ZFar = f;
-	recalculateProjectionMatrix();
-}
-
-
-void CCameraSceneNode::setAspectRatio(float f)
-{
-	Aspect = f;
-	recalculateProjectionMatrix();
-}
-
-
-void CCameraSceneNode::setFOV(float f)
-{
-	Fovy = f;
-	recalculateProjectionMatrix();
-}
-
-
-void CCameraSceneNode::recalculateProjectionMatrix()
-{
-	projMatrix = core::matrix4SIMD::buildProjectionMatrixPerspectiveFovRH(Fovy, Aspect, ZNear, ZFar);
-	concatMatrix = concatenateBFollowedByA(projMatrix,viewMatrix);
+	if (leftHanded)
+		projMatrix = core::matrix4SIMD::buildProjectionMatrixPerspectiveFovLH(Fovy, Aspect, ZNear, ZFar);
+	else
+		projMatrix = core::matrix4SIMD::buildProjectionMatrixPerspectiveFovRH(Fovy, Aspect, ZNear, ZFar);
+	concatMatrix = core::matrix4SIMD::concatenateBFollowedByAPrecisely(projMatrix,core::matrix4SIMD(viewMatrix));
 }
 
 
@@ -225,24 +166,26 @@ void CCameraSceneNode::OnRegisterSceneNode()
 //! render
 void CCameraSceneNode::render()
 {
-	core::vector3df pos = getAbsolutePosition();
-	core::vector3df tgtv = Target - pos;
-	tgtv.normalize();
+	core::vectorSIMDf pos;
+	pos.set(getAbsolutePosition());
+	core::vectorSIMDf tgtv = core::normalize(Target - pos);
 
 	// if upvector and vector to the target are the same, we have a
 	// problem. so solve this problem:
-	core::vector3df up = UpVector;
-	up.normalize();
+	core::vectorSIMDf up = core::normalize(UpVector);
 
-	float dp = tgtv.dotProduct(up);
+	core::vectorSIMDf dp = core::dot(tgtv,up);
 
-	if ( core::equals(core::abs_<float>(dp), 1.f) )
+	if (core::iszero(core::abs(dp)[0]-1.f))
 	{
 		up.X += 0.5f;
 	}
 
-	viewMatrix.buildCameraLookAtMatrixLH(pos, Target, up); // TODO: Change this to static
-	concatMatrix = concatenateBFollowedByA(projMatrix,viewMatrix);
+	if (leftHanded)
+		viewMatrix = core::matrix3x4SIMD::buildCameraLookAtMatrixLH(pos, Target, up);
+	else
+		viewMatrix = core::matrix3x4SIMD::buildCameraLookAtMatrixRH(pos, Target, up);
+	concatMatrix = core::matrix4SIMD::concatenateBFollowedByAPrecisely(projMatrix, core::matrix4SIMD(viewMatrix));
 	recalculateViewArea();
 
 	video::IVideoDriver* driver = SceneManager->getVideoDriver();

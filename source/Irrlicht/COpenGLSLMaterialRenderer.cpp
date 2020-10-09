@@ -75,7 +75,7 @@ COpenGLSLMaterialRenderer::~COpenGLSLMaterialRenderer()
 		GLint count;
 		COpenGLExtensionHandler::extGlGetAttachedShaders(Program2, 8, &count, shaders);
 		// avoid bugs in some drivers, which return larger numbers
-		count=core::min_(count,8);
+		count=core::min(count,8);
 		for (GLint i=0; i<count; ++i)
 			COpenGLExtensionHandler::extGlDeleteShader(shaders[i]);
 		COpenGLExtensionHandler::extGlDeleteProgram(Program2);
@@ -154,7 +154,7 @@ void COpenGLSLMaterialRenderer::init(int32_t& outMaterialTypeNr,
         os::Printer::log("GLSL: failed to retrieve uniform information", ELL_ERROR);
         return;
     }
-    maxlen = core::max_(maxlen,36); // gl_MVPInv for Intel drivers (irretards)
+    maxlen = core::max(maxlen,36); // gl_MVPInv for Intel drivers (irretards)
 
     // seems that some implementations use an extra null terminator
     ++maxlen;
@@ -449,7 +449,7 @@ void COpenGLSLMaterialRenderer::setShaderConstant(const void* data, int32_t loca
         COpenGLExtensionHandler::extGlProgramUniformMatrix4x2fv(Program2,loc,cnt,isRowMajor,(GLfloat*)data);
         break;
     case ESCT_FLOAT_MAT4x3:
-        COpenGLExtensionHandler::extGlProgramUniformMatrix4x3fv(Program2,loc,cnt,false,(GLfloat*)data); // not yet because core::matrix3x4 is still in use
+        COpenGLExtensionHandler::extGlProgramUniformMatrix4x3fv(Program2,loc,cnt,isRowMajor,(GLfloat*)data); // not yet because core::matrix3x4 is still in use
         break;
 #ifdef _IRR_DEBUG
     default:

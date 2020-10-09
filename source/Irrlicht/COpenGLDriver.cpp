@@ -454,7 +454,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceWin32* device)
 	}
 
 #ifdef _IRR_COMPILE_WITH_OPENCL_
-	ocl::COpenCLHandler::getCLDeviceFromGLContext(clDevice,hrc,HDc);
+	ocl::COpenCLHandler::getCLDeviceFromGLContext(clDevice,clProperties,hrc,HDc);
 #endif // _IRR_COMPILE_WITH_OPENCL_
 	genericDriverInit();
 
@@ -600,7 +600,7 @@ bool COpenGLDriver::initDriver(CIrrDeviceLinux* device, SAuxContext* auxCtxts)
     AuxContexts = auxCtxts;
 
 #ifdef _IRR_COMPILE_WITH_OPENCL_
-	if (!ocl::COpenCLHandler::getCLDeviceFromGLContext(clDevice,reinterpret_cast<GLXContext&>(ExposedData.OpenGLLinux.X11Context),(Display*)ExposedData.OpenGLLinux.X11Display))
+	if (!ocl::COpenCLHandler::getCLDeviceFromGLContext(clDevice,clProperties,reinterpret_cast<GLXContext&>(ExposedData.OpenGLLinux.X11Context),(Display*)ExposedData.OpenGLLinux.X11Display))
         os::Printer::log("Couldn't find matching OpenCL device.\n");
 #endif // _IRR_COMPILE_WITH_OPENCL_
 
@@ -1429,7 +1429,7 @@ void COpenGLDriver::drawMeshBuffer(const IGPUMeshBuffer* mb)
         return;
 
     const COpenGLVAOSpec* meshLayoutVAO = static_cast<const COpenGLVAOSpec*>(mb->getMeshDataAndFormat());
-    if (!found->setActiveVAO(meshLayoutVAO,mb))
+    if (!found->setActiveVAO(meshLayoutVAO))
         return;
 
 #ifdef _IRR_DEBUG
@@ -1968,7 +1968,7 @@ void COpenGLDriver::SAuxContext::COpenGLVAO::bindBuffers(   const COpenGLBuffer*
     lastValidated = beginStamp;
 }
 
-bool COpenGLDriver::SAuxContext::setActiveVAO(const COpenGLVAOSpec* const spec, const IGPUMeshBuffer* correctOffsetsForXFormDraw)
+bool COpenGLDriver::SAuxContext::setActiveVAO(const COpenGLVAOSpec* const spec)
 {
     if (!spec)
     {
@@ -1998,30 +1998,7 @@ bool COpenGLDriver::SAuxContext::setActiveVAO(const COpenGLVAOSpec* const spec, 
         extGlBindVertexArray(CurrentVAO.second->getOpenGLName());
     }
 
-    if (correctOffsetsForXFormDraw)
-    {
-        size_t offsets[asset::EVAI_COUNT] = {0};
-        memcpy(offsets,&spec->getMappedBufferOffset(asset::EVAI_ATTR0),sizeof(offsets));
-        for (size_t i=0; i<asset::EVAI_COUNT; i++)
-        {
-            if (!spec->getMappedBuffer((asset::E_VERTEX_ATTRIBUTE_ID)i))
-                continue;
-
-            if (spec->getAttribDivisor((asset::E_VERTEX_ATTRIBUTE_ID)i))
-            {
-                if (correctOffsetsForXFormDraw->getBaseInstance())
-                    offsets[i] += spec->getMappedBufferStride((asset::E_VERTEX_ATTRIBUTE_ID)i)*correctOffsetsForXFormDraw->getBaseInstance();
-            }
-            else
-            {
-                if (correctOffsetsForXFormDraw->getBaseVertex())
-                    offsets[i] = int64_t(offsets[i])+int64_t(spec->getMappedBufferStride((asset::E_VERTEX_ATTRIBUTE_ID)i))*correctOffsetsForXFormDraw->getBaseVertex();
-            }
-        }
-        CurrentVAO.second->bindBuffers(static_cast<const COpenGLBuffer*>(spec->getIndexBuffer()),reinterpret_cast<const COpenGLBuffer* const*>(spec->getMappedBuffers()),offsets,&spec->getMappedBufferStride(asset::EVAI_ATTR0));
-    }
-    else
-        CurrentVAO.second->bindBuffers(static_cast<const COpenGLBuffer*>(spec->getIndexBuffer()),reinterpret_cast<const COpenGLBuffer* const*>(spec->getMappedBuffers()),&spec->getMappedBufferOffset(asset::EVAI_ATTR0),&spec->getMappedBufferStride(asset::EVAI_ATTR0));
+    CurrentVAO.second->bindBuffers(static_cast<const COpenGLBuffer*>(spec->getIndexBuffer()),reinterpret_cast<const COpenGLBuffer* const*>(spec->getMappedBuffers()),&spec->getMappedBufferOffset(asset::EVAI_ATTR0),&spec->getMappedBufferStride(asset::EVAI_ATTR0));
 
     return true;
 }
@@ -2095,7 +2072,7 @@ const GLuint& COpenGLDriver::SAuxContext::constructSamplerInCache(const uint64_t
     extGlSamplerParameteri(samplerHandle, GL_TEXTURE_MAG_FILTER, tmpTSP->MaxFilter ? GL_LINEAR : GL_NEAREST);
 
     if (tmpTSP->AnisotropicFilter)
-        extGlSamplerParameteri(samplerHandle, GL_TEXTURE_MAX_ANISOTROPY_EXT, core::min_(tmpTSP->AnisotropicFilter+1u,uint32_t(MaxAnisotropy)));
+        extGlSamplerParameteri(samplerHandle, GL_TEXTURE_MAX_ANISOTROPY_EXT, core::min(tmpTSP->AnisotropicFilter+1u,uint32_t(MaxAnisotropy)));
 
     extGlSamplerParameteri(samplerHandle, GL_TEXTURE_WRAP_S, getTextureWrapMode(tmpTSP->TextureWrapU));
     extGlSamplerParameteri(samplerHandle, GL_TEXTURE_WRAP_T, getTextureWrapMode(tmpTSP->TextureWrapV));
@@ -2749,8 +2726,8 @@ void COpenGLDriver::blitRenderTargets(IFrameBuffer* in, IFrameBuffer* out,
                 }
                 else
                 {
-                    width = core::min_(rndrbl->getRenderableSize().Width,width);
-                    height = core::min_(rndrbl->getRenderableSize().Height,height);
+                    width = core::min(rndrbl->getRenderableSize().Width,width);
+                    height = core::min(rndrbl->getRenderableSize().Height,height);
                 }
             }
             if (firstAttached)
@@ -2784,8 +2761,8 @@ void COpenGLDriver::blitRenderTargets(IFrameBuffer* in, IFrameBuffer* out,
                 }
                 else
                 {
-                    width = core::min_(rndrbl->getRenderableSize().Width,width);
-                    height = core::min_(rndrbl->getRenderableSize().Height,height);
+                    width = core::min(rndrbl->getRenderableSize().Width,width);
+                    height = core::min(rndrbl->getRenderableSize().Height,height);
                 }
             }
             if (firstAttached)
@@ -2872,8 +2849,8 @@ bool COpenGLDriver::setRenderTarget(IFrameBuffer* frameBuffer, bool setNewViewpo
         }
         else
         {
-            newRTTSize.Width = core::min_(newRTTSize.Width,attachment->getRenderableSize().Width);
-            newRTTSize.Height = core::min_(newRTTSize.Height,attachment->getRenderableSize().Height);
+            newRTTSize.Width = core::min(newRTTSize.Width,attachment->getRenderableSize().Width);
+            newRTTSize.Height = core::min(newRTTSize.Height,attachment->getRenderableSize().Height);
         }
     }
 

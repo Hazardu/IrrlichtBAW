@@ -71,6 +71,10 @@
 #   define NO_IRR_LINUX_X11_RANDR_
 #endif
 
+#ifdef _MSC_VER
+#	define _ENABLE_EXTENDED_ALIGNED_STORAGE
+#endif
+
 //! VidMode is ANCIENT
 //#define NO_IRR_LINUX_X11_VIDMODE_
 
@@ -96,10 +100,10 @@
 #define _IRR_MATERIAL_MAX_IMAGES_ 8
 
 //! Maximum of other shader input (output) slots
-#define _IRR_MATERIAL_MAX_DYNAMIC_SHADER_STORAGE_OBJECTS_ 4
-#define _IRR_MATERIAL_MAX_SHADER_STORAGE_OBJECTS_ (16-_IRR_MATERIAL_MAX_DYNAMIC_SHADER_STORAGE_OBJECTS_) //opengl has one set of slots for both
-#define _IRR_MATERIAL_MAX_DYNAMIC_UNIFORM_BUFFER_OBJECTS_ 8
-#define _IRR_MATERIAL_MAX_UNIFORM_BUFFER_OBJECTS_ (24-_IRR_MATERIAL_MAX_DYNAMIC_UNIFORM_BUFFER_OBJECTS_) //opengl has one set of slots for both
+#define _IRR_MATERIAL_maxDYNAMIC_SHADER_STORAGE_OBJECTS_ 4
+#define _IRR_MATERIAL_maxSHADER_STORAGE_OBJECTS_ (16-_IRR_MATERIAL_maxDYNAMIC_SHADER_STORAGE_OBJECTS_) //opengl has one set of slots for both
+#define _IRR_MATERIAL_maxDYNAMIC_UNIFORM_BUFFER_OBJECTS_ 8
+#define _IRR_MATERIAL_maxUNIFORM_BUFFER_OBJECTS_ (24-_IRR_MATERIAL_maxDYNAMIC_UNIFORM_BUFFER_OBJECTS_) //opengl has one set of slots for both
 
 //! Maximum number of output buffers and streams a Transform Feedback Object can have
 #define _IRR_XFORM_FEEDBACK_MAX_BUFFERS_ 4 //depr
@@ -257,14 +261,6 @@ ones. */
 #ifdef NO_IRR_COMPILE_WITH_ZLIB_
 #undef _IRR_COMPILE_WITH_ZLIB_
 #endif
-//! Define _IRR_USE_NON_SYSTEM_ZLIB_ to let irrlicht use the zlib which comes with irrlicht.
-/** If this is commented out, Irrlicht will try to compile using the zlib
-installed on the system. This is only used when _IRR_COMPILE_WITH_ZLIB_ is
-defined. */
-#define _IRR_USE_NON_SYSTEM_ZLIB_
-#ifdef NO_IRR_USE_NON_SYSTEM_ZLIB_
-#undef _IRR_USE_NON_SYSTEM_ZLIB_
-#endif
 //! Define _IRR_COMPILE_WITH_ZIP_ENCRYPTION_ if you want to read AES-encrypted ZIP archives
 #define _IRR_COMPILE_WITH_ZIP_ENCRYPTION_
 #ifdef NO_IRR_COMPILE_WITH_ZIP_ENCRYPTION_
@@ -277,14 +273,6 @@ library. */
 #define _IRR_COMPILE_WITH_BZIP2_
 #ifdef NO_IRR_COMPILE_WITH_BZIP2_
 #undef _IRR_COMPILE_WITH_BZIP2_
-#endif
-//! Define _IRR_USE_NON_SYSTEM_BZLIB_ to let irrlicht use the bzlib which comes with irrlicht.
-/** If this is commented out, Irrlicht will try to compile using the bzlib
-installed on the system. This is only used when _IRR_COMPILE_WITH_BZLIB_ is
-defined. */
-#define _IRR_USE_NON_SYSTEM_BZLIB_
-#ifdef NO_IRR_USE_NON_SYSTEM_BZLIB_
-#undef _IRR_USE_NON_SYSTEM_BZLIB_
 #endif
 //! Define _IRR_COMPILE_WITH_LZMA_ if you want to use LZMA compressed zip files.
 /** LZMA is a very efficient compression code, known from 7zip. Irrlicht
@@ -305,20 +293,10 @@ currently only supports zip archives, though. */
 #ifdef NO__IRR_COMPILE_WITH_PAK_ARCHIVE_LOADER_
 #undef __IRR_COMPILE_WITH_PAK_ARCHIVE_LOADER_
 #endif
-//! Define __IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_ if you want to open Nebula Device NPK archives
-#define __IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_
-#ifdef NO__IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_
-#undef __IRR_COMPILE_WITH_NPK_ARCHIVE_LOADER_
-#endif
 //! Define __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_ if you want to open TAR archives
 #define __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
 #ifdef NO__IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
 #undef __IRR_COMPILE_WITH_TAR_ARCHIVE_LOADER_
-#endif
-//! Define __IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_ if you want to open WAD archives
-#define __IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_
-#ifdef NO__IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_
-#undef __IRR_COMPILE_WITH_WAD_ARCHIVE_LOADER_
 #endif
 
 // Some cleanup and standard stuff
@@ -362,21 +340,7 @@ currently only supports zip archives, though. */
 #endif
 
 
-#ifdef _IRR_DEBUG
-	//! A few attributes are written in CSceneManager when _IRR_SCENEMANAGER_DEBUG is enabled
-	// NOTE: Those attributes were used always until 1.8.0 and became a global define for 1.8.1
-	// which is only enabled in debug because it had a large (sometimes >5%) impact on speed.
-	// A better solution in the long run is to break the interface and remove _all_ attribute
-	// access in functions like CSceneManager::drawAll and instead put that information in some
-	// own struct/class or in CSceneManager.
-	// See http://irrlicht.sourceforge.net/forum/viewtopic.php?f=2&t=48211 for the discussion.
-	//#define _IRR_SCENEMANAGER_DEBUG
-	#ifdef NO_IRR_SCENEMANAGER_DEBUG
-		#undef _IRR_SCENEMANAGER_DEBUG
-	#endif
-#endif
-
-#define _IRR_BAW_FORMAT_VERSION 1
+#define _IRR_BAW_FORMAT_VERSION 3
 
 //! @see @ref CBlobsLoadingManager
 #define _IRR_ADD_BLOB_SUPPORT(BlobClassName, EnumValue, Function, ...) \
@@ -385,13 +349,13 @@ case asset::Blob::EnumValue:\
 
 //! Used inside CBlobsLoadingManager. Adds support of given blob types.
 #define _IRR_SUPPORTED_BLOBS(Function, ...) \
-_IRR_ADD_BLOB_SUPPORT(RawBufferBlobV1, EBT_RAW_DATA_BUFFER, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(TexturePathBlobV1, EBT_TEXTURE_PATH, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(MeshBlobV1, EBT_MESH, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(SkinnedMeshBlobV1, EBT_SKINNED_MESH, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(MeshBufferBlobV1, EBT_MESH_BUFFER, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(SkinnedMeshBufferBlobV1, EBT_SKINNED_MESH_BUFFER, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(MeshDataFormatDescBlobV1, EBT_DATA_FORMAT_DESC, Function, __VA_ARGS__)\
-_IRR_ADD_BLOB_SUPPORT(FinalBoneHierarchyBlobV1, EBT_FINAL_BONE_HIERARCHY, Function, __VA_ARGS__)
+_IRR_ADD_BLOB_SUPPORT(RawBufferBlobV3, EBT_RAW_DATA_BUFFER, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(TexturePathBlobV3, EBT_TEXTURE_PATH, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(MeshBlobV3, EBT_MESH, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(SkinnedMeshBlobV3, EBT_SKINNED_MESH, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(MeshBufferBlobV3, EBT_MESH_BUFFER, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(SkinnedMeshBufferBlobV3, EBT_SKINNED_MESH_BUFFER, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(MeshDataFormatDescBlobV3, EBT_DATA_FORMAT_DESC, Function, __VA_ARGS__)\
+_IRR_ADD_BLOB_SUPPORT(FinalBoneHierarchyBlobV3, EBT_FINAL_BONE_HIERARCHY, Function, __VA_ARGS__)
 
 #endif // __IRR_COMPILE_CONFIG_H_INCLUDED__
